@@ -72,7 +72,7 @@ vs_simulate_set <- function(rates, serving = NA, go_to = 25, simple = FALSE, id 
         } else {
             ## rec attack by non-serving (other) team
             temp <- c(other_rates$rec_att_kill, other_rates$rec_att_error, other_rates$rec_set_error, this_rates$rec_block)
-            if (sum(temp) > 1) stop("rec att prob error")
+            if (sum(temp) > 1) stop("The reception-phase probabilities sum to more than 1")
             ra_outc <- sum(tm2_prandf() <= cumsum(temp))
             if (ra_outc == 4) {
                 lost_serve <- TRUE
@@ -93,7 +93,7 @@ vs_simulate_set <- function(rates, serving = NA, go_to = 25, simple = FALSE, id 
                 while (is.na(lost_serve)) {
                     if (tptr < 2) {
                         temp <- c(this_rates$trans_att_kill, this_rates$trans_att_error, this_rates$trans_set_error, other_rates$trans_block)
-                        if (sum(temp) > 1) stop("trans att prob error")
+                        if (sum(temp) > 1) stop("The transition-phase probabilities sum to more than 1")
                         ta_outc <- sum(tm1_prandf() <= cumsum(temp))
                         if (ta_outc == 4) {
                             lost_serve <- FALSE
@@ -110,7 +110,7 @@ vs_simulate_set <- function(rates, serving = NA, go_to = 25, simple = FALSE, id 
                         }
                     } else {
                         temp <- c(other_rates$trans_att_kill, other_rates$trans_att_error, other_rates$trans_set_error, this_rates$trans_block)
-                        if (sum(temp) > 1) stop("trans att prob error")
+                        if (sum(temp) > 1) stop("The transition-phase probabilities sum to more than 1")
                         ta_outc <- sum(tm2_prandf() <= cumsum(temp))
                         if (ta_outc == 4) {
                             lost_serve <- TRUE
