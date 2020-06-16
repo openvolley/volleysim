@@ -45,6 +45,7 @@ vs_estimate_rates <- function(x, target_team) {
                                        trans_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE)))
     ## blocking
     xnt <- if (!is.null(target_team)) dplyr::filter(x, .data$opposition == target_team) else x
+    out <- cbind(out, dplyr::summarize(dplyr::filter(xnt, .data$skill == "Serve"), sideout = mean(.data$point_won_by == .data$opposition, na.rm = TRUE)))
     out <- cbind(out, dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Reception"), N_opp_rec_att = n(),
                                        rec_block = mean(.data$evaluation == "Blocked", na.rm = TRUE)))
     ## invasions not used yet
@@ -52,5 +53,6 @@ vs_estimate_rates <- function(x, target_team) {
     out <- cbind(out, dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Transition"), N_opp_trans_att = n(),
                                        trans_block = mean(.data$evaluation == "Blocked", na.rm = TRUE)))
     ##out$trans_block_invasion <- sum(xt$evaluation == "Invasion" & xt$phase == "Transition", na.rm = TRUE)/out$N_opp_trans_att
-    as.list(dplyr::select(out, -"N_opp_rec_att", -"N_opp_trans_att"))
+    out <- dplyr::mutate_all(out, function(z) ifelse(is.na(z), 0, z))
+    dplyr::select(out, -"N_opp_rec_att", -"N_opp_trans_att")
 }
