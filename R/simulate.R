@@ -1,6 +1,7 @@
 #' Simulate a set of volleyball
 #'
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}
+#' @param process_model string: either "sideout" or "phase". Details TBD
 #' @param serving logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
 #' @param simple logical: if \code{TRUE}, just return the team (1 or 2) that won. If \code{FALSE}, return extra details in a data.frame
@@ -25,10 +26,22 @@
 #' }
 #'
 #' @export
-vs_simulate_set <- function(rates, serving = NA, go_to = 25, simple = FALSE, id = NULL) {
+vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, simple = FALSE, id = NULL) {
+    assert_that(is.string(process_model))
+    process_model <- match.arg(tolower(process_model), c("phase", "sideout"))
     assert_that(is.flag(simple), !is.na(simple))
     if (missing(serving) || is.na(serving)) serving <- runif(1) > 0.5 ## random
     assert_that(is.flag(serving), !is.na(serving))
+    if (process_model == "sideout") {
+        if (is.null(rates[[1]]$sideout) || is.null(rates[[2]]$sideout)) {
+            stop("one or both rates are missing their 'sideout' component")
+        }
+    } else {
+        rnms <- c("serve_ace", "serve_error", "rec_set_error", "rec_att_error", "rec_att_kill", "rec_block", "trans_set_error", "trans_att_error", "trans_att_kill", "trans_block")
+        if (!all(rnms %in% names(rates[[1]])) || !all(rnms %in% names(rates[[2]]))) {
+            stop("one or both rates are missing a required component (required: ", paste(rnms, collapse = ", "), ")")
+        }
+    }
     ## rates are list(
     ##  ## for team 1, probs
     ##  list(serve_ace = z, serve_error = z,
@@ -61,74 +74,78 @@ vs_simulate_set <- function(rates, serving = NA, go_to = 25, simple = FALSE, id 
         other_rates <- rates[[3-srv]] ## other team's rates
         ## the simulation process is basically a hard-coded set of if-else statements here
         ## this should be replaced by something more flexible and configurable, and able to cope with a more highly parameterized simulation model
-        ## serve
-        serve_outc <- sum(tm1_prandf() <= cumsum(c(this_rates$serve_ace, this_rates$serve_error)))
-        if (serve_outc == 2) {
-            lost_serve <- FALSE
-            if (!simple) outcome[ptr] <- "Serve ace"
-        } else if (serve_outc == 1) {
-            lost_serve <- TRUE
-            if (!simple) outcome[ptr] <- "Serve error"
+        if (process_model == "sideout") {
+            lost_serve <- tm2_prandf() <= other_rates$sideout
         } else {
-            ## rec attack by non-serving (other) team
-            temp <- c(other_rates$rec_att_kill, other_rates$rec_att_error, other_rates$rec_set_error, this_rates$rec_block)
-            if (sum(temp) > 1) stop("The reception-phase probabilities sum to more than 1")
-            ra_outc <- sum(tm2_prandf() <= cumsum(temp))
-            if (ra_outc == 4) {
+            ## serve
+            serve_outc <- sum(tm1_prandf() <= cumsum(c(this_rates$serve_ace, this_rates$serve_error)))
+            if (serve_outc == 2) {
+                lost_serve <- FALSE
+                if (!simple) outcome[ptr] <- "Serve ace"
+            } else if (serve_outc == 1) {
                 lost_serve <- TRUE
-                if (!simple) outcome[ptr] <- "Rec attack kill"
-            } else if (ra_outc == 3) {
-                lost_serve <- FALSE
-                if (!simple) outcome[ptr] <- "Rec attack error"
-            } else if (ra_outc == 2) {
-                lost_serve <- FALSE
-                if (!simple) outcome[ptr] <- "Rec set error"
-            } else if (ra_outc == 1) {
-                lost_serve <- FALSE
-                if (!simple) outcome[ptr] <- "Rec attack block"
+                if (!simple) outcome[ptr] <- "Serve error"
             } else {
-                ## transition - iterate back and forth between teams until someone wins the point
-                lost_serve <- NA
-                tptr <- 1L ## serving team gets first transition attack opportunity
-                while (is.na(lost_serve)) {
-                    if (tptr < 2) {
-                        temp <- c(this_rates$trans_att_kill, this_rates$trans_att_error, this_rates$trans_set_error, other_rates$trans_block)
-                        if (sum(temp) > 1) stop("The transition-phase probabilities sum to more than 1")
-                        ta_outc <- sum(tm1_prandf() <= cumsum(temp))
-                        if (ta_outc == 4) {
-                            lost_serve <- FALSE
-                            if (!simple) outcome[ptr] <- "Trans attack kill"
-                        } else if (ta_outc == 3) {
-                            lost_serve <- TRUE
-                            if (!simple) outcome[ptr] <- "Trans attack error"
-                        } else if (ta_outc == 2) {
-                            lost_serve <- TRUE
-                            if (!simple) outcome[ptr] <- "Trans set error"
-                        } else if (ta_outc == 1) {
-                            lost_serve <- TRUE
-                            if (!simple) outcome[ptr] <- "Trans attack block"
+                ## rec attack by non-serving (other) team
+                temp <- c(other_rates$rec_att_kill, other_rates$rec_att_error, other_rates$rec_set_error, this_rates$rec_block)
+                if (sum(temp) > 1) stop("The reception-phase probabilities sum to more than 1")
+                ra_outc <- sum(tm2_prandf() <= cumsum(temp))
+                if (ra_outc == 4) {
+                    lost_serve <- TRUE
+                    if (!simple) outcome[ptr] <- "Rec attack kill"
+                } else if (ra_outc == 3) {
+                    lost_serve <- FALSE
+                    if (!simple) outcome[ptr] <- "Rec attack error"
+                } else if (ra_outc == 2) {
+                    lost_serve <- FALSE
+                    if (!simple) outcome[ptr] <- "Rec set error"
+                } else if (ra_outc == 1) {
+                    lost_serve <- FALSE
+                    if (!simple) outcome[ptr] <- "Rec attack block"
+                } else {
+                    ## transition - iterate back and forth between teams until someone wins the point
+                    lost_serve <- NA
+                    tptr <- 1L ## serving team gets first transition attack opportunity
+                    while (is.na(lost_serve)) {
+                        if (tptr < 2) {
+                            temp <- c(this_rates$trans_att_kill, this_rates$trans_att_error, this_rates$trans_set_error, other_rates$trans_block)
+                            if (sum(temp) > 1) stop("The transition-phase probabilities sum to more than 1")
+                            ta_outc <- sum(tm1_prandf() <= cumsum(temp))
+                            if (ta_outc == 4) {
+                                lost_serve <- FALSE
+                                if (!simple) outcome[ptr] <- "Trans attack kill"
+                            } else if (ta_outc == 3) {
+                                lost_serve <- TRUE
+                                if (!simple) outcome[ptr] <- "Trans attack error"
+                            } else if (ta_outc == 2) {
+                                lost_serve <- TRUE
+                                if (!simple) outcome[ptr] <- "Trans set error"
+                            } else if (ta_outc == 1) {
+                                lost_serve <- TRUE
+                                if (!simple) outcome[ptr] <- "Trans attack block"
+                            }
+                        } else {
+                            temp <- c(other_rates$trans_att_kill, other_rates$trans_att_error, other_rates$trans_set_error, this_rates$trans_block)
+                            if (sum(temp) > 1) stop("The transition-phase probabilities sum to more than 1")
+                            ta_outc <- sum(tm2_prandf() <= cumsum(temp))
+                            if (ta_outc == 4) {
+                                lost_serve <- TRUE
+                                if (!simple) outcome[ptr] <- "Trans attack kill"
+                            } else if (ta_outc == 3) {
+                                lost_serve <- FALSE
+                                if (!simple) outcome[ptr] <- "Trans attack error"
+                            } else if (ta_outc == 2) {
+                                lost_serve <- FALSE
+                                if (!simple) outcome[ptr] <- "Trans set error"
+                            } else if (ta_outc == 1) {
+                                lost_serve <- FALSE
+                                if (!simple) outcome[ptr] <- "Trans attack block"
+                            }
                         }
-                    } else {
-                        temp <- c(other_rates$trans_att_kill, other_rates$trans_att_error, other_rates$trans_set_error, this_rates$trans_block)
-                        if (sum(temp) > 1) stop("The transition-phase probabilities sum to more than 1")
-                        ta_outc <- sum(tm2_prandf() <= cumsum(temp))
-                        if (ta_outc == 4) {
-                            lost_serve <- TRUE
-                            if (!simple) outcome[ptr] <- "Trans attack kill"
-                        } else if (ta_outc == 3) {
-                            lost_serve <- FALSE
-                            if (!simple) outcome[ptr] <- "Trans attack error"
-                        } else if (ta_outc == 2) {
-                            lost_serve <- FALSE
-                            if (!simple) outcome[ptr] <- "Trans set error"
-                        } else if (ta_outc == 1) {
-                            lost_serve <- FALSE
-                            if (!simple) outcome[ptr] <- "Trans attack block"
-                        }
+                        tptr <- 3L - tptr ## other team now in transition attack phase
                     }
-                    tptr <- 3L - tptr ## other team now in transition attack phase
                 }
-            }
+            } ## if-else method
         }
         if (lost_serve) {
             srv <- 3L - srv ## sided out, change server
@@ -187,6 +204,7 @@ vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
 #' Currently hard-coded to indoor, best-of-5-set scoring.
 #'
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}
+#' @param process_model string: either "sideout" or "phase". Details TBD
 #' @param serving logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random
 #' @param n integer: the number of simulations to run
 #' @param simple logical: if \code{TRUE}, just return the probability of team winning and the probabilities of each possible set score. If \code{FALSE}, return extra details in a named list
@@ -207,13 +225,13 @@ vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
 #' }
 #'
 #' @export
-vs_simulate_match <- function(rates, serving = NA, n = 2000, simple = FALSE) {
+vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 2000, simple = FALSE) {
     assert_that(is.flag(simple), !is.na(simple))
     if (simple) {
-        simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = rates, serving = serving, go_to = 25, simple = TRUE))
+        simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving, go_to = 25, simple = TRUE))
         nsims <- sum(!is.na(simres14))
     } else {
-        simres14 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = rates, serving = serving, go_to = 25, simple = FALSE, id = z)))
+        simres14 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving, go_to = 25, simple = FALSE, id = z)))
         nsims <- length(unique(simres14$id))
     }
     if (nsims/n < 0.98) {
@@ -221,10 +239,10 @@ vs_simulate_match <- function(rates, serving = NA, n = 2000, simple = FALSE) {
         warning("More than 2% of set1-4 simulations did not yield a result")
     }
     if (simple) {
-        simres5 <- sapply(1:n, function(z) vs_simulate_set(rates = rates, serving = serving, go_to = 15, simple = TRUE))
+        simres5 <- sapply(1:n, function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving, go_to = 15, simple = TRUE))
         nsims <- sum(!is.na(simres5))
     } else {
-        simres5 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = rates, serving = serving, go_to = 15, simple = FALSE, id = z)))
+        simres5 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving, go_to = 15, simple = FALSE, id = z)))
         nsims <- length(unique(simres5$id))
     }
     if (nsims/n < 0.98) {

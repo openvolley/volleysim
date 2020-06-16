@@ -4,10 +4,19 @@
 \alias{vs_simulate_set}
 \title{Simulate a set of volleyball}
 \usage{
-vs_simulate_set(rates, serving = NA, go_to = 25, simple = FALSE, id = NULL)
+vs_simulate_set(
+  rates,
+  process_model = "phase",
+  serving = NA,
+  go_to = 25,
+  simple = FALSE,
+  id = NULL
+)
 }
 \arguments{
 \item{rates}{list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}}
+
+\item{process_model}{string: either "sideout" or "phase". Details TBD}
 
 \item{serving}{logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random}
 
