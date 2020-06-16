@@ -4,12 +4,14 @@
 \alias{vs_estimate_rates}
 \title{Estimate parameters required for simulation}
 \usage{
-vs_estimate_rates(x, target_team)
+vs_estimate_rates(x, target_team, by = "none")
 }
 \arguments{
 \item{x}{datavolleyplays: the plays component of a datavolley object as returned by \code{\link[datavolley]{dv_read}}}
 
 \item{target_team}{string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}}
+
+\item{by}{string: grouping to calculate rates by. Either "none" (calculate whole-data set rates), "match" (by match), or "set" (by match and set)}
 }
 \value{
 A named list, currently with the names serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block
