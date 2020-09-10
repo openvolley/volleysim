@@ -44,11 +44,11 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
     }
     ## rates are list(
     ##  ## for team 1, probs
-    ##  list(serve_ace = z, serve_error = z,
-    ##       rec_att_error = z, rec_att_kill = z,
-    ##       trans_att_error = z, trans_att_kill = z,
-    ##       rec_block = z, trans_block = z),
-    ##  list(same for team 2))
+    ##  data.frame(serve_ace = z, serve_error = z,
+    ##             rec_att_error = z, rec_att_kill = z,
+    ##             trans_att_error = z, trans_att_kill = z,
+    ##             rec_block = z, trans_block = z),
+    ##  data.frame(same for team 2))
     ## preallocate random numbers
     prandf <- function() {
         pptr <- 0L
@@ -228,10 +228,10 @@ vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
 vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 2000, simple = FALSE) {
     assert_that(is.flag(simple), !is.na(simple))
     if (simple) {
-        simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving, go_to = 25, simple = TRUE))
+        simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = TRUE))
         nsims <- sum(!is.na(simres14))
     } else {
-        simres14 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving, go_to = 25, simple = FALSE, id = z)))
+        simres14 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = FALSE, id = z)))
         nsims <- length(unique(simres14$id))
     }
     if (nsims/n < 0.98) {
@@ -239,10 +239,10 @@ vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 
         warning("More than 2% of set1-4 simulations did not yield a result")
     }
     if (simple) {
-        simres5 <- sapply(1:n, function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving, go_to = 15, simple = TRUE))
+        simres5 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = TRUE))
         nsims <- sum(!is.na(simres5))
     } else {
-        simres5 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving, go_to = 15, simple = FALSE, id = z)))
+        simres5 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = FALSE, id = z)))
         nsims <- length(unique(simres5$id))
     }
     if (nsims/n < 0.98) {
