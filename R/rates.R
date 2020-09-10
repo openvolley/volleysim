@@ -4,7 +4,7 @@
 #' @param target_team string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}
 #' @param by string: grouping to calculate rates by. Either "none" (calculate whole-data set rates), "match" (by match), or "set" (by match and set)
 #'
-#' @return A named list, currently with the names serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block
+#' @return A named list, currently with the names sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block
 #'
 #' @seealso \code{\link{vs_simulate_set}}
 #'
