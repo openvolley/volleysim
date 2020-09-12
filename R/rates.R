@@ -1,10 +1,10 @@
 #' Estimate parameters required for simulation
 #'
 #' @param x datavolleyplays: the plays component of a datavolley object as returned by \code{\link[datavolley]{dv_read}}
-#' @param target_team string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}
+#' @param target_team string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}. If \code{target_team} is "each", rates will be calculated for each team separately
 #' @param by string: grouping to calculate rates by. Either "none" (calculate whole-data set rates), "match" (by match), or "set" (by match and set)
 #'
-#' @return A named list, currently with the names sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block
+#' @return A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block, plus (if \code{by} is "match") match_id and (if \code{by} is "set") set_number and (if \code{target_team} is "each") "team"
 #'
 #' @seealso \code{\link{vs_simulate_set}}
 #'
@@ -24,13 +24,16 @@
 #' @export
 vs_estimate_rates <- function(x, target_team, by = "none") {
     if (inherits(x, c("datavolley", "peranavolley"))) x <- x$plays
-    if (missing(target_team) || is.null(target_team)) {
-        target_team <- NULL
-    } else {
-        assert_that(is.string(target_team))
-    }
+    if (missing(target_team)) target_team <- NULL else assert_that(is.string(target_team))
     assert_that(is.string(by))
     by <- match.arg(tolower(by), c("none", "match", "set"))
+    if (!"opposition" %in% names(x)) x <- mutate(x, opposition = case_when(.data$team == .data$home_team ~ .data$visiting_team,
+                                                                           .data$team == .data$visiting_team ~ .data$home_team))
+    if (!is.null(target_team) && target_team == "each") {
+        return(dplyr::bind_rows(lapply(unique(na.omit(x$team)), function(tm) {
+            dplyr::select(dplyr::mutate(vs_estimate_rates(x, target_team = tm, by = by), team = tm), "team", dplyr::everything())
+        })))
+    }
     if (by == "none") {
         by <- NULL
     } else if (by == "match") {
@@ -38,8 +41,6 @@ vs_estimate_rates <- function(x, target_team, by = "none") {
     } else {
         by <- c("match_id", "set_number")
     }
-    if (!"opposition" %in% names(x)) x <- mutate(x, opposition = case_when(.data$team == .data$home_team ~ .data$visiting_team,
-                                                                           .data$team == .data$visiting_team ~ .data$home_team))
     xt <- if (!is.null(target_team)) dplyr::filter(x, .data$team == target_team) else x
     if (!is.null(by)) xt <- group_by(xt, across(by))
     out <- dplyr::summarize(dplyr::filter(xt, .data$skill == "Serve"), serve_ace = mean(.data$evaluation == "Ace", na.rm = TRUE),
@@ -81,4 +82,19 @@ vs_estimate_rates <- function(x, target_team, by = "none") {
     }
     out <- dplyr::mutate_all(out, function(z) ifelse(is.na(z), 0, z))
     dplyr::select(out, -"N_opp_rec_att", -"N_opp_trans_att")
+}
+
+## convert df to list
+precheck_rates <- function(rates) {
+    if (is.data.frame(rates)) {
+        ## convert to two-element list, if we can
+        if ("team" %in% names(rates) && length(unique(na.omit(rates$team))) == 2) {
+            tms <- unique(na.omit(rates$team))
+            rates <- list(rates[which(rates$team == tms[1]), ], rates[which(rates$team == tms[2]), ])
+        }
+    }
+    if (!(is.list(rates) && length(rates) == 2)) {
+        stop("rates must be a two-element list")
+    }
+    rates
 }

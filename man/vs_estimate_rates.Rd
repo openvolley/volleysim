@@ -9,12 +9,12 @@ vs_estimate_rates(x, target_team, by = "none")
 \arguments{
 \item{x}{datavolleyplays: the plays component of a datavolley object as returned by \code{\link[datavolley]{dv_read}}}
 
-\item{target_team}{string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}}
+\item{target_team}{string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}. If \code{target_team} is "each", rates will be calculated for each team separately}
 
 \item{by}{string: grouping to calculate rates by. Either "none" (calculate whole-data set rates), "match" (by match), or "set" (by match and set)}
 }
 \value{
-A named list, currently with the names sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block
+A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block, plus (if \code{by} is "match") match_id and (if \code{by} is "set") set_number and (if \code{target_team} is "each") "team"
 }
 \description{
 Estimate parameters required for simulation
