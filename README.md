@@ -29,30 +29,31 @@ x <- dv_read(dv_example_file())
 rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
               vs_estimate_rates(x, target_team = visiting_team(x)))
 
-vs_simulate_match(rates, n = 100, simple = TRUE) ## simulate a match 100 times
+vs_simulate_match(rates, n = 100, simple = TRUE) ## simulate the match 100 times
 #> $pwin
-#> [1] 0.9714374
+#> [1] 0.9943773
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.614125
+#> [1] 0.804357
 #> 
 #> $scores$`3-1`
-#> [1] 0.2763563
+#> [1] 0.168915
 #> 
 #> $scores$`3-2`
-#> [1] 0.08095613
+#> [1] 0.02110529
 #> 
 #> $scores$`2-3`
-#> [1] 0.01658138
+#> [1] 0.00432277
 #> 
 #> $scores$`1-3`
-#> [1] 0.00860625
+#> [1] 0.00095697
 #> 
 #> $scores$`0-3`
-#> [1] 0.003375
+#> [1] 0.000343
 
-## so we expect the home team to win, with 3-0 being the most likely scoreline
+## so given the performances of the two teams during that match, we expect
+##  that the home team should have won, with 3-0 being the most likely scoreline
 
 ## compare this to the actual match result
 summary(x)

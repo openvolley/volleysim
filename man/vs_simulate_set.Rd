@@ -40,7 +40,8 @@ Simulate a set of volleyball
                 vs_estimate_rates(x, target_team = visiting_team(x)))
   vs_simulate_set(rates) ## simulate a single set
   vs_simulate_match(rates, n = 100, simple = TRUE) ## simulate a match 100 times
-  ## so we expect the home team to win, with 3-0 being the most likely scoreline
+  ## so given the performances of the two teams during that match, we expect
+  ##  that the home team should have won, with 3-0 being the most likely scoreline
 
   ## compare to the actual match result
   summary(x)

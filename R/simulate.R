@@ -19,7 +19,8 @@
 #'                 vs_estimate_rates(x, target_team = visiting_team(x)))
 #'   vs_simulate_set(rates) ## simulate a single set
 #'   vs_simulate_match(rates, n = 100, simple = TRUE) ## simulate a match 100 times
-#'   ## so we expect the home team to win, with 3-0 being the most likely scoreline
+#'   ## so given the performances of the two teams during that match, we expect
+#'   ##  that the home team should have won, with 3-0 being the most likely scoreline
 #'
 #'   ## compare to the actual match result
 #'   summary(x)
@@ -69,13 +70,18 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
     tm_srv[1] <- srv
     sc <- tm_scores[ptr, ]
     while (all(sc < go_to) || abs(diff(sc)) < 2) {
-        tm_scores[ptr + 1, ] <- tm_scores[ptr, ] ## scores at the START of the next point
+        tm_scores[ptr + 1, ] <- tm_scores[ptr, ] ## scores at the START of the next point, updated below
         this_rates <- rates[[srv]] ## serving team's rates
         other_rates <- rates[[3-srv]] ## other team's rates
         ## the simulation process is basically a hard-coded set of if-else statements here
         ## this should be replaced by something more flexible and configurable, and able to cope with a more highly parameterized simulation model
         if (process_model == "sideout") {
-            lost_serve <- tm2_prandf() <= other_rates$sideout
+            this_so_rate <- other_rates$sideout
+            if (is.function(this_so_rate)) {
+                ## undocumented
+                this_so_rate <- this_so_rate(scores = tm_scores[1:ptr, , drop = FALSE], serving = srv, go_to = go_to)
+            }
+            lost_serve <- tm2_prandf() <= this_so_rate
         } else {
             ## serve
             serve_outc <- sum(tm1_prandf() <= cumsum(c(this_rates$serve_ace, this_rates$serve_error)))
