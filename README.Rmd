@@ -27,9 +27,9 @@ knitr::opts_chunk$set(
 remotes::install_github("scienceuntangled/volleysim")
 ```
 
-## Example
+## Example 1
 
-```{r example}
+```{r ex1}
 library(volleysim)
 library(datavolley)
 
@@ -40,12 +40,75 @@ x <- dv_read(dv_example_file())
 rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
               vs_estimate_rates(x, target_team = visiting_team(x)))
 
-vs_simulate_match(rates, n = 100, simple = TRUE) ## simulate the match 100 times
+vs_simulate_match(rates, simple = TRUE)
 
-## so given the performances of the two teams during that match, we expect
-##  that the home team should have won, with 3-0 being the most likely scoreline
+```
 
-## compare this to the actual match result
+So given the performances of the two teams during that match, we expect that the home team should have won, with 3-0 being the most likely scoreline. Compare this to the actual match result:
+
+```{r ex1b}
 summary(x)
 
 ```
+
+## Example 2: exploring match options
+
+Let's say we have two teams with the following season-average parameters:
+
+```{r ex2a}
+library(dplyr)
+rates <- tribble(~team, ~serve_ace, ~serve_error, ~rec_set_error, ~rec_att_error, ~rec_att_kill, ~trans_set_error, ~trans_att_error, ~trans_att_kill, ~sideout, ~rec_block, ~trans_block,
+"My team",    0.062, 0.156, 0.009, 0.071, 0.499, 0.018, 0.082, 0.452, 0.668, 0.075, 0.079,
+"Other team", 0.069, 0.190, 0.014, 0.063, 0.523, 0.021, 0.102, 0.435, 0.683, 0.083, 0.109)
+knitr::kable(rates)
+
+```
+
+"My team" is due to play "Other team" in our next match. If we assume that both teams play to their season-average parameters, what outcome do we expect?
+
+```{r ex2ah, echo = FALSE}
+set.seed(112)
+
+```
+
+```{r ex2b}
+vs_simulate_match(rates, simple = TRUE)
+
+```
+
+Looks like we expect a close match, but my team is most probably going to lose.
+
+Perhaps as the coach of My team there are some adjustments I could make --- in choosing the players in our starting lineup, or in our match tactics. Can simulation help us explore which option might be most beneficial?
+
+Let's say that one of our options is to substitute in a different pass-hitter: Betty, who has a more aggressive serve and attack but who is a weaker passer than our starting pass-hitter Agnes. With Betty in the lineup instead of Agnes, we guesstimate our new team parameters to be:
+
+```{r ex2c}
+rates2 <- rates
+
+## increase my team's serve aces and errors by 1% each, and attack kills by 2%
+rates2[1, c("serve_ace", "serve_error", "rec_att_kill", "trans_att_kill")] <-
+    rates2[1, c("serve_ace", "serve_error", "rec_att_kill", "trans_att_kill")] + c(0.01, 0.01, 0.02, 0.02)
+
+## increase opposition serve aces by 1%
+rates2[2, c("serve_ace")] <- rates2[2, c("serve_ace")] + 0.01
+
+vs_simulate_match(rates2, simple = TRUE)
+
+```
+
+That makes a slight improvement. Our second option is to change our serving tactics: we will serve more aggressively in order to put more pressure on Other team's reception but accepting that we will make more serve errors in doing so:
+
+```{r ex2d}
+rates3 <- rates
+
+## increase my team's serve aces by 2% and errors by 5%
+rates3[1, c("serve_ace", "serve_error")] <- rates3[1, c("serve_ace", "serve_error")] + c(0.02, 0.05)
+
+## decrease opposition reception kills by 5% due to their expected poorer passing
+rates3[2, c("rec_att_kill")] <- rates3[2, c("rec_att_kill")] - 0.05
+vs_simulate_match(rates3, simple = TRUE)
+
+```
+
+This looks like it might be a better option (assuming, of course, that we have estimated the changes in rates correctly).
+
