@@ -116,7 +116,7 @@ vs_simulate_match(rates, simple = TRUE)
 #> [1] 0.1299437
 ```
 
-Looks like we expect a close match, but my team is most probably going
+Looks like we expect a close match, but My team is most probably going
 to lose.
 
 Perhaps as the coach of My team there are some adjustments I could make

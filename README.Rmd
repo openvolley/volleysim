@@ -76,7 +76,7 @@ vs_simulate_match(rates, simple = TRUE)
 
 ```
 
-Looks like we expect a close match, but my team is most probably going to lose.
+Looks like we expect a close match, but My team is most probably going to lose.
 
 Perhaps as the coach of My team there are some adjustments I could make --- in choosing the players in our starting lineup, or in our match tactics. Can simulation help us explore which option might be most beneficial?
 
