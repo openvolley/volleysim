@@ -14,7 +14,15 @@ vs_simulate_set(
 )
 }
 \arguments{
-\item{rates}{list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}}
+\item{rates}{list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}. Experimental: for \code{process_model} "sideout", the \code{sideout} rate component can be a function. This function will be called at each step of the simulation with the parameters:
+\itemize{
+\item \code{team_1_score} - the score of team 1 at each point in the set so far
+\item \code{team_2_score} - the score of team 2 at each point in the set so far
+\item \code{serving} - the serving team 1 or 2 at each point in the set so far
+\item \code{point_won_by} - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
+\item \code{outcome} - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if \code{process_model} is "sideout", or details TBD if \code{process_model} is "phase"
+\item \code{go_to}
+}}
 
 \item{process_model}{string: either "sideout" or "phase". Details TBD}
 
@@ -46,6 +54,24 @@ Simulate a set of volleyball
   ## compare to the actual match result
   summary(x)
 }
+
+## sideout rates as a function for team 2
+sofun2 <- function(serving, point_won_by, ...) {
+    ## if team 2 won their previous sideout opportunity, their sideout rate is 0.6
+    ## otherwise it's 0.5
+    prevso <- tail(na.omit(point_won_by[serving == 1]), 1)
+    if (length(prevso) < 1 || prevso == 1) {
+        ## first sideout opportunity or lost the last one
+        0.5
+    } else {
+        0.6
+    }
+}
+
+rates <- list(list(sideout = 0.55), ## first team has constant 55\% sideout rate
+               list(sideout = sofun2)) ## function for team 2's sideout rate
+
+vs_simulate_set(rates = rates, process_model = "sideout")
 
 }
 \seealso{

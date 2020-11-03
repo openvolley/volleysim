@@ -1,6 +1,14 @@
 #' Simulate a set of volleyball
 #'
-#' @param rates list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}
+#' @param rates list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}. Experimental: for \code{process_model} "sideout", the `sideout` rate component can be a function. This function will be called at each step of the simulation with the parameters:
+#' \itemize{
+#'   \item \code{team_1_score} - the score of team 1 at each point in the set so far
+#'   \item \code{team_2_score} - the score of team 2 at each point in the set so far
+#'   \item \code{serving} - the serving team 1 or 2 at each point in the set so far
+#'   \item \code{point_won_by} - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
+#'   \item \code{outcome} - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if \code{process_model} is "sideout", or details TBD if \code{process_model} is "phase"
+#'   \item \code{go_to}
+#' }
 #' @param process_model string: either "sideout" or "phase". Details TBD
 #' @param serving logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
@@ -25,6 +33,24 @@
 #'   ## compare to the actual match result
 #'   summary(x)
 #' }
+#'
+#' ## sideout rates as a function for team 2
+#' sofun2 <- function(serving, point_won_by, ...) {
+#'     ## if team 2 won their previous sideout opportunity, their sideout rate is 0.6
+#'     ## otherwise it's 0.5
+#'     prevso <- tail(na.omit(point_won_by[serving == 1]), 1)
+#'     if (length(prevso) < 1 || prevso == 1) {
+#'         ## first sideout opportunity or lost the last one
+#'         0.5
+#'     } else {
+#'         0.6
+#'     }
+#' }
+#'
+#' rates <- list(list(sideout = 0.55), ## first team has constant 55% sideout rate
+#'                list(sideout = sofun2)) ## function for team 2's sideout rate
+#'
+#' vs_simulate_set(rates = rates, process_model = "sideout")
 #'
 #' @export
 vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, simple = FALSE, id = NULL) {
@@ -63,8 +89,9 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
     tm1_prandf <- prandf()
     tm2_prandf <- prandf()
     tm_scores <- matrix(NA_integer_, nrow = 100, ncol = 2)
-    if (!simple) outcome <- rep(NA_character_, 100)
+    outcome <- rep(NA_character_, 100)
     tm_srv <- rep(NA_integer_, 100)
+    tm_point_won_by <- rep(NA_integer_, 100)
     ptr <- 1 ## pointer into those vectors
     tm_scores[1, ] <- c(0L, 0L) ## scores for team 1, team 2
     srv <- if (serving) 1L else 2L ## serving TRUE => team 1 starts serving
@@ -79,19 +106,20 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
         if (process_model == "sideout") {
             this_so_rate <- other_rates$sideout
             if (is.function(this_so_rate)) {
-                ## undocumented
-                this_so_rate <- this_so_rate(scores = tm_scores[1:ptr, , drop = FALSE], serving = srv, go_to = go_to)
+                idx <- seq_len(ptr)
+                this_so_rate <- this_so_rate(team_1_score = tm_scores[idx, 1], team_2_score = tm_scores[idx, 2], serving = tm_srv[idx], point_won_by = tm_point_won_by[idx],  outcome = outcome[idx], go_to = go_to)
             }
             lost_serve <- tm2_prandf() <= this_so_rate
+            outcome[ptr] <- if (lost_serve) "Sideout" else "Breakpoint"
         } else {
             ## serve
             serve_outc <- sum(tm1_prandf() <= cumsum(c(this_rates$serve_ace, this_rates$serve_error)))
             if (serve_outc == 2) {
                 lost_serve <- FALSE
-                if (!simple) outcome[ptr] <- "Serve ace"
+                outcome[ptr] <- "Serve ace"
             } else if (serve_outc == 1) {
                 lost_serve <- TRUE
-                if (!simple) outcome[ptr] <- "Serve error"
+                outcome[ptr] <- "Serve error"
             } else {
                 ## rec attack by non-serving (other) team
                 temp <- c(other_rates$rec_att_kill, other_rates$rec_att_error, other_rates$rec_set_error, this_rates$rec_block)
@@ -99,16 +127,16 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
                 ra_outc <- sum(tm2_prandf() <= cumsum(temp))
                 if (ra_outc == 4) {
                     lost_serve <- TRUE
-                    if (!simple) outcome[ptr] <- "Rec attack kill"
+                    outcome[ptr] <- "Rec attack kill"
                 } else if (ra_outc == 3) {
                     lost_serve <- FALSE
-                    if (!simple) outcome[ptr] <- "Rec attack error"
+                    outcome[ptr] <- "Rec attack error"
                 } else if (ra_outc == 2) {
                     lost_serve <- FALSE
-                    if (!simple) outcome[ptr] <- "Rec set error"
+                    outcome[ptr] <- "Rec set error"
                 } else if (ra_outc == 1) {
                     lost_serve <- FALSE
-                    if (!simple) outcome[ptr] <- "Rec attack block"
+                    outcome[ptr] <- "Rec attack block"
                 } else {
                     ## transition - iterate back and forth between teams until someone wins the point
                     lost_serve <- NA
@@ -120,16 +148,16 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
                             ta_outc <- sum(tm1_prandf() <= cumsum(temp))
                             if (ta_outc == 4) {
                                 lost_serve <- FALSE
-                                if (!simple) outcome[ptr] <- "Trans attack kill"
+                                outcome[ptr] <- "Trans attack kill"
                             } else if (ta_outc == 3) {
                                 lost_serve <- TRUE
-                                if (!simple) outcome[ptr] <- "Trans attack error"
+                                outcome[ptr] <- "Trans attack error"
                             } else if (ta_outc == 2) {
                                 lost_serve <- TRUE
-                                if (!simple) outcome[ptr] <- "Trans set error"
+                                outcome[ptr] <- "Trans set error"
                             } else if (ta_outc == 1) {
                                 lost_serve <- TRUE
-                                if (!simple) outcome[ptr] <- "Trans attack block"
+                                outcome[ptr] <- "Trans attack block"
                             }
                         } else {
                             temp <- c(other_rates$trans_att_kill, other_rates$trans_att_error, other_rates$trans_set_error, this_rates$trans_block)
@@ -137,16 +165,16 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
                             ta_outc <- sum(tm2_prandf() <= cumsum(temp))
                             if (ta_outc == 4) {
                                 lost_serve <- TRUE
-                                if (!simple) outcome[ptr] <- "Trans attack kill"
+                                outcome[ptr] <- "Trans attack kill"
                             } else if (ta_outc == 3) {
                                 lost_serve <- FALSE
-                                if (!simple) outcome[ptr] <- "Trans attack error"
+                                outcome[ptr] <- "Trans attack error"
                             } else if (ta_outc == 2) {
                                 lost_serve <- FALSE
-                                if (!simple) outcome[ptr] <- "Trans set error"
+                                outcome[ptr] <- "Trans set error"
                             } else if (ta_outc == 1) {
                                 lost_serve <- FALSE
-                                if (!simple) outcome[ptr] <- "Trans attack block"
+                                outcome[ptr] <- "Trans attack block"
                             }
                         }
                         tptr <- 3L - tptr ## other team now in transition attack phase
@@ -157,6 +185,7 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
         if (lost_serve) {
             srv <- 3L - srv ## sided out, change server
         }
+        tm_point_won_by[ptr] <- srv ## who won this point
         tm_srv[ptr + 1] <- srv
         tm_scores[ptr + 1, srv] <- tm_scores[ptr, srv] + 1
         ptr <- ptr + 1
@@ -171,8 +200,7 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
         tm_scores <- tm_scores[seq_len(ptr - 1), ]
         out <- setNames(as.data.frame(tm_scores), c("team_1_score", "team_2_score"))
         out$serving <- tm_srv[seq_len(ptr - 1)]
-        out$point_won_by <- (lead(tm_scores[, 2]) > tm_scores[, 2])+1
-        out$point_won_by[nrow(out)] <- which.max(sc)
+        out$point_won_by <- tm_point_won_by[seq_len(ptr - 1)]
         out$set_won_by <- which.max(sc)
         out$outcome <- outcome[seq_len(ptr - 1)]
         if (!is.null(id)) out$id <- id
