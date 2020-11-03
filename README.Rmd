@@ -27,6 +27,19 @@ knitr::opts_chunk$set(
 remotes::install_github("scienceuntangled/volleysim")
 ```
 
+The `volleysim` package provides functions for simulating sets and matches of volleyball. The simulation model can be parameterized in two ways:
+
+1. A simple "sideout" parameterization. We simply specify the sideout rate for each team. This can be a constant value (i.e. their average sideout rate) or can be provided as a function, allowing the sideout rate to vary depending on whatever factors you think might be appropriate. (Function-based parameterization is experimental: see `help("vs_simulate_set")` for more information.)
+
+2. A more detailed "phase" parameterization. In this model, we specify the rates for each team for:
+  - `serve_ace` (serve ace rate)
+  - `serve_error` (serve error rate)
+  - `rec_set_error` (error rate on reception-phase sets)
+  - `rec_att_error` (error rate on reception-phase attacks)
+  - `rec_att_kill` (kill rate on reception-phase attacks)
+  - `rec_block` (block kill rate against reception-phase attacks)
+  - `trans_set_error`, `trans_att_error`, `trans_att_kill`, `trans_block` - as for the `rec_*` parameters, but in transition phase (i.e. everything after the reception-phase attack)
+
 ## Example 1
 
 ```{r ex1}
@@ -55,7 +68,7 @@ summary(x)
 
 Let's say we have two teams with the following season-average parameters:
 
-```{r ex2a}
+```{r ex2a, message = FALSE}
 library(dplyr)
 rates <- tribble(~team, ~serve_ace, ~serve_error, ~rec_set_error, ~rec_att_error, ~rec_att_kill, ~trans_set_error, ~trans_att_error, ~trans_att_kill, ~sideout, ~rec_block, ~trans_block,
 "My team",    0.062, 0.156, 0.009, 0.071, 0.499, 0.018, 0.082, 0.452, 0.668, 0.075, 0.079,

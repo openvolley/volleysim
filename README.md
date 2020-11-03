@@ -16,6 +16,32 @@
 remotes::install_github("scienceuntangled/volleysim")
 ```
 
+The `volleysim` package provides functions for simulating sets and
+matches of volleyball. The simulation model can be parameterized in two
+ways:
+
+1.  A simple “sideout” parameterization. We simply specify the sideout
+    rate for each team. This can be a constant value (i.e. their average
+    sideout rate) or can be provided as a function, allowing the sideout
+    rate to vary depending on whatever factors you think might be
+    appropriate. (Function-based parameterization is experimental: see
+    `help("vs_simulate_set")` for more information.)
+
+2.  A more detailed “phase” parameterization. In this model, we specify
+    the rates for each team for:
+
+<!-- end list -->
+
+  - `serve_ace` (serve ace rate)
+  - `serve_error` (serve error rate)
+  - `rec_set_error` (error rate on reception-phase sets)
+  - `rec_att_error` (error rate on reception-phase attacks)
+  - `rec_att_kill` (kill rate on reception-phase attacks)
+  - `rec_block` (block kill rate against reception-phase attacks)
+  - `trans_set_error`, `trans_att_error`, `trans_att_kill`,
+    `trans_block` - as for the `rec_*` parameters, but in transition
+    phase (i.e. everything after the reception-phase attack)
+
 ## Example 1
 
 ``` r
