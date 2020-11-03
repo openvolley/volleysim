@@ -29,18 +29,16 @@ ways:
 
 2.  A more detailed “phase” parameterization. In this model, we specify
     the rates for each team for:
-
-<!-- end list -->
-
-  - `serve_ace` (serve ace rate)
-  - `serve_error` (serve error rate)
-  - `rec_set_error` (error rate on reception-phase sets)
-  - `rec_att_error` (error rate on reception-phase attacks)
-  - `rec_att_kill` (kill rate on reception-phase attacks)
-  - `rec_block` (block kill rate against reception-phase attacks)
-  - `trans_set_error`, `trans_att_error`, `trans_att_kill`,
-    `trans_block` - as for the `rec_*` parameters, but in transition
-    phase (i.e. everything after the reception-phase attack)
+    
+      - `serve_ace` (serve ace rate)
+      - `serve_error` (serve error rate)
+      - `rec_set_error` (error rate on reception-phase sets)
+      - `rec_att_error` (error rate on reception-phase attacks)
+      - `rec_att_kill` (kill rate on reception-phase attacks)
+      - `rec_block` (block kill rate against reception-phase attacks)
+      - `trans_set_error`, `trans_att_error`, `trans_att_kill`,
+        `trans_block` - as for the `rec_*` parameters, but in transition
+        phase (i.e. everything after the reception-phase attack)
 
 ## Example 1
 
