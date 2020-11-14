@@ -253,7 +253,6 @@ Let’s see what result we expected given the team’s actual performances
 during the match:
 
 ``` r
-set.seed(121)
 rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
               vs_estimate_rates(x, target_team = visiting_team(x)))
 sim_result <- vs_simulate_match(rates = rates, simple = TRUE)
@@ -281,8 +280,8 @@ sim_result
 #> [1] 0.2647851
 ```
 
-The result is as the simulations suggest: Hartberg with a 26% chance of
-winning, with the most likely scoreline being 1-3.
+The simulations suggest that Hartberg had a 26% chance of winning, with
+the most likely scoreline being 1-3 — consistent with the actual result.
 
 Now let’s say that the two teams will be playing again soon, and the
 Hartberg coach thinks that their first-ball attack could be improved by
@@ -358,8 +357,9 @@ new_rec_att_kill
 #> [1] 0.3752742
 ```
 
-That is, with the hypothesized better passing performance we expect the
-overall reception attack kill rate to increase to 37.5% (up from 35.6%).
+That is, with the hypothesized better passing performance we expect only
+a modest increase in the overall reception attack kill rate to 37.5% (up
+from 35.6%).
 
 Armed with that estimate, we can explore what effect that might have on
 a re-match:
@@ -391,5 +391,4 @@ new_sim_result
 #> [1] 0.2320415
 ```
 
-Giving an increase in the match win probability (up from 25.9% to
-30.4%).
+Giving a match win probability of 30.4% (up from 25.9%).
