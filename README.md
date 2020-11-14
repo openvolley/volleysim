@@ -56,26 +56,26 @@ rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
 
 vs_simulate_match(rates, simple = TRUE)
 #> $pwin
-#> [1] 0.9830585
+#> [1] 0.9840313
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.686129
+#> [1] 0.6931541
 #> 
 #> $scores$`3-1`
-#> [1] 0.2428897
+#> [1] 0.2391382
 #> 
 #> $scores$`3-2`
-#> [1] 0.05403992
+#> [1] 0.05173896
 #> 
 #> $scores$`2-3`
-#> [1] 0.01095096
+#> [1] 0.01040994
 #> 
 #> $scores$`1-3`
-#> [1] 0.004347463
+#> [1] 0.004037923
 #> 
 #> $scores$`0-3`
-#> [1] 0.001643032
+#> [1] 0.001520875
 ```
 
 So given the performances of the two teams during that match, we expect
@@ -237,7 +237,7 @@ between Hartberg and UVC Graz (the dvw file was downloaded from
 bundled with the volleysim package). UVC Graz won the match 3-1:
 
 ``` r
-x <- dv_read(system.file("extdata/demo/&DCup-7.dvw", package = "volleysim"))
+x <- dv_read(vs_example_file())
 summary(x)
 #> Match summary:
 #> Date: 2020-11-08

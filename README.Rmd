@@ -137,7 +137,7 @@ This looks like it might be a better option (assuming, of course, that we have e
 Let's look at another match: the 2020 Austrian Women's Volley Cup played between Hartberg and UVC Graz (the dvw file was downloaded from https://www.volleynet.at/dvdownload/information/f-Damen/ and is bundled with the volleysim package). UVC Graz won the match 3-1:
 
 ```{r ex3a}
-x <- dv_read(system.file("extdata/demo/&DCup-7.dvw", package = "volleysim"))
+x <- dv_read(vs_example_file())
 summary(x)
 ```
 
