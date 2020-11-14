@@ -29,14 +29,14 @@ ways:
 
 2.  A more detailed “phase” parameterization. In this model, we specify
     the rates for each team for:
-    
-      - `serve_ace` (serve ace rate)
-      - `serve_error` (serve error rate)
-      - `rec_set_error` (error rate on reception-phase sets)
-      - `rec_att_error` (error rate on reception-phase attacks)
-      - `rec_att_kill` (kill rate on reception-phase attacks)
-      - `rec_block` (block kill rate against reception-phase attacks)
-      - `trans_set_error`, `trans_att_error`, `trans_att_kill`,
+
+    -   `serve_ace` (serve ace rate)
+    -   `serve_error` (serve error rate)
+    -   `rec_set_error` (error rate on reception-phase sets)
+    -   `rec_att_error` (error rate on reception-phase attacks)
+    -   `rec_att_kill` (kill rate on reception-phase attacks)
+    -   `rec_block` (block kill rate against reception-phase attacks)
+    -   `trans_set_error`, `trans_att_error`, `trans_att_kill`,
         `trans_block` - as for the `rec_*` parameters, but in transition
         phase (i.e. everything after the reception-phase attack)
 
@@ -45,6 +45,7 @@ ways:
 ``` r
 library(volleysim)
 library(datavolley)
+library(dplyr)
 
 ## read an example file
 x <- dv_read(dv_example_file())
@@ -55,26 +56,26 @@ rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
 
 vs_simulate_match(rates, simple = TRUE)
 #> $pwin
-#> [1] 0.9897465
+#> [1] 0.9830585
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.7424468
+#> [1] 0.686129
 #> 
 #> $scores$`3-1`
-#> [1] 0.2104837
+#> [1] 0.2428897
 #> 
 #> $scores$`3-2`
-#> [1] 0.03681593
+#> [1] 0.05403992
 #> 
 #> $scores$`2-3`
-#> [1] 0.007117161
+#> [1] 0.01095096
 #> 
 #> $scores$`1-3`
-#> [1] 0.002292478
+#> [1] 0.004347463
 #> 
 #> $scores$`0-3`
-#> [1] 0.0008439086
+#> [1] 0.001643032
 ```
 
 So given the performances of the two teams during that match, we expect
@@ -107,7 +108,7 @@ knitr::kable(rates)
 ```
 
 | team       | serve\_ace | serve\_error | rec\_set\_error | rec\_att\_error | rec\_att\_kill | trans\_set\_error | trans\_att\_error | trans\_att\_kill | sideout | rec\_block | trans\_block |
-| :--------- | ---------: | -----------: | --------------: | --------------: | -------------: | ----------------: | ----------------: | ---------------: | ------: | ---------: | -----------: |
+|:-----------|-----------:|-------------:|----------------:|----------------:|---------------:|------------------:|------------------:|-----------------:|--------:|-----------:|-------------:|
 | My team    |      0.062 |        0.156 |           0.009 |           0.071 |          0.499 |             0.018 |             0.082 |            0.452 |   0.668 |      0.075 |        0.079 |
 | Other team |      0.069 |        0.190 |           0.014 |           0.063 |          0.523 |             0.021 |             0.102 |            0.435 |   0.683 |      0.083 |        0.109 |
 
@@ -227,3 +228,168 @@ vs_simulate_match(rates3, simple = TRUE)
 
 This looks like it might be a better option (assuming, of course, that
 we have estimated the changes in rates correctly).
+
+## Example 3
+
+Let’s look at another match: the 2020 Austrian Women’s Volley Cup played
+between Hartberg and UVC Graz (the dvw file was downloaded from
+<https://www.volleynet.at/dvdownload/information/f-Damen/> and is
+bundled with the volleysim package). UVC Graz won the match 3-1:
+
+``` r
+x <- dv_read(system.file("extdata/demo/&DCup-7.dvw", package = "volleysim"))
+summary(x)
+#> Match summary:
+#> Date: 2020-11-08
+#> League: Austrian Volley Cup Women 2020/21 - DCup
+#> Teams: Hartberg w Cup (BEINSEN Birgit/ALMER Katharina)
+#>        vs
+#>        UVC Graz w Cup (PACK Matthias/APPEL Martin)
+#> Result: 1-3 (21-25, 21-25, 25-20, 15-25)
+#> Duration: 88 minutes
+```
+
+Let’s see what result we expected given the team’s actual performances
+during the match:
+
+``` r
+set.seed(121)
+rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
+              vs_estimate_rates(x, target_team = visiting_team(x)))
+sim_result <- vs_simulate_match(rates = rates, simple = TRUE)
+sim_result
+#> $pwin
+#> [1] 0.2592628
+#> 
+#> $scores
+#> $scores$`3-0`
+#> [1] 0.04582808
+#> 
+#> $scores$`3-1`
+#> [1] 0.08828443
+#> 
+#> $scores$`3-2`
+#> [1] 0.1251503
+#> 
+#> $scores$`2-3`
+#> [1] 0.1916859
+#> 
+#> $scores$`1-3`
+#> [1] 0.2842663
+#> 
+#> $scores$`0-3`
+#> [1] 0.2647851
+```
+
+The result is as the simulations suggest: Hartberg with a 26% chance of
+winning, with the most likely scoreline being 1-3.
+
+Now let’s say that the two teams will be playing again soon, and the
+Hartberg coach thinks that their first-ball attack could be improved by
+improving their passing. What difference might we expect in the match
+outcome for an improvement in this area?
+
+First let’s get a handle on the relevant performance parameters.
+“Positive” passes here means passes that were rated as perfect or
+positive.
+
+``` r
+## extract the play-by-play data
+xp <- plays(x)
+
+## identify first-ball attacks
+fba <- xp %>% dplyr::filter(skill == "Attack" & phase == "Reception") %>%
+    mutate(made_attack = TRUE, fbso = evaluation == "Winning attack") %>%
+    dplyr::select(point_id, team, made_attack, fbso)
+
+## join that back to the full play-by-play data
+xp <- left_join(xp, fba, by = c("point_id", "team")) %>%
+    mutate(fbso = if_else(is.na(fbso), FALSE, fbso),
+           made_attack = if_else(is.na(made_attack), FALSE, made_attack))
+
+## and pass quality on each rally
+pq <- xp %>% dplyr::filter(skill == "Reception") %>% group_by(point_id) %>%
+    dplyr::summarize(pass_quality = case_when(n() == 1 ~ evaluation))
+xp <- left_join(xp, pq, by = "point_id") %>%
+    mutate(pass_quality = case_when(grepl("Perfect|Positive", pass_quality) ~ "Positive",
+                                    grepl("Error", pass_quality) ~ "Error",
+                                    TRUE ~ "Other"))
+
+## finally summarize the first-ball attacks by pass quality
+fb_summary <- xp %>% dplyr::filter(skill == "Reception" & team == home_team(x)) %>%
+    group_by(pass_quality) %>% dplyr::summarize(N = n(),
+                                                `Attack %` = mean(made_attack)*100,
+                                                `Attack kill %` = mean(fbso[made_attack])*100,
+                                                `FBSO%` = mean(fbso)*100)
+fb_summary
+#> # A tibble: 3 x 5
+#>   pass_quality     N `Attack %` `Attack kill %` `FBSO%`
+#>   <chr>        <int>      <dbl>           <dbl>   <dbl>
+#> 1 Error            3        0             NaN       0  
+#> 2 Other           26       61.5            18.8    11.5
+#> 3 Positive        49       87.8            41.9    36.7
+```
+
+Hartberg made 49 positive passes (62.8% positive pass rate). They made
+an actual attack on 87.8% of those positive passes, with a kill rate of
+41.9% on those attacks. Their overall first-ball sideout rate on
+positive passes was 36.7%.
+
+On other passes (excluding pass errors), Hartberg’s first-attack sideout
+rate was 11.5%, with only 61.5% of those passes leading to an attack,
+and a kill rate of 18.8% on those attacks.
+
+Let’s say that with some focused training, the Hartberg coach thinks
+that their positive pass rate can be substantially increased, from 62.8%
+to 75%. This would change their reception attack kill rate, because more
+attacks would be made from positive passes. The expected reception
+attack kill rate would be the weighted average of the kill rates on
+positive and other passes (where the weights are the relative numbers of
+positive and other passes).
+
+``` r
+new_positive_pass_rate <- 0.75
+attack_rate_pos <- new_positive_pass_rate * 0.878
+attack_rate_other <- (1 - new_positive_pass_rate) * 0.615
+new_rec_att_kill <- (attack_rate_pos * 0.419 + ## positive pass rate multiplied by their corresponding kill rate
+                     attack_rate_other * 0.188 ## attack rate on other passes * their kill rate
+                     ) / (attack_rate_pos + attack_rate_other)
+new_rec_att_kill
+#> [1] 0.3752742
+```
+
+That is, with the hypothesized better passing performance we expect the
+overall reception attack kill rate to increase to 37.5% (up from 35.6%).
+
+Armed with that estimate, we can explore what effect that might have on
+a re-match:
+
+``` r
+rates[[1]]$rec_att_kill <- new_rec_att_kill
+new_sim_result <- vs_simulate_match(rates = rates, simple = TRUE)
+new_sim_result
+#> $pwin
+#> [1] 0.3038112
+#> 
+#> $scores
+#> $scores$`3-0`
+#> [1] 0.05728925
+#> 
+#> $scores$`3-1`
+#> [1] 0.1056127
+#> 
+#> $scores$`3-2`
+#> [1] 0.1409092
+#> 
+#> $scores$`2-3`
+#> [1] 0.1957914
+#> 
+#> $scores$`1-3`
+#> [1] 0.268356
+#> 
+#> $scores$`0-3`
+#> [1] 0.2320415
+```
+
+Giving an increase in the match win probability (up from 25.9% to
+30.4%).

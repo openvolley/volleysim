@@ -42,9 +42,16 @@ The `volleysim` package provides functions for simulating sets and matches of vo
 
 ## Example 1
 
-```{r ex1}
+```{r prep, echo = FALSE}
+rd1 <- function(z) round(z, 1)
+options(dplyr.summarise.inform = FALSE)
+
+```
+
+```{r ex1, message = FALSE, warning = FALSE}
 library(volleysim)
 library(datavolley)
+library(dplyr)
 
 ## read an example file
 x <- dv_read(dv_example_file())
@@ -125,3 +132,90 @@ vs_simulate_match(rates3, simple = TRUE)
 
 This looks like it might be a better option (assuming, of course, that we have estimated the changes in rates correctly).
 
+## Example 3
+
+Let's look at another match: the 2020 Austrian Women's Volley Cup played between Hartberg and UVC Graz (the dvw file was downloaded from https://www.volleynet.at/dvdownload/information/f-Damen/ and is bundled with the volleysim package). UVC Graz won the match 3-1:
+
+```{r ex3a}
+x <- dv_read(system.file("extdata/demo/&DCup-7.dvw", package = "volleysim"))
+summary(x)
+```
+
+Let's see what result we expected given the team's actual performances during the match:
+
+```{r ex3b}
+set.seed(121)
+rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
+              vs_estimate_rates(x, target_team = visiting_team(x)))
+sim_result <- vs_simulate_match(rates = rates, simple = TRUE)
+sim_result
+
+```
+
+The result is as the simulations suggest: Hartberg with a 26% chance of winning, with the most likely scoreline being 1-3.
+
+Now let's say that the two teams will be playing again soon, and the Hartberg coach thinks that their first-ball attack could be improved by improving their passing. What difference might we expect in the match outcome for an improvement in this area?
+
+First let's get a handle on the relevant performance parameters. "Positive" passes here means passes that were rated as perfect or positive.
+
+```{r ex3c}
+## extract the play-by-play data
+xp <- plays(x)
+
+## identify first-ball attacks
+fba <- xp %>% dplyr::filter(skill == "Attack" & phase == "Reception") %>%
+    mutate(made_attack = TRUE, fbso = evaluation == "Winning attack") %>%
+    dplyr::select(point_id, team, made_attack, fbso)
+
+## join that back to the full play-by-play data
+xp <- left_join(xp, fba, by = c("point_id", "team")) %>%
+    mutate(fbso = if_else(is.na(fbso), FALSE, fbso),
+           made_attack = if_else(is.na(made_attack), FALSE, made_attack))
+
+## and pass quality on each rally
+pq <- xp %>% dplyr::filter(skill == "Reception") %>% group_by(point_id) %>%
+    dplyr::summarize(pass_quality = case_when(n() == 1 ~ evaluation))
+xp <- left_join(xp, pq, by = "point_id") %>%
+    mutate(pass_quality = case_when(grepl("Perfect|Positive", pass_quality) ~ "Positive",
+                                    grepl("Error", pass_quality) ~ "Error",
+                                    TRUE ~ "Other"))
+
+## finally summarize the first-ball attacks by pass quality
+fb_summary <- xp %>% dplyr::filter(skill == "Reception" & team == home_team(x)) %>%
+    group_by(pass_quality) %>% dplyr::summarize(N = n(),
+                                                `Attack %` = mean(made_attack)*100,
+                                                `Attack kill %` = mean(fbso[made_attack])*100,
+                                                `FBSO%` = mean(fbso)*100)
+fb_summary
+
+```
+
+Hartberg made `r fb_summary$N[fb_summary$pass_quality == "Positive"]` positive passes (`r rd1(fb_summary$N[fb_summary$pass_quality == "Positive"]/sum(fb_summary$N)*100)`% positive pass rate). They made an actual attack on `r rd1(fb_summary$"Attack %"[fb_summary$pass_quality == "Positive"])`% of those positive passes, with a kill rate of `r rd1(fb_summary$"Attack kill %"[fb_summary$pass_quality == "Positive"])`% on those attacks. Their overall first-ball sideout rate on positive passes was `r rd1(fb_summary$"FBSO%"[fb_summary$pass_quality == "Positive"])`%.
+
+On other passes (excluding pass errors), Hartberg's first-attack sideout rate was `r rd1(fb_summary$"FBSO%"[fb_summary$pass_quality == "Other"])`%, with only `r rd1(fb_summary$"Attack %"[fb_summary$pass_quality == "Other"])`% of those passes leading to an attack, and a kill rate of `r rd1(fb_summary$"Attack kill %"[fb_summary$pass_quality == "Other"])`% on those attacks.
+
+Let's say that with some focused training, the Hartberg coach thinks that their positive pass rate can be substantially increased, from `r rd1(fb_summary$N[fb_summary$pass_quality == "Positive"]/sum(fb_summary$N)*100)`% to 75%. This would change their reception attack kill rate, because more attacks would be made from positive passes. The expected reception attack kill rate would be the weighted average of the kill rates on positive and other passes (where the weights are the relative numbers of positive and other passes).
+
+```{r ex3d}
+new_positive_pass_rate <- 0.75
+attack_rate_pos <- new_positive_pass_rate * 0.878
+attack_rate_other <- (1 - new_positive_pass_rate) * 0.615
+new_rec_att_kill <- (attack_rate_pos * 0.419 + ## positive pass rate multiplied by their corresponding kill rate
+                     attack_rate_other * 0.188 ## attack rate on other passes * their kill rate
+                     ) / (attack_rate_pos + attack_rate_other)
+new_rec_att_kill
+
+```
+
+That is, with the hypothesized better passing performance we expect the overall reception attack kill rate to increase to `r rd1(new_rec_att_kill*100)`% (up from `r rd1(rates[[1]]$rec_att_kill*100)`%).
+
+Armed with that estimate, we can explore what effect that might have on a re-match:
+
+```{r ex3e}
+rates[[1]]$rec_att_kill <- new_rec_att_kill
+new_sim_result <- vs_simulate_match(rates = rates, simple = TRUE)
+new_sim_result
+
+```
+
+Giving an increase in the match win probability (up from `r rd1(sim_result$pwin*100)`% to `r rd1(new_sim_result$pwin*100)`%).
