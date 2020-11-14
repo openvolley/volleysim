@@ -4,7 +4,7 @@
 \alias{vs_estimate_rates}
 \title{Estimate parameters required for simulation}
 \usage{
-vs_estimate_rates(x, target_team, by = "none")
+vs_estimate_rates(x, target_team, by = "none", moderate = TRUE)
 }
 \arguments{
 \item{x}{datavolleyplays: the plays component of a datavolley object as returned by \code{\link[datavolley]{dv_read}}}
@@ -12,6 +12,11 @@ vs_estimate_rates(x, target_team, by = "none")
 \item{target_team}{string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}. If \code{target_team} is "each", rates will be calculated for each team separately}
 
 \item{by}{string: grouping to calculate rates by. Either "none" (calculate whole-data set rates), "match" (by match), or "set" (by match and set)}
+
+\item{moderate}{logical: if \code{TRUE}, apply some checks to attempt to ensure that the estimated rates are reasonable. Currently these checks include:
+\itemize{
+\item setting error rates are limited to a maximum of 5\%. Some scouts do not include setting actions, except where they are errors or otherwise exceptional, which can lead to unrealistic estimates of setting error rates
+}}
 }
 \value{
 A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block, plus (if \code{by} is "match") match_id and (if \code{by} is "set") set_number and (if \code{target_team} is "each") "team"
