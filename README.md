@@ -15,7 +15,7 @@ status](https://github.com/openvolley/volleysim/workflows/R-CMD-check/badge.svg)
 
 ``` r
 ## install.packages("remotes")
-remotes::install_github("scienceuntangled/volleysim")
+remotes::install_github("openvolley/volleysim")
 ```
 
 The `volleysim` package provides functions for simulating sets and

@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 
 ``` r
 ## install.packages("remotes")
-remotes::install_github("scienceuntangled/volleysim")
+remotes::install_github("openvolley/volleysim")
 ```
 
 The `volleysim` package provides functions for simulating sets and matches of volleyball. The simulation model can be parameterized in two ways:
