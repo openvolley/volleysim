@@ -19,7 +19,7 @@ vs_estimate_rates(x, target_team, by = "none", moderate = TRUE)
 }}
 }
 \value{
-A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, trans_set_error, trans_att_error, trans_att_kill, rec_block, and trans_block, plus (if \code{by} is "match") match_id and (if \code{by} is "set") set_number and (if \code{target_team} is "each") "team"
+A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, rec_att_replayed, trans_set_error, trans_att_error, trans_att_kill, trans_att_replayed, rec_block, and trans_block, plus (if \code{by} is "match") match_id and (if \code{by} is "set") set_number and (if \code{target_team} is "each") "team"
 }
 \description{
 Estimate parameters required for simulation
