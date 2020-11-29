@@ -157,7 +157,7 @@ sim_result
 
 ```
 
-The simulations suggest that Hartberg had a 26% chance of winning, with the most likely scoreline being 1-3 --- consistent with the actual result.
+The simulations suggest that Hartberg had a `r rd1(sim_result$pwin*100)`% chance of winning, with the most likely scoreline being 1-3 --- consistent with the actual result.
 
 Now let's say that the two teams will be playing again soon, and the Hartberg coach thinks that their first-ball attack could be improved by improving their passing. What difference might we expect in the match outcome for an improvement in this area?
 

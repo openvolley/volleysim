@@ -421,8 +421,9 @@ sim_result
 #> [1] 0.2253107
 ```
 
-The simulations suggest that Hartberg had a 26% chance of winning, with
-the most likely scoreline being 1-3 — consistent with the actual result.
+The simulations suggest that Hartberg had a 30.8% chance of winning,
+with the most likely scoreline being 1-3 — consistent with the actual
+result.
 
 Now let’s say that the two teams will be playing again soon, and the
 Hartberg coach thinks that their first-ball attack could be improved by
