@@ -59,7 +59,7 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
     assert_that(is.flag(simple), !is.na(simple))
     if (missing(serving) || is.na(serving)) serving <- runif(1) > 0.5 ## random
     assert_that(is.flag(serving), !is.na(serving))
-    rates <- precheck_rates(rates)
+    rates <- precheck_rates(rates, process_model = process_model)
     if (process_model == "sideout") {
         if (is.null(rates[[1]]$sideout) || is.null(rates[[2]]$sideout)) {
             stop("one or both rates are missing their 'sideout' component")
@@ -273,7 +273,7 @@ vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
 #' @export
 vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 2000, simple = FALSE) {
     assert_that(is.flag(simple), !is.na(simple))
-    rates <- precheck_rates(rates)
+    rates <- precheck_rates(rates, process_model = process_model)
     if (simple) {
         simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = TRUE))
         nsims <- sum(!is.na(simres14))
