@@ -37,10 +37,15 @@ ways:
     -   `rec_set_error` (error rate on reception-phase sets)
     -   `rec_att_error` (error rate on reception-phase attacks)
     -   `rec_att_kill` (kill rate on reception-phase attacks)
+    -   `rec_att_replayed` (rate at which reception-phase attacks are
+        replayed by the attacking team for a second attack: either
+        blocked for reattack, deliberately recycled off the block, or
+        dug by the defending team but put back over as a freeball)
     -   `rec_block` (block kill rate against reception-phase attacks)
     -   `trans_set_error`, `trans_att_error`, `trans_att_kill`,
-        `trans_block` - as for the `rec_*` parameters, but in transition
-        phase (i.e. everything after the reception-phase attack)
+        `trans_att_replayed`, `trans_block` - as for the `rec_*`
+        parameters, but in transition phase (i.e. everything after the
+        reception-phase attack)
 
 ## Example 1
 
@@ -58,26 +63,26 @@ rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
 
 vs_simulate_match(rates, simple = TRUE)
 #> $pwin
-#> [1] 0.9873356
+#> [1] 0.9862626
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.7169174
+#> [1] 0.712122
 #> 
 #> $scores$`3-1`
-#> [1] 0.225829
+#> [1] 0.2285911
 #> 
 #> $scores$`3-2`
-#> [1] 0.04458924
+#> [1] 0.04554954
 #> 
 #> $scores$`2-3`
-#> [1] 0.008398567
+#> [1] 0.009230424
 #> 
 #> $scores$`1-3`
-#> [1] 0.003108223
+#> [1] 0.00328189
 #> 
 #> $scores$`0-3`
-#> [1] 0.001157625
+#> [1] 0.001225043
 ```
 
 So given the performances of the two teams during that match, we expect

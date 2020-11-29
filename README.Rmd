@@ -38,8 +38,9 @@ The `volleysim` package provides functions for simulating sets and matches of vo
     - `rec_set_error` (error rate on reception-phase sets)
     - `rec_att_error` (error rate on reception-phase attacks)
     - `rec_att_kill` (kill rate on reception-phase attacks)
+    - `rec_att_replayed` (rate at which reception-phase attacks are replayed by the attacking team for a second attack: either blocked for reattack, deliberately recycled off the block, or dug by the defending team but put back over as a freeball)
     - `rec_block` (block kill rate against reception-phase attacks)
-    - `trans_set_error`, `trans_att_error`, `trans_att_kill`, `trans_block` - as for the `rec_*` parameters, but in transition phase (i.e. everything after the reception-phase attack)
+    - `trans_set_error`, `trans_att_error`, `trans_att_kill`, `trans_att_replayed`, `trans_block` - as for the `rec_*` parameters, but in transition phase (i.e. everything after the reception-phase attack)
 
 ## Example 1
 
