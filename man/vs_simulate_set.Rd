@@ -2,6 +2,8 @@
 % Please edit documentation in R/simulate.R
 \name{vs_simulate_set}
 \alias{vs_simulate_set}
+\alias{vs_simulate_set_mc}
+\alias{vs_simulate_set_theor}
 \title{Simulate a set of volleyball}
 \usage{
 vs_simulate_set(
@@ -10,8 +12,13 @@ vs_simulate_set(
   serving = NA,
   go_to = 25,
   simple = FALSE,
-  id = NULL
+  id = NULL,
+  method = "monte carlo"
 )
+
+vs_simulate_set_mc(...)
+
+vs_simulate_set_theor(...)
 }
 \arguments{
 \item{rates}{list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}. Experimental: for \code{process_model} "sideout", the \code{sideout} rate component can be a function. This function will be called at each step of the simulation with the parameters:
@@ -21,7 +28,6 @@ vs_simulate_set(
 \item \code{serving} - the serving team 1 or 2 at each point in the set so far
 \item \code{point_won_by} - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
 \item \code{outcome} - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if \code{process_model} is "sideout", or details TBD if \code{process_model} is "phase"
-\item \code{go_to}
 }}
 
 \item{process_model}{string: either "sideout" or "phase". Details TBD}
@@ -33,12 +39,16 @@ vs_simulate_set(
 \item{simple}{logical: if \code{TRUE}, just return the team (1 or 2) that won. If \code{FALSE}, return extra details in a data.frame}
 
 \item{id}{: an optional value that (if non-\code{NULL}) will be returned in the \code{id} column of the returned data frame, if \code{simple} is \code{FALSE}}
+
+\item{method}{string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD}
+
+\item{...}{: parameters as for \code{vs_simulate_set}. \code{vs_simulate_set_theor} and \code{vs_simulate_set_mc} are convenience functions for \code{vs_simulate_set(..., method = "theoretical")} and \code{vs_simulate_set(..., method = "monte carlo")} respectively}
 }
 \value{
 Integer (1 or 2) or a data frame, depending on the value of \code{simple}
 }
 \description{
-Simulate a set of volleyball
+\code{vs_simulate_set_theor} and \code{vs_simulate_set_mc} are convenience functions for \code{vs_simulate_set(..., method = "theoretical")} and \code{vs_simulate_set(..., method = "monte carlo")} respectively.
 }
 \examples{
 \dontrun{
@@ -75,5 +85,5 @@ vs_simulate_set(rates = rates, process_model = "sideout")
 
 }
 \seealso{
-\code{\link{vs_estimate_rates}} \code{\link{vs_simulate_match}}
+\link{vs_estimate_rates} \link{vs_simulate_match}
 }

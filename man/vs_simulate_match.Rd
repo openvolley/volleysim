@@ -2,6 +2,8 @@
 % Please edit documentation in R/simulate.R
 \name{vs_simulate_match}
 \alias{vs_simulate_match}
+\alias{vs_simulate_match_mc}
+\alias{vs_simulate_match_theor}
 \title{Simulate a volleyball match}
 \usage{
 vs_simulate_match(
@@ -9,8 +11,13 @@ vs_simulate_match(
   process_model = "phase",
   serving = NA,
   n = 2000,
-  simple = FALSE
+  simple = FALSE,
+  method = "monte carlo"
 )
+
+vs_simulate_match_mc(...)
+
+vs_simulate_match_theor(...)
 }
 \arguments{
 \item{rates}{list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}}
@@ -22,6 +29,10 @@ vs_simulate_match(
 \item{n}{integer: the number of simulations to run}
 
 \item{simple}{logical: if \code{TRUE}, just return the probability of team winning and the probabilities of each possible set score. If \code{FALSE}, return extra details in a named list}
+
+\item{method}{string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD}
+
+\item{...}{: parameters as for \code{vs_simulate_match}. \code{vs_simulate_match_theor} and \code{vs_simulate_match_mc} are convenience functions for \code{vs_simulate_match(..., method = "theoretical")} and \code{vs_simulate_match(..., method = "monte carlo")} respectively}
 }
 \description{
 Currently hard-coded to indoor, best-of-5-set scoring.
@@ -42,5 +53,5 @@ Currently hard-coded to indoor, best-of-5-set scoring.
 
 }
 \seealso{
-\code{\link{vs_estimate_rates}} \code{\link{vs_simulate_match}}
+\link{vs_estimate_rates} \link{vs_simulate_match}
 }

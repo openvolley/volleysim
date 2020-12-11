@@ -1,23 +1,26 @@
 #' Simulate a set of volleyball
 #'
-#' @param rates list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}. Experimental: for \code{process_model} "sideout", the `sideout` rate component can be a function. This function will be called at each step of the simulation with the parameters:
+#' `vs_simulate_set_theor` and `vs_simulate_set_mc` are convenience functions for `vs_simulate_set(..., method = "theoretical")` and `vs_simulate_set(..., method = "monte carlo")` respectively.
+#'
+#' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`. Experimental: for `process_model` "sideout", the `sideout` rate component can be a function. This function will be called at each step of the simulation with the parameters:
 #' \itemize{
-#'   \item \code{team_1_score} - the score of team 1 at each point in the set so far
-#'   \item \code{team_2_score} - the score of team 2 at each point in the set so far
-#'   \item \code{serving} - the serving team 1 or 2 at each point in the set so far
-#'   \item \code{point_won_by} - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
-#'   \item \code{outcome} - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if \code{process_model} is "sideout", or details TBD if \code{process_model} is "phase"
-#'   \item \code{go_to}
+#'   \item `team_1_score` - the score of team 1 at each point in the set so far
+#'   \item `team_2_score` - the score of team 2 at each point in the set so far
+#'   \item `serving` - the serving team 1 or 2 at each point in the set so far
+#'   \item `point_won_by` - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
+#'   \item `outcome` - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if `process_model` is "sideout", or details TBD if `process_model` is "phase"
 #' }
 #' @param process_model string: either "sideout" or "phase". Details TBD
-#' @param serving logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random
+#' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
-#' @param simple logical: if \code{TRUE}, just return the team (1 or 2) that won. If \code{FALSE}, return extra details in a data.frame
-#' @param id : an optional value that (if non-\code{NULL}) will be returned in the \code{id} column of the returned data frame, if \code{simple} is \code{FALSE}
+#' @param simple logical: if `TRUE`, just return the team (1 or 2) that won. If `FALSE`, return extra details in a data.frame
+#' @param id : an optional value that (if non-`NULL`) will be returned in the `id` column of the returned data frame, if `simple` is `FALSE`
+#' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
+#' @param ... : parameters as for `vs_simulate_set`. `vs_simulate_set_theor` and `vs_simulate_set_mc` are convenience functions for `vs_simulate_set(..., method = "theoretical")` and `vs_simulate_set(..., method = "monte carlo")` respectively
 #'
-#' @return Integer (1 or 2) or a data frame, depending on the value of \code{simple}
+#' @return Integer (1 or 2) or a data frame, depending on the value of `simple`
 #'
-#' @seealso \code{\link{vs_estimate_rates}} \code{\link{vs_simulate_match}}
+#' @seealso [vs_estimate_rates] [vs_simulate_match]
 #'
 #' @examples
 #' \dontrun{
@@ -53,12 +56,16 @@
 #' vs_simulate_set(rates = rates, process_model = "sideout")
 #'
 #' @export
-vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, simple = FALSE, id = NULL) {
+vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, simple = FALSE, id = NULL, method = "monte carlo") {
     assert_that(is.string(process_model))
-    process_model <- match.arg(tolower(process_model), c("phase", "sideout"))
+    process_model <- tolower(process_model)
+    process_model <- match.arg(process_model, c("phase", "sideout"))
     assert_that(is.flag(simple), !is.na(simple))
     if (missing(serving) || is.na(serving)) serving <- runif(1) > 0.5 ## random
     assert_that(is.flag(serving), !is.na(serving))
+    assert_that(is.string(method))
+    method <- tolower(method)
+    method <- match.arg(method, c("monte carlo", "theoretical"))
     rates <- precheck_rates(rates, process_model = process_model)
     if (process_model == "sideout") {
         if (is.null(rates[[1]]$sideout) || is.null(rates[[2]]$sideout)) {
@@ -70,6 +77,33 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
             stop("one or both rates are missing a required component (required: ", paste(rnms, collapse = ", "), ")")
         }
     }
+    sim_fun <- if (method == "monte carlo") do_sim_set_mc else do_sim_set_theor
+    sim_fun(rates = rates, process_model = process_model, serving = serving, go_to = go_to, simple = simple, id = id)
+}
+
+#' @rdname vs_simulate_set
+#' @export
+vs_simulate_set_mc <- function(...) {
+    vs_simulate_set(..., method = "monte carlo")
+}
+
+#' @rdname vs_simulate_set
+#' @export
+vs_simulate_set_theor <- function(...) {
+    vs_simulate_set(..., method = "theoretical")
+}
+
+do_sim_set_theor <- function(rates, process_model, serving, go_to, simple, id) {
+    if (go_to < 1 | go_to > 25) stop("go_to must be between 1 and 25 inclusive")
+    m <- set_win_probabilities_theoretical(c(rates[[1]]$sideout, rates[[2]]$sideout))
+    if (isTRUE(serving)) {
+        m$s.matrix[26-go_to, 26-go_to]
+    } else {
+        m$o.matrix[26-go_to, 26-go_to]
+    }
+}
+
+do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
     ## rates are list(
     ##  ## for team 1, probs
     ##  data.frame(serve_ace = z, serve_error = z,
@@ -249,12 +283,15 @@ vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
 #'
 #' Currently hard-coded to indoor, best-of-5-set scoring.
 #'
-#' @param rates list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}
+#' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`
 #' @param process_model string: either "sideout" or "phase". Details TBD
-#' @param serving logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random
+#' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param n integer: the number of simulations to run
-#' @param simple logical: if \code{TRUE}, just return the probability of team winning and the probabilities of each possible set score. If \code{FALSE}, return extra details in a named list
-#' @seealso \code{\link{vs_estimate_rates}} \code{\link{vs_simulate_match}}
+#' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list
+#' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
+#' @param ... : parameters as for `vs_simulate_match`. `vs_simulate_match_theor` and `vs_simulate_match_mc` are convenience functions for `vs_simulate_match(..., method = "theoretical")` and `vs_simulate_match(..., method = "monte carlo")` respectively
+#'
+#' @seealso [vs_estimate_rates] [vs_simulate_match]
 #'
 #' @examples
 #' \dontrun{
@@ -271,14 +308,19 @@ vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
 #' }
 #'
 #' @export
-vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 2000, simple = FALSE) {
+vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 2000, simple = FALSE, method = "monte carlo") {
     assert_that(is.flag(simple), !is.na(simple))
     rates <- precheck_rates(rates, process_model = process_model)
+    sim_fun <- if (method == "monte carlo") do_sim_match_mc else do_sim_match_theor
+    sim_fun(rates = rates, process_model = process_model, serving = serving, n = n, simple = simple)
+}
+
+do_sim_match_mc <- function(rates, process_model, serving, n, simple) {
     if (simple) {
-        simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = TRUE))
+        simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = TRUE, method = "monte carlo"))
         nsims <- sum(!is.na(simres14))
     } else {
-        simres14 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = FALSE, id = z)))
+        simres14 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
         nsims <- length(unique(simres14$id))
     }
     if (nsims/n < 0.98) {
@@ -286,10 +328,10 @@ vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 
         warning("More than 2% of set1-4 simulations did not yield a result")
     }
     if (simple) {
-        simres5 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = TRUE))
+        simres5 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = TRUE, method = "monte carlo"))
         nsims <- sum(!is.na(simres5))
     } else {
-        simres5 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = FALSE, id = z)))
+        simres5 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = FALSE, id = z, method = "monte carlo")))
         nsims <- length(unique(simres5$id))
     }
     if (nsims/n < 0.98) {
@@ -305,4 +347,30 @@ vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 
         match_prob <- vs_set_probs_to_match(mean(win14 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE)) ## set probs to match prob
         list(pwin = match_prob$pwin, scores = match_prob$scores, simres14 = simres14, simres5 = simres5)
     }
+}
+
+do_sim_match_theor <- function(rates, process_model, serving, n, simple) {
+    ## rates is a list
+    so1 <- estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]])
+    so2 <- estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]])
+    out <- win_probabilities_theoretical(c(so1, so2))
+    if (isTRUE(simple)) {
+        ## reformat out$result_probabilities to match the output from method = "monte carlo"
+        out <- as.list(out$result_probabilities)
+        list(pwin = out$W, scores = list(`3-0` = out$W30, `3-1` = out$W31, `3-2` = out$W32, `2-3` = out$L32, `1-3` = out$L31, `0-3` = out$L30))
+    } else {
+        out
+    }
+}
+
+#' @rdname vs_simulate_match
+#' @export
+vs_simulate_match_mc <- function(...) {
+    vs_simulate_match(..., method = "monte carlo")
+}
+
+#' @rdname vs_simulate_match
+#' @export
+vs_simulate_match_theor <- function(...) {
+    vs_simulate_match(..., method = "theoretical")
 }
