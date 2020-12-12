@@ -3,17 +3,17 @@
 #' `vs_simulate_set_theor` and `vs_simulate_set_mc` are convenience functions for `vs_simulate_set(..., method = "theoretical")` and `vs_simulate_set(..., method = "monte carlo")` respectively.
 #'
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`. Experimental: for `process_model` "sideout", the `sideout` rate component can be a function. This function will be called at each step of the simulation with the parameters:
-#' \itemize{
-#'   \item `team_1_score` - the score of team 1 at each point in the set so far
-#'   \item `team_2_score` - the score of team 2 at each point in the set so far
-#'   \item `serving` - the serving team 1 or 2 at each point in the set so far
-#'   \item `point_won_by` - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
-#'   \item `outcome` - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if `process_model` is "sideout", or details TBD if `process_model` is "phase"
-#' }
+#' * `team_1_score` - the score of team 1 at each point in the set so far
+#' * `team_2_score` - the score of team 2 at each point in the set so far
+#' * `serving` - the serving team 1 or 2 at each point in the set so far
+#' * `point_won_by` - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
+#' * `outcome` - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if `process_model` is "sideout", or details TBD if `process_model` is "phase"
 #' @param process_model string: either "sideout" or "phase". Details TBD
 #' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
-#' @param simple logical: if `TRUE`, just return the team (1 or 2) that won. If `FALSE`, return extra details in a data.frame
+#' @param simple logical: if `TRUE`, return simplified output. The content depends on the `method`:
+#' * `method = "monte carlo"`. If `simplified = TRUE`, return the team (1 or 2) that won the set. If `simplified = FALSE`, return extra details in a data.frame
+#' * `method = "theoretical"`. If `simplified = TRUE`, return the probability that team 1 won the set. If `simplified = FALSE`, return additional details (TBD)
 #' @param id : an optional value that (if non-`NULL`) will be returned in the `id` column of the returned data frame, if `simple` is `FALSE`
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
 #' @param ... : parameters as for `vs_simulate_set`. `vs_simulate_set_theor` and `vs_simulate_set_mc` are convenience functions for `vs_simulate_set(..., method = "theoretical")` and `vs_simulate_set(..., method = "monte carlo")` respectively
@@ -287,7 +287,7 @@ vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
 #' @param process_model string: either "sideout" or "phase". Details TBD
 #' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param n integer: the number of simulations to run
-#' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list
+#' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list. The details will differ between `method = "monte carlo"` and `method = "theoretical"` 
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
 #' @param ... : parameters as for `vs_simulate_match`. `vs_simulate_match_theor` and `vs_simulate_match_mc` are convenience functions for `vs_simulate_match(..., method = "theoretical")` and `vs_simulate_match(..., method = "monte carlo")` respectively
 #'

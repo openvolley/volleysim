@@ -36,7 +36,11 @@ vs_simulate_set_theor(...)
 
 \item{go_to}{integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)}
 
-\item{simple}{logical: if \code{TRUE}, just return the team (1 or 2) that won. If \code{FALSE}, return extra details in a data.frame}
+\item{simple}{logical: if \code{TRUE}, return simplified output. The content depends on the \code{method}:
+\itemize{
+\item \code{method = "monte carlo"}. If \code{simplified = TRUE}, return the team (1 or 2) that won the set. If \code{simplified = FALSE}, return extra details in a data.frame
+\item \code{method = "theoretical"}. If \code{simplified = TRUE}, return the probability that team 1 won the set. If \code{simplified = FALSE}, return additional details (TBD)
+}}
 
 \item{id}{: an optional value that (if non-\code{NULL}) will be returned in the \code{id} column of the returned data frame, if \code{simple} is \code{FALSE}}
 

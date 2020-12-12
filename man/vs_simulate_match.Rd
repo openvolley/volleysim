@@ -28,7 +28,7 @@ vs_simulate_match_theor(...)
 
 \item{n}{integer: the number of simulations to run}
 
-\item{simple}{logical: if \code{TRUE}, just return the probability of team winning and the probabilities of each possible set score. If \code{FALSE}, return extra details in a named list}
+\item{simple}{logical: if \code{TRUE}, just return the probability of team winning and the probabilities of each possible set score. If \code{FALSE}, return extra details in a named list. The details will differ between \code{method = "monte carlo"} and \code{method = "theoretical"}}
 
 \item{method}{string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD}
 
