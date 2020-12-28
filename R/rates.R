@@ -113,6 +113,8 @@ precheck_rates <- function(rates, process_model = "sideout") {
     if (!(is.list(rates) && length(rates) == 2)) {
         stop("rates must be a two-element list")
     }
+    if (is.data.frame(rates[[1]])) rates[[1]] <- as.list(rates[[1]])
+    if (is.data.frame(rates[[2]])) rates[[2]] <- as.list(rates[[2]])
     ## make sure that all elements are present
     expected <- if (process_model == "phase") c("serve_ace", "serve_error", "rec_set_error", "rec_att_error", "rec_att_kill", "rec_att_replayed", "trans_set_error", "trans_att_error", "trans_att_kill", "trans_att_replayed", "rec_block", "trans_block") else "sideout"
     if (!all(expected %in% names(rates[[1]]))) stop("team 1 rates missing at least one parameter: ", paste(setdiff(expected, names(rates[[1]])), collapse = ", "))
