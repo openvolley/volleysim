@@ -256,9 +256,9 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
 ## not exported
 ## given the probability of winning sets 1-4, and set 5, calculate the overall probability of winning the match
 ## currently best-of-5-sets only
-vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
+vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
     ## all possible set outcomes in a 5-set match
-    tposs <- matrix(c(c(1, 1, 1, NA_real_, NA_real_), ## 3-0
+    tposs_orig <- matrix(c(c(1, 1, 1, NA_real_, NA_real_), ## 3-0
                       c(1, 1, 0, 1, NA_real_), ## 3-1
                       c(1, 1, 0, 0, 1), ## 3-2
                       c(1, 0, 1, 1, NA_real_), ## 3-1
@@ -270,11 +270,22 @@ vs_set_probs_to_match <- function(sp14, sp5 = sp14) {
                       c(0, 0, 1, 1, 1)), ## 3-2
                     ncol = 5, byrow = TRUE)
     pwinsc <- c(0, 1, 2, 1, 2, 2, 1, 2, 2, 2) ## losing team score on each of those possibilities
-    tposs <- rbind(tposs, 1-tposs)
+    tposs <- rbind(tposs_orig, 1-tposs_orig)
     pwinsc <- c(pwinsc, 3+pwinsc)
-    tposs[,1:4] <- abs(1-tposs[, 1:4]-sp14)
+    tposs[,c(1,3)] <- abs(1-tposs[, c(1,3)]-sp13)
+    tposs[,c(2,4)] <- abs(1-tposs[, c(2,4)]-sp24)
     tposs[,5] <- abs(1-tposs[, 5]-sp5)
     temp <- apply(tposs, 1, prod, na.rm = TRUE) ## prob of each of the possible ways to win
+    
+    if(!serve_known){
+        tposs2 <- rbind(tposs_orig, 1-tposs_orig)
+        tposs2[,c(1,3)] <- abs(1-tposs2[, c(1,3)]-sp24)  ## if we don't know who started with serve then we have to flip sets 1/3 and 2/4
+        tposs2[,c(2,4)] <- abs(1-tposs2[, c(2,4)]-sp13)
+        tposs2[,5] <- abs(1-tposs2[, 5]-sp5)
+        temp2 <- apply(tposs2, 1, prod, na.rm = TRUE)
+        temp <- (temp + temp2)/2
+    }
+    
     list(pwin = sum(temp[1:10]), scores = list("3-0" = temp[1], "3-1" = sum(temp[pwinsc==1]), "3-2" = sum(temp[pwinsc==2]), "2-3" = sum(temp[pwinsc==5]), "1-3" = sum(temp[pwinsc==4]), "0-3" = sum(temp[pwinsc==3])))
 }
 
@@ -344,7 +355,9 @@ do_sim_match_mc <- function(rates, process_model, serving, n, simple) {
     } else {
         win14 <- pull(dplyr::filter(simres14, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
         win5 <- pull(dplyr::filter(simres5, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
-        match_prob <- vs_set_probs_to_match(mean(win14 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE)) ## set probs to match prob
+        match_prob <- vs_set_probs_to_match(mean(win14 == 1, na.rm = TRUE), mean(win14 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE)) ## set probs to match prob
+        ## Note: line above is a temporary fix while figuring out how to run the simulation for sets 1/3 and 2/4 separately
+        
         list(pwin = match_prob$pwin, scores = match_prob$scores, simres14 = simres14, simres5 = simres5)
     }
 }
