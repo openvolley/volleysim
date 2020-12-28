@@ -41,62 +41,75 @@ if (FALSE) {
     chk$result_probabilities
     ## compare to
     pu.s <- m$s.matrix[1,1] ##P(Win | Serve)
+    pu.o <- m$o.matrix[1,1]
     pu.s5 <- m$s.matrix[11,11] ##P(Win Game 5 | Serve)
-    vs_set_probs_to_match(pu.s, pu.s5)
+    pu.5 <- (m$s.matrix[11,11] + m$o.matrix[11,11])/2
+    vs_set_probs_to_match(pu.s, pu.o, pu.5)
 }
 
-win_probabilities_theoretical <- function(so) {
+win_probabilities_theoretical <- function(so, serve1_start = NA_real_, serve5_start = NA_real_) {
     ## create P(Team 1 Wins Set) and P(Team 1 Wins Match) as a function of
     ## so = vector c(P(Team 1 sideouts), P(Team 2 sideouts))
+    ## serve1_start = 1 if Team 1 starts match with serve, 2 if Team 2 starts match with serve
+    ## serve5_start = 1 if Team 1 starts set 5 with serve, 2 if Team 2 starts set 5 with serve
+    ## if serving team(s) is unknown, will average P(Team 1 Wins Set | Serve 0-0) and P(Team 1 Wins Set | Receive 0-0)
     ## returns a list of the following objects:
     ## team_serve: a matrix of set win probabilities given score and Team 1 is serving
     ## opponent_serve: a matrix of set win probabilities given score and Team 2 is serving
     ## start_serve_set1_wins: a vector of match win probabilities given Team 1's results of previous sets and that Team 1 began Set 1 with serve
     ## opponent_serve_set1_wins: a vector of match win probabilities given Team 1's results in previous sets that Team 2 began Set 1 with serve
-    ## result_probabilities: a vector of match win/loss probabilities at the beginning of the match (before the coin flip)
+    ## result_probabilities: a vector of match win/loss probabilities
 
     m <- set_win_probabilities_theoretical(so)
     pu.s <- m$s.matrix[1,1] ##P(Win | Serve)
     pu.o <- m$o.matrix[1,1] ##P(Win | Opp Serve)
     pu.s5 <- m$s.matrix[11,11] ##P(Win Game 5 | Serve)
     pu.o5 <- m$o.matrix[11,11] ##P(Win Game 5 | Opp Serve)
+    
+    
+    # set chance of winning set 5 based on who starts
+    w5 <- dplyr::case_when(
+        serve5_start == 1 ~ pu.s5,
+        serve5_start == 2 ~ pu.o5,
+        TRUE ~ 0.5*(pu.s5 + pu.o5)
+    )
 
     ## now match outcomes from set outcomes
     wu3.s <- pu.s*pu.o*pu.s
     wu4.s <- 2*(1-pu.s)*pu.o*pu.s*pu.o + pu.s*(1-pu.o)*pu.s*pu.o
     
     ##L1, L2; L1, L4; L2, L3; L3, L4 --- L1, L3; L2, L4
-    wu5.s <- 0.5*(pu.s5+pu.o5)*(4*(1-pu.s)*pu.o*pu.s*(1-pu.o) + pu.s^2*(1-pu.o)^2 + pu.o^2*(1-pu.s)^2)
+    wu5.s <- w5*(4*(1-pu.s)*pu.o*pu.s*(1-pu.o) + pu.s^2*(1-pu.o)^2 + pu.o^2*(1-pu.s)^2)
     
     lu3.s <- (1 - pu.s)*(1 - pu.o)*(1 - pu.s)
     lu4.s <- 2*pu.s*(1-pu.o)*(1-pu.s)*(1-pu.o) + (1-pu.s)*pu.o*(1-pu.s)*(1-pu.o)
-    lu5.s <- 0.5*((1-pu.s5) + (1-pu.o5))*(4*pu.o*(1-pu.s)*(1-pu.o)*pu.s + (1-pu.o)^2*(pu.s)^2 + (1-pu.s)^2*pu.o^2)
+    lu5.s <- (1-w5)*(4*pu.o*(1-pu.s)*(1-pu.o)*pu.s + (1-pu.o)^2*(pu.s)^2 + (1-pu.s)^2*pu.o^2)
     
     wu3.o <- pu.o*pu.s*pu.o
     wu4.o <- 2*(1-pu.o)*pu.s*pu.o*pu.s + pu.o*(1-pu.s)*pu.o*pu.s
-    wu5.o <- 0.5*(pu.s5+pu.o5)*(4*(1-pu.s)*pu.o*pu.s*(1-pu.o) + pu.s^2*(1-pu.o)^2 + pu.o^2*(1-pu.s)^2)
+    wu5.o <- w5*(4*(1-pu.s)*pu.o*pu.s*(1-pu.o) + pu.s^2*(1-pu.o)^2 + pu.o^2*(1-pu.s)^2)
     
     lu3.o <- (1 - pu.o)*(1 - pu.s)*(1 - pu.o)
     lu4.o <- 2*pu.o*(1-pu.s)*(1-pu.o)*(1-pu.s) + (1-pu.o)*pu.s*(1-pu.o)*(1-pu.s)
-    lu5.o <- 0.5*((1-pu.s5) + (1-pu.o5))*(4*pu.s*(1-pu.o)*(1-pu.s)*pu.o + (1-pu.s)^2*(pu.o)^2 + (1-pu.o)^2*pu.s^2)
+    lu5.o <- (1-w5)*(4*pu.s*(1-pu.o)*(1-pu.s)*pu.o + (1-pu.s)^2*(pu.o)^2 + (1-pu.o)^2*pu.s^2)
     
     wu3.s.w1 <- pu.o*pu.s
     wu4.s.w1 <- pu.o*(1-pu.s)*pu.o + (1-pu.o)*pu.s*pu.o
     
     ##L2, L3; L3, L4; L2, L4
-    wu5.s.w1 <- 0.5*(pu.s5+pu.o5)*(2*(1-pu.o)*(1-pu.s)*pu.o + pu.s*(1-pu.o)^2)
+    wu5.s.w1 <- w5*(2*(1-pu.o)*(1-pu.s)*pu.o + pu.s*(1-pu.o)^2)
     
     wu3.o.w1 <- pu.s*pu.o
     wu4.o.w1 <- (1-pu.s)*pu.o*pu.s + pu.s*(1-pu.o)*pu.s
-    wu5.o.w1 <- 0.5*(pu.s5+pu.o5)*(2*(1-pu.s)*(1-pu.o)*pu.s + pu.o*(1-pu.s)^2)
+    wu5.o.w1 <- w5*(2*(1-pu.s)*(1-pu.o)*pu.s + pu.o*(1-pu.s)^2)
     
     wu4.s.l1 <- pu.o*pu.s*pu.o
     
     ##W2, W3; W3, W4; W2, W4
-    wu5.s.l1 <- 0.5*(pu.s5+pu.o5)*(2*pu.o*pu.s*(1-pu.o) + pu.o^2*(1-pu.s))
+    wu5.s.l1 <- w5*(2*pu.o*pu.s*(1-pu.o) + pu.o^2*(1-pu.s))
     
     wu4.o.l1 <- pu.s*pu.o*pu.s
-    wu5.o.l1 <- 0.5*(pu.s5+pu.o5)*(2*pu.s*pu.o*(1-pu.s) + pu.s^2*(1-pu.o))
+    wu5.o.l1 <- w5*(2*pu.s*pu.o*(1-pu.s) + pu.s^2*(1-pu.o))
     
     
     w.s.w1 <- wu3.s.w1 + wu4.s.w1 + wu5.s.w1
@@ -109,21 +122,21 @@ win_probabilities_theoretical <- function(so) {
     
     wu3.s.w2 <- pu.s
     wu4.s.w2 <- (1-pu.s)*pu.o
-    wu5.s.w2 <- 0.5*(pu.s5+pu.o5)*((1-pu.s)*(1-pu.o))
+    wu5.s.w2 <- w5*((1-pu.s)*(1-pu.o))
     
     wu4.s.wl <- pu.s*pu.o
-    wu5.s.wl <- 0.5*(pu.s5+pu.o5)*((1-pu.s)*pu.o + pu.s*(1-pu.o))
+    wu5.s.wl <- w5*((1-pu.s)*pu.o + pu.s*(1-pu.o))
     
-    wu5.s.l2 <- 0.5*(pu.s5+pu.o5)*(pu.s*pu.o)
+    wu5.s.l2 <- w5*(pu.s*pu.o)
     
     wu3.o.w2 <- pu.o
     wu4.o.w2 <- (1-pu.o)*pu.s
-    wu5.o.w2 <- 0.5*(pu.s5+pu.o5)*((1-pu.s)*(1-pu.o))
+    wu5.o.w2 <- w5*((1-pu.s)*(1-pu.o))
     
     wu4.o.wl <- pu.o*pu.s
-    wu5.o.wl <- 0.5*(pu.s5+pu.o5)*((1-pu.o)*pu.s + pu.o*(1-pu.s))
+    wu5.o.wl <- w5*((1-pu.o)*pu.s + pu.o*(1-pu.s))
     
-    wu5.o.l2 <- 0.5*(pu.s5+pu.o5)*(pu.o*pu.s)
+    wu5.o.l2 <- w5*(pu.o*pu.s)
     
     w.s.w2 <- wu3.s.w2 + wu4.s.w2 + wu5.s.w2
     w.s.wl <- wu4.s.wl + wu5.s.wl
@@ -136,13 +149,13 @@ win_probabilities_theoretical <- function(so) {
     ##Game 3 result
     
     wu4.s.w2l <- pu.o
-    wu5.s.w2l <- 0.5*(pu.s5+pu.o5)*(1-pu.o)
+    wu5.s.w2l <- w5*(1-pu.o)
     
-    wu5.s.wl2 <- 0.5*(pu.s5+pu.o5)*pu.o
+    wu5.s.wl2 <- w5*pu.o
     
     wu4.o.w2l <- pu.s
-    wu5.o.w2l <- 0.5*(pu.s5+pu.o5)*(1-pu.s)
-    wu5.o.wl2 <- 0.5*(pu.s5+pu.o5)*pu.s
+    wu5.o.w2l <- w5*(1-pu.s)
+    wu5.o.wl2 <- w5*pu.s
     
     w.s.w2l <- wu4.s.w2l + wu5.s.w2l
     w.s.wl2 <- wu5.s.wl2
@@ -151,7 +164,7 @@ win_probabilities_theoretical <- function(so) {
     w.o.wl2 <- wu5.o.wl2
     
     ##Game 4 result
-    wu5.w2l2 <- 0.5*(pu.s5+pu.o5)
+    wu5.w2l2 <- w5
     
     ##unconditional
     wu.s <- pu.s*w.s.w1 + (1-pu.s)*w.s.l1 ##P(win Set 1 | Serve)*P(Win | Win Set 1) + P(Lose Set 1 | Serve)*P(Win Match | Lose Set 1)
@@ -165,17 +178,36 @@ win_probabilities_theoretical <- function(so) {
     
     names(s.wins) <- names(o.wins) <- c("U","W","L","WW", "WL", "LL", "WLW", "WLL", "WLWL")
     
-    
     ## overall results - chance of winning/losing in each number of games
-    results <- c(W = (wu.s + wu.o)/2,
-                 L = 1 - (wu.s + wu.o)/2,
+    results <- dplyr::case_when(
+        serve1_start == 1 ~ c(W = wu.s,
+                              W30 = wu3.s,
+                              W31 = wu4.s,
+                              W32 = wu5.s,
+                              L32 = lu5.s,
+                              L31 = lu4.s,
+                              L30 = lu3.s
+            
+        ),
+        serve1_start == 2 ~ c(W = wu.o,
+                              W30 = wu3.o,
+                              W31 = wu4.o,
+                              W32 = wu5.o,
+                              L32 = lu5.o,
+                              L31 = lu4.o,
+                              L30 = lu3.o
+                              
+        ),
+        TRUE ~ c(W = (wu.s + wu.o)/2,  # if serve1_start is not 1 or 2, coin toss hasn't happened, average
                  W30 = (wu3.s + wu3.o)/2,
                  W31 = (wu4.s + wu4.o)/2,
                  W32 = (wu5.s + wu5.o)/2,
                  L32 = (lu5.s + lu5.o)/2,
                  L31 = (lu4.s + lu4.o)/2,
                  L30 = (lu3.s + lu3.o)/2
-                 )
+               )
+    )
+    names(results) <- c("pwin", "3-0", "3-1", "3-2", "2-3", "1-3", "0-3")
     
     return(list(team_serve = m$s.matrix, opponent_serve = m$o.matrix,
                 start_serve_set1_wins = s.wins, opponent_serve_set1_wins = o.wins,
