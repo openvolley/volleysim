@@ -36,7 +36,7 @@ set_win_probabilities_theoretical <- function(so) {
 ## TODO: see why this gives slightly different numbers to vs_set_probs_to_match
 if (FALSE) {
     so <- c(rates[[1]]$sideout, rates[[2]]$sideout)
-    m <- set_win_probabilities_theoretical(rates)
+    m <- set_win_probabilities_theoretical(so)
     chk <- win_probabilities_theoretical(so)
     chk$result_probabilities
     ## compare to
@@ -199,8 +199,8 @@ estimate_sideout_rates <- function(serving, receiving){
     ## RAR: Receiving team attacks off reception
     ## SAT: Serving team attacks in transition
     ## RAT: Receiving team attacks in transition
-    ## SD: Serving team digs/freeball reception - note: technically we should have transitions from RR, SD, and SAT to this column to account for overpasses, downballs, and block covers
-    ## RD: Receiving team digs/freeball reception - note: technically we should have transitions from SD, RAR, and RAT to this column to account for overpasses, downballs, and block covers
+    ## SD: Serving team digs/freeball reception - note: technically we should have transition from RR and RD to this column to account for overpasses and downballs
+    ## RD: Receiving team digs/freeball reception - note: technically we should have transition from SD to this column to account for overpasses and downballs
     A <- data.matrix(
         data.frame(
             SW = c(1, 0, serving$serve_ace, receiving$rec_set_error, (receiving$rec_att_error + serving$rec_block), serving$trans_att_kill, (receiving$trans_att_error + serving$trans_block), 0, receiving$trans_set_error),
@@ -210,8 +210,8 @@ estimate_sideout_rates <- function(serving, receiving){
             RAR = c(rep(0, 3), 1 - receiving$rec_set_error, rep(0, 5)),
             SAT = c(rep(0, 7), 1 - serving$trans_set_error, 0),
             RAT = c(rep(0, 8), 1 - receiving$trans_set_error),
-            SD = c(rep(0, 4), 1 - (receiving$rec_att_kill + receiving$rec_att_error + serving$rec_block), 0, 1 - (receiving$trans_att_kill + receiving$trans_att_error + serving$trans_block), 0, 0),
-            RD = c(rep(0, 5), 1 - (serving$trans_att_kill + serving$trans_att_error + receiving$trans_block), rep(0, 3))
+            SD = c(rep(0, 4), 1 - (receiving$rec_att_kill + receiving$rec_att_error + serving$rec_block + receiving$rec_att_replayed), serving$trans_att_replayed, 1 - (receiving$trans_att_kill + receiving$trans_att_error + serving$trans_block + receiving$trans_att_replayed), 0, 0),
+            RD = c(rep(0, 4), receiving$rec_att_replayed, 1 - (serving$trans_att_kill + serving$trans_att_error + receiving$trans_block + serving$trans_att_replayed), receiving$trans_att_replayed, rep(0, 2))
         )
     )
     
