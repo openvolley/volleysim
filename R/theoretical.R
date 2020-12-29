@@ -47,11 +47,11 @@ if (FALSE) {
     vs_set_probs_to_match(pu.s, pu.o, pu.5)
 }
 
-win_probabilities_theoretical <- function(so, serve1_start = NA_real_, serve5_start = NA_real_) {
+win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = NA) {
     ## create P(Team 1 Wins Set) and P(Team 1 Wins Match) as a function of
     ## so = vector c(P(Team 1 sideouts), P(Team 2 sideouts))
-    ## serve1_start = 1 if Team 1 starts match with serve, 2 if Team 2 starts match with serve
-    ## serve5_start = 1 if Team 1 starts set 5 with serve, 2 if Team 2 starts set 5 with serve
+    ## serve1_start = TRUE if Team 1 starts match with serve, FALSE if Team 2 starts match with serve
+    ## serve5_start = TRUE if Team 1 starts set 5 with serve, FALSE if Team 2 starts set 5 with serve
     ## if serving team(s) is unknown, will average P(Team 1 Wins Set | Serve 0-0) and P(Team 1 Wins Set | Receive 0-0)
     ## returns a list of the following objects:
     ## team_serve: a matrix of set win probabilities given score and Team 1 is serving
@@ -69,8 +69,8 @@ win_probabilities_theoretical <- function(so, serve1_start = NA_real_, serve5_st
     
     # set chance of winning set 5 based on who starts
     w5 <- dplyr::case_when(
-        serve5_start == 1 ~ pu.s5,
-        serve5_start == 2 ~ pu.o5,
+        serve5_start ~ pu.s5,
+        !serve5_start ~ pu.o5,
         TRUE ~ 0.5*(pu.s5 + pu.o5)
     )
 
@@ -180,35 +180,39 @@ win_probabilities_theoretical <- function(so, serve1_start = NA_real_, serve5_st
     
     ## overall results - chance of winning/losing in each number of games
     results <- dplyr::case_when(
-        serve1_start == 1 ~ c(W = wu.s,
-                              W30 = wu3.s,
-                              W31 = wu4.s,
-                              W32 = wu5.s,
-                              L32 = lu5.s,
-                              L31 = lu4.s,
-                              L30 = lu3.s
-            
-        ),
-        serve1_start == 2 ~ c(W = wu.o,
-                              W30 = wu3.o,
-                              W31 = wu4.o,
-                              W32 = wu5.o,
-                              L32 = lu5.o,
-                              L31 = lu4.o,
-                              L30 = lu3.o
+        serve1_start ~ list(pwin = wu.s,
+                            scores = list(
+                                `3-0` = wu3.s,
+                                `3-1` = wu4.s,
+                                `3-2` = wu5.s,
+                                `2-3` = lu5.s,
+                                `1-3` = lu4.s,
+                                `0-3` = lu3.s
+                                
+                            )),
+        !serve1_start ~ list(pwin = wu.o,
+                             scores = list(
+                                 `3-0` = wu3.o,
+                                 `3-1` = wu4.o,
+                                 `3-2` = wu5.o,
+                                 `2-3` = lu5.o,
+                                 `1-3` = lu4.o,
+                                 `0-3` = lu3.o
                               
-        ),
-        TRUE ~ c(W = (wu.s + wu.o)/2,  # if serve1_start is not 1 or 2, coin toss hasn't happened, average
-                 W30 = (wu3.s + wu3.o)/2,
-                 W31 = (wu4.s + wu4.o)/2,
-                 W32 = (wu5.s + wu5.o)/2,
-                 L32 = (lu5.s + lu5.o)/2,
-                 L31 = (lu4.s + lu4.o)/2,
-                 L30 = (lu3.s + lu3.o)/2
-               )
+        )),
+        TRUE ~ list(pwin = (wu.s + wu.o)/2,  # if serve1_start is NA, coin toss hasn't happened, average
+                    scores = list(
+                        `3-0` = (wu3.s + wu3.o)/2,
+                        `3-1` = (wu4.s + wu4.o)/2,
+                        `3-2` = (wu5.s + wu5.o)/2,
+                        `2-3` = (lu5.s + lu5.o)/2,
+                        `1-3` = (lu4.s + lu4.o)/2,
+                        `0-3` = (lu3.s + lu3.o)/2
+        ))
     )
-    names(results) <- c("pwin", "3-0", "3-1", "3-2", "2-3", "1-3", "0-3")
     
+    names(results) <- c("pwin", "scores")  # case_when can return a list but the first level names are NA'd out
+
     return(list(team_serve = m$s.matrix, opponent_serve = m$o.matrix,
                 start_serve_set1_wins = s.wins, opponent_serve_set1_wins = o.wins,
                 result_probabilities = results))
