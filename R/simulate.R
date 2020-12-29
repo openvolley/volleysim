@@ -259,33 +259,33 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
 vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
     ## all possible set outcomes in a 5-set match
     tposs_orig <- matrix(c(c(1, 1, 1, NA_real_, NA_real_), ## 3-0
-                      c(1, 1, 0, 1, NA_real_), ## 3-1
-                      c(1, 1, 0, 0, 1), ## 3-2
-                      c(1, 0, 1, 1, NA_real_), ## 3-1
-                      c(1, 0, 1, 0, 1), ## 3-2
-                      c(1, 0, 0, 1, 1), ## 3-2
-                      c(0, 1, 1, 1, NA_real_), ## 3-1
-                      c(0, 1, 1, 0, 1), ## 3-2
-                      c(0, 1, 0, 1, 1), ## 3-2
-                      c(0, 0, 1, 1, 1)), ## 3-2
-                    ncol = 5, byrow = TRUE)
-    pwinsc <- c(0, 1, 2, 1, 2, 2, 1, 2, 2, 2) ## losing team score on each of those possibilities
+                           c(1, 1, 0, 1, NA_real_), ## 3-1
+                           c(1, 1, 0, 0, 1), ## 3-2
+                           c(1, 0, 1, 1, NA_real_), ## 3-1
+                           c(1, 0, 1, 0, 1), ## 3-2
+                           c(1, 0, 0, 1, 1), ## 3-2
+                           c(0, 1, 1, 1, NA_real_), ## 3-1
+                           c(0, 1, 1, 0, 1), ## 3-2
+                           c(0, 1, 0, 1, 1), ## 3-2
+                           c(0, 0, 1, 1, 1)), ## 3-2
+                         ncol = 5, byrow = TRUE)
+    pwinsc <- rowSums(1 - tposs_orig, na.rm = TRUE) ## losing team score on each of those possibilities
     tposs <- rbind(tposs_orig, 1-tposs_orig)
     pwinsc <- c(pwinsc, 3+pwinsc)
-    tposs[,c(1,3)] <- abs(1-tposs[, c(1,3)]-sp13)
-    tposs[,c(2,4)] <- abs(1-tposs[, c(2,4)]-sp24)
-    tposs[,5] <- abs(1-tposs[, 5]-sp5)
+    tposs[, c(1, 3)] <- abs(1 - tposs[, c(1, 3)] - sp13)
+    tposs[, c(2, 4)] <- abs(1 - tposs[, c(2, 4)] - sp24)
+    tposs[, 5] <- abs(1-tposs[, 5] - sp5)
     temp <- apply(tposs, 1, prod, na.rm = TRUE) ## prob of each of the possible ways to win
-    
-    if(!serve_known){
+
+    if (!serve_known) {
         tposs2 <- rbind(tposs_orig, 1-tposs_orig)
-        tposs2[,c(1,3)] <- abs(1-tposs2[, c(1,3)]-sp24)  ## if we don't know who started with serve then we have to flip sets 1/3 and 2/4
-        tposs2[,c(2,4)] <- abs(1-tposs2[, c(2,4)]-sp13)
-        tposs2[,5] <- abs(1-tposs2[, 5]-sp5)
+        tposs2[, c(1, 3)] <- abs(1 - tposs2[, c(1, 3)] - sp24)  ## if we don't know who started with serve then we have to flip sets 1/3 and 2/4
+        tposs2[, c(2, 4)] <- abs(1 - tposs2[, c(2, 4)] - sp13)
+        tposs2[, 5] <- abs(1-tposs2[, 5] - sp5)
         temp2 <- apply(tposs2, 1, prod, na.rm = TRUE)
         temp <- (temp + temp2)/2
     }
-    
+
     list(pwin = sum(temp[1:10]), scores = list("3-0" = temp[1], "3-1" = sum(temp[pwinsc==1]), "3-2" = sum(temp[pwinsc==2]), "2-3" = sum(temp[pwinsc==5]), "1-3" = sum(temp[pwinsc==4]), "0-3" = sum(temp[pwinsc==3])))
 }
 
@@ -296,7 +296,7 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
 #'
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`
 #' @param process_model string: either "sideout" or "phase". Details TBD
-#' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
+#' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random. The team serving first in set 5 (if the match gets that far) is always chosen at random
 #' @param n integer: the number of simulations to run
 #' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list. The details will differ between `method = "monte carlo"` and `method = "theoretical"` 
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
@@ -327,39 +327,68 @@ vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 
 }
 
 do_sim_match_mc <- function(rates, process_model, serving, n, simple) {
+    ## need to simulate explicitly with team 1 serving first and then receiving first, so that we can adjust for the different probs in sets 1 & 3 vs sets 2 & 4
     if (simple) {
-        simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = TRUE, method = "monte carlo"))
-        nsims <- sum(!is.na(simres14))
+        simres14s <- sapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        simres14r <- sapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        if (mean(is.na(c(simres14s, simres14r)) > 0.02)) warning("More than 2% of set 1-4 simulations did not yield a result")
     } else {
-        simres14 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
-        nsims <- length(unique(simres14$id))
-    }
-    if (nsims/n < 0.98) {
-        ## allow up to 2% that didn't reach result
-        warning("More than 2% of set1-4 simulations did not yield a result")
-    }
-    if (simple) {
-        simres5 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = TRUE, method = "monte carlo"))
-        nsims <- sum(!is.na(simres5))
-    } else {
-        simres5 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = FALSE, id = z, method = "monte carlo")))
-        nsims <- length(unique(simres5$id))
-    }
-    if (nsims/n < 0.98) {
-        ## allow up to 2% that didn't reach result
-        warning("More than 2% of set5 simulations did not yield a result")
+        simres14s <- bind_rows(lapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        simres14r <- bind_rows(lapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        nsims <- length(c(unique(simres14s$id), -unique(simres14s$id)))
+        if (nsims/n < 0.98) warning("More than 2% of set 1-4 simulations did not yield a result")
     }
     if (simple) {
-        match_prob <- vs_set_probs_to_match(mean(simres14 == 1, na.rm = TRUE), mean(simres5 == 1, na.rm = TRUE)) ## set probs to match prob
-        list(pwin = match_prob$pwin, scores = match_prob$scores)
+        simres5s <- sapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 15, simple = TRUE, method = "monte carlo"))
+        simres5r <- sapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 15, simple = TRUE, method = "monte carlo"))
+        if (mean(is.na(c(simres5s, simres5r)) > 0.02)) warning("More than 2% of set 5 simulations did not yield a result")
     } else {
-        win14 <- pull(dplyr::filter(simres14, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
-        win5 <- pull(dplyr::filter(simres5, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
-        match_prob <- vs_set_probs_to_match(mean(win14 == 1, na.rm = TRUE), mean(win14 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE)) ## set probs to match prob
-        ## Note: line above is a temporary fix while figuring out how to run the simulation for sets 1/3 and 2/4 separately
-        
-        list(pwin = match_prob$pwin, scores = match_prob$scores, simres14 = simres14, simres5 = simres5)
+        simres5s <- bind_rows(lapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 15, simple = FALSE, id = z, method = "monte carlo")))
+        simres5r <- bind_rows(lapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 15, simple = FALSE, id = z, method = "monte carlo")))
+        nsims <- length(c(unique(simres5s$id), -unique(simres5s$id)))
+        if (nsims/n < 0.98) warning("More than 2% of set 5 simulations did not yield a result")
     }
+    ## now convert set probabilities to match probabilities
+    ## consider which team served first in sets 1-4, and in set 5
+    if (simple) {
+        swby14s <- simres14s ## sets 1-4 win prob when team 1 serving first
+        swby14r <- simres14r ## sets 1-4 win prob when team 1 receiving first
+        swby5s <- simres5s ## set 5 win prob when team 1 serving first
+        swby5r <- simres5r ## set 5 win prob when team 1 receiving first
+    } else {
+        swby14s <- pull(dplyr::filter(simres14s, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by) ## sets 1-4 win prob when team 1 serving first
+        swby14r <- pull(dplyr::filter(simres14r, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by) ## sets 1-4 win prob when team 1 receiving first
+        swby5s <- pull(dplyr::filter(simres5s, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by) ## set 5 win prob when team 1 serving first
+        swby5r <- pull(dplyr::filter(simres5r, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by) ## set 5 win prob when team 1 receiving first
+    }
+    ## match win probs when team 1 serving first in set 1, 3, 5
+    match_prob_ss <- vs_set_probs_to_match(sp13 = mean(swby14s == 1, na.rm = TRUE), sp24 = mean(swby14r == 1, na.rm = TRUE), sp5 = mean(swby5s == 1, na.rm = TRUE), serve_known = TRUE)
+    ## match win probs when team 1 serving first in set 1, 3 but not 5
+    match_prob_sr <- vs_set_probs_to_match(sp13 = mean(swby14s == 1, na.rm = TRUE), sp24 = mean(swby14r == 1, na.rm = TRUE), sp5 = mean(swby5r == 1, na.rm = TRUE), serve_known = TRUE)
+    ## match win probs when team 1 receiving first in set 1, 3 but not 5
+    match_prob_rs <- vs_set_probs_to_match(sp13 = mean(swby14r == 1, na.rm = TRUE), sp24 = mean(swby14s == 1, na.rm = TRUE), sp5 = mean(swby5s == 1, na.rm = TRUE), serve_known = TRUE)
+    ## match win probs when team 1 receiving first in set 1, 3, 5
+    match_prob_rr <- vs_set_probs_to_match(sp13 = mean(swby14r == 1, na.rm = TRUE), sp24 = mean(swby14s == 1, na.rm = TRUE), sp5 = mean(swby5r == 1, na.rm = TRUE), serve_known = TRUE)
+
+    ## team 1 served first in sets 1, 3, and random in set 5
+    match_prob_s <- list(pwin = (match_prob_ss$pwin + match_prob_sr$pwin)/2, scores = as.list(unlist(match_prob_ss$scores)/2 + unlist(match_prob_sr$scores)/2))
+    ## team 1 received first in sets 1, 3, and random in set 5
+    match_prob_r <- list(pwin = (match_prob_rs$pwin + match_prob_rr$pwin)/2, scores = as.list(unlist(match_prob_rs$scores)/2 + unlist(match_prob_rr$scores)/2))
+    if (is.na(serving)) {
+        ## the serving team was chosen at random
+        out <- list(pwin = (match_prob_s$pwin + match_prob_r$pwin)/2, scores = as.list(unlist(match_prob_s$scores)/2 + unlist(match_prob_r$scores)/2))
+    } else if (isTRUE(serving)) {
+        ## team 1 served first in sets 1, 3, and random in set 5
+        out <- match_prob_s
+    } else {
+        ## team 1 received first in sets 1, 3, and random in set 5
+        out <- match_prob_r
+    }
+    if (!simple) {
+        out$simres14 <- bind_rows(simres14s, simres14r)
+        out$simres5 <- bind_rows(simres5s, simres5r)
+    }
+    out
 }
 
 do_sim_match_theor <- function(rates, process_model, serving, n, simple) {
