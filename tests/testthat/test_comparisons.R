@@ -6,14 +6,14 @@ test_that("set probs to match probs are consistent between methods", {
         list(serve_ace = 0.185, serve_error = 0.185, rec_set_error = 0, rec_att_error = 0.058, rec_att_kill = 0.192, rec_att_replayed = 0.153, trans_set_error = 0.05, trans_att_error = 0.125, trans_att_kill = 0.232, trans_att_replayed = 0.142, sideout = 0.432, rec_block = 0.036, trans_block = 0.027))
 
     so <- c(rates[[1]]$sideout, rates[[2]]$sideout)
-    m <- set_win_probabilities_theoretical(so)
     chk <- win_probabilities_theoretical(so)
     p1 <- chk$result_probabilities
     ## compare to
+    m <- set_win_probabilities_theoretical(so)
     pu.s <- m$s.matrix[1,1] ##P(Win | Serve)
     pu.o <- m$o.matrix[1,1] ##P(Win | Opp Serve)
     pu.s5 <- m$s.matrix[11,11] ##P(Win Game 5 | Serve)
     p2 <- vs_set_probs_to_match(pu.s, pu.o, pu.s5)
     p2 <- c(p2$pwin, 1-p2$pwin, unlist(p2$scores)) ## to match p1 format
-    expect_true(all(abs(p1 - p2) < 0.001))    
+    expect_true(all(abs(p1 - p2) < 0.01))
 })
