@@ -256,7 +256,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
 ## not exported
 ## given the probability of winning sets 1-4, and set 5, calculate the overall probability of winning the match
 ## currently best-of-5-sets only
-vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
+vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
     ## all possible set outcomes in a 5-set match
     tposs_orig <- matrix(c(c(1, 1, 1, NA_real_, NA_real_), ## 3-0
                            c(1, 1, 0, 1, NA_real_), ## 3-1
@@ -320,6 +320,9 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
 #'
 #' @export
 vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 2000, simple = FALSE, method = "monte carlo") {
+    assert_that(is.string(process_model))
+    process_model <- tolower(process_model)
+    process_model <- match.arg(process_model, c("phase", "sideout"))
     assert_that(is.flag(simple), !is.na(simple))
     rates <- precheck_rates(rates, process_model = process_model)
     sim_fun <- if (method == "monte carlo") do_sim_match_mc else do_sim_match_theor
@@ -393,9 +396,18 @@ do_sim_match_mc <- function(rates, process_model, serving, n, simple) {
 
 do_sim_match_theor <- function(rates, process_model, serving, n, simple) {
     ## rates is a list
-    so1 <- estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]])
-    so2 <- estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]])
-    out <- win_probabilities_theoretical(c(so1, so2))
+    ## BR - not sure about this yet - should we use observed sideout rates directly if process_model is "sideout"? That makes it more consistent with the MC method
+    ## uncomment the following lines to enable this
+    ##if (process_model == "sideout") {
+    ##    ## if process_model == "sideout", use the observed sideout rates directly
+    ##    so1 <- rates[[1]]$sideout
+    ##    so2 <- rates[[2]]$sideout
+    ##} else {
+    ##    ## if process_model == "phase" then we use the per-action rates
+        so1 <- estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]])
+        so2 <- estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]])
+    ##}
+    out <- win_probabilities_theoretical(c(so1, so2), serving = serving)
     if (isTRUE(simple)) {
         ## reformat out$result_probabilities to match the output from method = "monte carlo"
         out <- as.list(out$result_probabilities)

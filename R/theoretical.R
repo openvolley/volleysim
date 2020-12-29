@@ -32,7 +32,7 @@ set_win_probabilities_theoretical <- function(so) {
     list(s.matrix = s.matrix, o.matrix = o.matrix)
 }
 
-win_probabilities_theoretical <- function(so) {
+win_probabilities_theoretical <- function(so, serving = NA) {
     ## create P(Team 1 Wins Set) and P(Team 1 Wins Match) as a function of
     ## so = vector c(P(Team 1 sideouts), P(Team 2 sideouts))
     ## returns a list of the following objects:
