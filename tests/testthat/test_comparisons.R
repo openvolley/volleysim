@@ -14,6 +14,5 @@ test_that("set probs to match probs are consistent between methods", {
     pu.o <- m$o.matrix[1,1] ##P(Win | Opp Serve)
     pu.s5 <- m$s.matrix[11,11] ##P(Win Game 5 | Serve)
     p2 <- vs_set_probs_to_match(pu.s, pu.o, pu.s5)
-    p2 <- c(p2$pwin, 1-p2$pwin, unlist(p2$scores)) ## to match p1 format
-    expect_true(all(abs(p1 - p2) < 0.01))
+    expect_true(all(abs(unlist(p1) - unlist(p2)) < 0.01))
 })
