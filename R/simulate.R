@@ -257,6 +257,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
 ## given the probability of winning sets 1-4, and set 5, calculate the overall probability of winning the match
 ## currently best-of-5-sets only
 vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
+
     ## all possible set outcomes in a 5-set match
     tposs_orig <- matrix(c(c(1, 1, 1, NA_real_, NA_real_), ## 3-0
                       c(1, 1, 0, 1, NA_real_), ## 3-1
@@ -328,13 +329,15 @@ vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 
 
 do_sim_match_mc <- function(rates, process_model, serving, n, simple) {
     if (simple) {
-        simres14 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = TRUE, method = "monte carlo"))
-        nsims <- sum(!is.na(simres14))
+        simres13 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = TRUE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        simres24 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = FALSE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        nsims <- sum(c(!is.na(simres13), !is.na(simres24)))
     } else {
-        simres14 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
-        nsims <- length(unique(simres14$id))
+        simres13 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = TRUE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        simres24 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = FALSE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        nsims <- length(c(unique(simres13$id), unique(simres24$id)))
     }
-    if (nsims/n < 0.98) {
+    if (nsims/(2*n) < 0.98) {
         ## allow up to 2% that didn't reach result
         warning("More than 2% of set1-4 simulations did not yield a result")
     }
@@ -350,27 +353,42 @@ do_sim_match_mc <- function(rates, process_model, serving, n, simple) {
         warning("More than 2% of set5 simulations did not yield a result")
     }
     if (simple) {
-        match_prob <- vs_set_probs_to_match(mean(simres14 == 1, na.rm = TRUE), mean(simres5 == 1, na.rm = TRUE)) ## set probs to match prob
+        if (is.na(serving)){
+            match_prob <- vs_set_probs_to_match(mean(simres13 == 1, na.rm = TRUE), mean(simres24 == 1, na.rm = TRUE), mean(simres5 == 1, na.rm = TRUE), serve_known = FALSE)
+        } else if (serving){
+            match_prob <- vs_set_probs_to_match(mean(simres13 == 1, na.rm = TRUE), mean(simres24 == 1, na.rm = TRUE), mean(simres5 == 1, na.rm = TRUE), serve_known = TRUE)
+        } else if(!serving){
+            match_prob <- vs_set_probs_to_match(mean(simres24 == 1, na.rm = TRUE), mean(simres13 == 1, na.rm = TRUE), mean(simres5 == 1, na.rm = TRUE), serve_known = TRUE)
+        }
         list(pwin = match_prob$pwin, scores = match_prob$scores)
     } else {
-        win14 <- pull(dplyr::filter(simres14, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
+        win13 <- pull(dplyr::filter(simres13, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
+        win24 <- pull(dplyr::filter(simres24, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
         win5 <- pull(dplyr::filter(simres5, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
-        match_prob <- vs_set_probs_to_match(mean(win14 == 1, na.rm = TRUE), mean(win14 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE)) ## set probs to match prob
-        ## Note: line above is a temporary fix while figuring out how to run the simulation for sets 1/3 and 2/4 separately
-        
-        list(pwin = match_prob$pwin, scores = match_prob$scores, simres14 = simres14, simres5 = simres5)
+        if (is.na(serving)){
+            match_prob <- vs_set_probs_to_match(mean(win13 == 1, na.rm = TRUE), mean(win24 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE), serve_known = FALSE)
+        } else if (serving){
+            match_prob <- vs_set_probs_to_match(mean(win13 == 1, na.rm = TRUE), mean(win24 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE), serve_known = TRUE)
+        } else if(!serving){
+            match_prob <- vs_set_probs_to_match(mean(win24 == 1, na.rm = TRUE), mean(win13 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE), serve_known = TRUE)
+        }
+        list(pwin = match_prob$pwin, scores = match_prob$scores, simres13 = simres13, simres24 = simres24, simres5 = simres5)
     }
 }
 
 do_sim_match_theor <- function(rates, process_model, serving, n, simple) {
-    ## rates is a list
-    so1 <- estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]])
-    so2 <- estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]])
-    out <- win_probabilities_theoretical(c(so1, so2))
+    if (process_model == "sideout"){
+        so1 <- rates[[1]]$sideout
+        so2 <- rates[[2]]$sideout
+    } else {
+        ## sideout rates need to be estimated from Markov chain model
+        ## rates is a list
+        so1 <- estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]])
+        so2 <- estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]])
+    }
+    out <- win_probabilities_theoretical(c(so1, so2), serve1_start = serving)
     if (isTRUE(simple)) {
-        ## reformat out$result_probabilities to match the output from method = "monte carlo"
-        out <- as.list(out$result_probabilities)
-        list(pwin = out$W, scores = list(`3-0` = out$W30, `3-1` = out$W31, `3-2` = out$W32, `2-3` = out$L32, `1-3` = out$L31, `0-3` = out$L30))
+        out$result_probabilities
     } else {
         out
     }
