@@ -24,7 +24,7 @@ vs_simulate_match_theor(...)
 
 \item{process_model}{string: either "sideout" or "phase". Details TBD}
 
-\item{serving}{logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random}
+\item{serving}{logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random. The team serving first in set 5 (if the match gets that far) is always chosen at random}
 
 \item{n}{integer: the number of simulations to run}
 
