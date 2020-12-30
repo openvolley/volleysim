@@ -32,21 +32,6 @@ set_win_probabilities_theoretical <- function(so) {
     list(s.matrix = s.matrix, o.matrix = o.matrix)
 }
 
-
-## TODO: see why this gives slightly different numbers to vs_set_probs_to_match
-if (FALSE) {
-    so <- c(rates[[1]]$sideout, rates[[2]]$sideout)
-    m <- set_win_probabilities_theoretical(so)
-    chk <- win_probabilities_theoretical(so)
-    chk$result_probabilities
-    ## compare to
-    pu.s <- m$s.matrix[1,1] ##P(Win | Serve)
-    pu.o <- m$o.matrix[1,1]
-    pu.s5 <- m$s.matrix[11,11] ##P(Win Game 5 | Serve)
-    pu.5 <- (m$s.matrix[11,11] + m$o.matrix[11,11])/2
-    vs_set_probs_to_match(pu.s, pu.o, pu.5)
-}
-
 win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = NA) {
     ## create P(Team 1 Wins Set) and P(Team 1 Wins Match) as a function of
     ## so = vector c(P(Team 1 sideouts), P(Team 2 sideouts))
