@@ -1,16 +1,14 @@
 #' Estimate parameters required for simulation
 #'
-#' @param x datavolleyplays: the plays component of a datavolley object as returned by \code{\link[datavolley]{dv_read}}
-#' @param target_team string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}. If \code{target_team} is "each", rates will be calculated for each team separately
+#' @param x datavolleyplays: the plays component of a datavolley object as returned by [datavolley::dv_read()]
+#' @param target_team string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame `x`. If `target_team` is "each", rates will be calculated for each team separately
 #' @param by string: grouping to calculate rates by. Either "none" (calculate whole-data set rates), "match" (by match), or "set" (by match and set)
-#' @param moderate logical: if \code{TRUE}, apply some checks to attempt to ensure that the estimated rates are reasonable. Currently these checks include:
-#' \itemize{
-#'   \item setting error rates are limited to a maximum of 5%. Some scouts do not include setting actions, except where they are errors or otherwise exceptional, which can lead to unrealistic estimates of setting error rates
-#' }
+#' @param moderate logical: if `TRUE`, apply some checks to attempt to ensure that the estimated rates are reasonable. Currently these checks include:
+#' * setting error rates are limited to a maximum of 5%. Some scouts do not include setting actions, except where they are errors or otherwise exceptional, which can lead to unrealistic estimates of setting error rates
 #'
-#' @return A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, rec_att_replayed, trans_set_error, trans_att_error, trans_att_kill, trans_att_replayed, rec_block, and trans_block, plus (if \code{by} is "match") match_id and (if \code{by} is "set") set_number and (if \code{target_team} is "each") "team"
+#' @return A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, rec_att_replayed, trans_set_error, trans_att_error, trans_att_kill, trans_att_replayed, rec_block, and trans_block, plus (if `by` is "match") match_id and (if `by` is "set") set_number and (if `target_team` is "each") "team"
 #'
-#' @seealso \code{\link{vs_simulate_set}}
+#' @seealso [vs_simulate_set()]
 #'
 #' @examples
 #' \dontrun{
@@ -113,9 +111,8 @@ precheck_rates <- function(rates, process_model = "sideout") {
     if (!(is.list(rates) && length(rates) == 2)) {
         stop("rates must be a two-element list")
     }
-    ## DW - I think we need a 2-element list where each element is a df, otherwise the simulation doesn't run correctly
-    #if (is.data.frame(rates[[1]])) rates[[1]] <- as.list(rates[[1]])
-    #if (is.data.frame(rates[[2]])) rates[[2]] <- as.list(rates[[2]])
+    if (is.data.frame(rates[[1]])) rates[[1]] <- as.list(rates[[1]])
+    if (is.data.frame(rates[[2]])) rates[[2]] <- as.list(rates[[2]])
     ## make sure that all elements are present
     expected <- if (process_model == "phase") c("serve_ace", "serve_error", "rec_set_error", "rec_att_error", "rec_att_kill", "rec_att_replayed", "trans_set_error", "trans_att_error", "trans_att_kill", "trans_att_replayed", "rec_block", "trans_block") else "sideout"
     if (!all(expected %in% names(rates[[1]]))) stop("team 1 rates missing at least one parameter: ", paste(setdiff(expected, names(rates[[1]])), collapse = ", "))
