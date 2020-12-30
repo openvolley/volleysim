@@ -20,7 +20,7 @@
 #'
 #' @return Integer (1 or 2) or a data frame, depending on the value of `simple`
 #'
-#' @seealso [vs_estimate_rates] [vs_simulate_match]
+#' @seealso [vs_estimate_rates()] [vs_simulate_match()]
 #'
 #' @examples
 #' \dontrun{
@@ -256,37 +256,36 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
 ## not exported
 ## given the probability of winning sets 1-4, and set 5, calculate the overall probability of winning the match
 ## currently best-of-5-sets only
-vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
-
+vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
     ## all possible set outcomes in a 5-set match
     tposs_orig <- matrix(c(c(1, 1, 1, NA_real_, NA_real_), ## 3-0
-                      c(1, 1, 0, 1, NA_real_), ## 3-1
-                      c(1, 1, 0, 0, 1), ## 3-2
-                      c(1, 0, 1, 1, NA_real_), ## 3-1
-                      c(1, 0, 1, 0, 1), ## 3-2
-                      c(1, 0, 0, 1, 1), ## 3-2
-                      c(0, 1, 1, 1, NA_real_), ## 3-1
-                      c(0, 1, 1, 0, 1), ## 3-2
-                      c(0, 1, 0, 1, 1), ## 3-2
-                      c(0, 0, 1, 1, 1)), ## 3-2
-                    ncol = 5, byrow = TRUE)
-    pwinsc <- c(0, 1, 2, 1, 2, 2, 1, 2, 2, 2) ## losing team score on each of those possibilities
+                           c(1, 1, 0, 1, NA_real_), ## 3-1
+                           c(1, 1, 0, 0, 1), ## 3-2
+                           c(1, 0, 1, 1, NA_real_), ## 3-1
+                           c(1, 0, 1, 0, 1), ## 3-2
+                           c(1, 0, 0, 1, 1), ## 3-2
+                           c(0, 1, 1, 1, NA_real_), ## 3-1
+                           c(0, 1, 1, 0, 1), ## 3-2
+                           c(0, 1, 0, 1, 1), ## 3-2
+                           c(0, 0, 1, 1, 1)), ## 3-2
+                         ncol = 5, byrow = TRUE)
+    pwinsc <- rowSums(1 - tposs_orig, na.rm = TRUE) ## losing team score on each of those possibilities
     tposs <- rbind(tposs_orig, 1-tposs_orig)
     pwinsc <- c(pwinsc, 3+pwinsc)
-    tposs[,c(1,3)] <- abs(1-tposs[, c(1,3)]-sp13)
-    tposs[,c(2,4)] <- abs(1-tposs[, c(2,4)]-sp24)
-    tposs[,5] <- abs(1-tposs[, 5]-sp5)
+    tposs[, c(1, 3)] <- abs(1 - tposs[, c(1, 3)] - sp13)
+    tposs[, c(2, 4)] <- abs(1 - tposs[, c(2, 4)] - sp24)
+    tposs[, 5] <- abs(1-tposs[, 5] - sp5)
     temp <- apply(tposs, 1, prod, na.rm = TRUE) ## prob of each of the possible ways to win
-    
-    if(!serve_known){
+
+    if (!serve_known) {
         tposs2 <- rbind(tposs_orig, 1-tposs_orig)
-        tposs2[,c(1,3)] <- abs(1-tposs2[, c(1,3)]-sp24)  ## if we don't know who started with serve then we have to flip sets 1/3 and 2/4
-        tposs2[,c(2,4)] <- abs(1-tposs2[, c(2,4)]-sp13)
-        tposs2[,5] <- abs(1-tposs2[, 5]-sp5)
+        tposs2[, c(1, 3)] <- abs(1 - tposs2[, c(1, 3)] - sp24)  ## if we don't know who started with serve then we have to flip sets 1/3 and 2/4
+        tposs2[, c(2, 4)] <- abs(1 - tposs2[, c(2, 4)] - sp13)
+        tposs2[, 5] <- abs(1-tposs2[, 5] - sp5)
         temp2 <- apply(tposs2, 1, prod, na.rm = TRUE)
         temp <- (temp + temp2)/2
     }
-    
+
     list(pwin = sum(temp[1:10]), scores = list("3-0" = temp[1], "3-1" = sum(temp[pwinsc==1]), "3-2" = sum(temp[pwinsc==2]), "2-3" = sum(temp[pwinsc==5]), "1-3" = sum(temp[pwinsc==4]), "0-3" = sum(temp[pwinsc==3])))
 }
 
@@ -297,13 +296,14 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
 #'
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`
 #' @param process_model string: either "sideout" or "phase". Details TBD
-#' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
+#' @param serving logical: if `TRUE`, team 1 will serve first in the match. If `NA`, the team serving first will be chosen at random
+#' @param serving5 logical: if `TRUE`, team 1 will serve first in set 5 (if the match gets that far). If `NA`, the team serving first in set 5 will be chosen at random
 #' @param n integer: the number of simulations to run
 #' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list. The details will differ between `method = "monte carlo"` and `method = "theoretical"` 
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
 #' @param ... : parameters as for `vs_simulate_match`. `vs_simulate_match_theor` and `vs_simulate_match_mc` are convenience functions for `vs_simulate_match(..., method = "theoretical")` and `vs_simulate_match(..., method = "monte carlo")` respectively
 #'
-#' @seealso [vs_estimate_rates] [vs_simulate_match]
+#' @seealso [vs_estimate_rates()] [vs_simulate_set()]
 #'
 #' @examples
 #' \dontrun{
@@ -320,73 +320,79 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = FALSE) {
 #' }
 #'
 #' @export
-vs_simulate_match <- function(rates, process_model = "phase", serving = NA, n = 2000, simple = FALSE, method = "monte carlo") {
+vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, n = 2000, simple = FALSE, method = "monte carlo") {
+    assert_that(is.string(process_model))
+    process_model <- tolower(process_model)
+    process_model <- match.arg(process_model, c("phase", "sideout"))
     assert_that(is.flag(simple), !is.na(simple))
     rates <- precheck_rates(rates, process_model = process_model)
     sim_fun <- if (method == "monte carlo") do_sim_match_mc else do_sim_match_theor
-    sim_fun(rates = rates, process_model = process_model, serving = serving, n = n, simple = simple)
+    sim_fun(rates = rates, process_model = process_model, serving = serving, serving5 = serving5, n = n, simple = simple)
 }
 
-do_sim_match_mc <- function(rates, process_model, serving, n, simple) {
+do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple) {
+    ## need to simulate explicitly with team 1 serving first and then receiving first, so that we can adjust for the different probs in sets 1 & 3 vs sets 2 & 4
     if (simple) {
-        simres13 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = TRUE, go_to = 25, simple = TRUE, method = "monte carlo"))
-        simres24 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = FALSE, go_to = 25, simple = TRUE, method = "monte carlo"))
-        nsims <- sum(c(!is.na(simres13), !is.na(simres24)))
+        simres14s <- sapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        simres14r <- sapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        if (mean(is.na(c(simres14s, simres14r)) > 0.02)) warning("More than 2% of set 1-4 simulations did not yield a result")
     } else {
-        simres13 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = TRUE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
-        simres24 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = FALSE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
-        nsims <- length(c(unique(simres13$id), unique(simres24$id)))
-    }
-    if (nsims/(2*n) < 0.98) {
-        ## allow up to 2% that didn't reach result
-        warning("More than 2% of set1-4 simulations did not yield a result")
+        simres14s <- bind_rows(lapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        simres14r <- bind_rows(lapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        nsims <- length(c(unique(simres14s$id), -unique(simres14s$id)))
+        if (nsims/n < 0.98) warning("More than 2% of set 1-4 simulations did not yield a result")
     }
     if (simple) {
-        simres5 <- sapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = TRUE, method = "monte carlo"))
-        nsims <- sum(!is.na(simres5))
+        simres5 <- sapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = 15, simple = TRUE, method = "monte carlo"))
+        if (mean(is.na(simres5)) > 0.02) warning("More than 2% of set 5 simulations did not yield a result")
     } else {
-        simres5 <- bind_rows(lapply(1:n, function(z) vs_simulate_set(rates = if (nrow(rates[[1]]) == 1) rates else list(rates[[1]][n, ], rates[[2]][n, ]), process_model = process_model, serving = serving, go_to = 15, simple = FALSE, id = z, method = "monte carlo")))
-        nsims <- length(unique(simres5$id))
+        simres5 <- bind_rows(lapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = 15, simple = FALSE, id = z, method = "monte carlo")))
+        if (length(unique(simres5$id))/n < 0.98) warning("More than 2% of set 5 simulations did not yield a result")
     }
-    if (nsims/n < 0.98) {
-        ## allow up to 2% that didn't reach result
-        warning("More than 2% of set5 simulations did not yield a result")
-    }
+    ## now convert set probabilities to match probabilities
+    ## consider which team served first in sets 1-4, and in set 5
+    ## first deal with format differences of simple from not-simple
     if (simple) {
-        if (is.na(serving)){
-            match_prob <- vs_set_probs_to_match(mean(simres13 == 1, na.rm = TRUE), mean(simres24 == 1, na.rm = TRUE), mean(simres5 == 1, na.rm = TRUE), serve_known = FALSE)
-        } else if (serving){
-            match_prob <- vs_set_probs_to_match(mean(simres13 == 1, na.rm = TRUE), mean(simres24 == 1, na.rm = TRUE), mean(simres5 == 1, na.rm = TRUE), serve_known = TRUE)
-        } else if(!serving){
-            match_prob <- vs_set_probs_to_match(mean(simres24 == 1, na.rm = TRUE), mean(simres13 == 1, na.rm = TRUE), mean(simres5 == 1, na.rm = TRUE), serve_known = TRUE)
-        }
-        list(pwin = match_prob$pwin, scores = match_prob$scores)
+        swby14s <- mean(simres14s == 1, na.rm = TRUE) ## sets 1-4 win prob when team 1 serving first in the set
+        swby14r <- mean(simres14r == 1, na.rm = TRUE) ## sets 1-4 win prob when team 1 receiving first in the set
+        swby5 <- mean(simres5 == 1, na.rm = TRUE)
     } else {
-        win13 <- pull(dplyr::filter(simres13, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
-        win24 <- pull(dplyr::filter(simres24, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
-        win5 <- pull(dplyr::filter(simres5, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by)
-        if (is.na(serving)){
-            match_prob <- vs_set_probs_to_match(mean(win13 == 1, na.rm = TRUE), mean(win24 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE), serve_known = FALSE)
-        } else if (serving){
-            match_prob <- vs_set_probs_to_match(mean(win13 == 1, na.rm = TRUE), mean(win24 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE), serve_known = TRUE)
-        } else if(!serving){
-            match_prob <- vs_set_probs_to_match(mean(win24 == 1, na.rm = TRUE), mean(win13 == 1, na.rm = TRUE), mean(win5 == 1, na.rm = TRUE), serve_known = TRUE)
-        }
-        list(pwin = match_prob$pwin, scores = match_prob$scores, simres13 = simres13, simres24 = simres24, simres5 = simres5)
+        swby14s <- mean(pull(dplyr::filter(simres14s, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by) == 1, na.rm = TRUE) ## sets 1-4 win prob when team 1 serving first in the set
+        swby14r <- mean(pull(dplyr::filter(simres14r, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by) == 1, na.rm = TRUE) ## sets 1-4 win prob when team 1 receiving first in the set
+        swby5 <- mean(pull(dplyr::filter(simres5, .data$team_1_score < 1 & .data$team_2_score < 1), .data$set_won_by) == 1, na.rm = TRUE)
     }
+    ## now match win probs for possible combinations of who served first in set 1 and set 5
+    if (is.na(serving)) {
+        swby13 <- swby24 <- (swby14s + swby14r)/2
+    } else if (isTRUE(serving)) {
+        swby13 <- swby14s
+        swby24 <- swby14r
+    } else {
+        swby13 <- swby14r
+        swby24 <- swby14s
+    }
+
+    out <- vs_set_probs_to_match(sp13 = swby13, sp24 = swby24, sp5 = swby5, serve_known = TRUE)
+    if (!simple) {
+        out$simres14 <- bind_rows(simres14s, simres14r)
+        out$simres5 <- simres5
+    }
+    out
 }
 
-do_sim_match_theor <- function(rates, process_model, serving, n, simple) {
-    if (process_model == "sideout"){
+do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simple) {
+    ## rates is a list
+    if (process_model == "sideout") {
+        ## if process_model == "sideout", use the observed sideout rates directly
         so1 <- rates[[1]]$sideout
         so2 <- rates[[2]]$sideout
     } else {
+        ## if process_model == "phase" then we use the per-action rates
         ## sideout rates need to be estimated from Markov chain model
-        ## rates is a list
         so1 <- estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]])
         so2 <- estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]])
     }
-    out <- win_probabilities_theoretical(c(so1, so2), serve1_start = serving)
+    out <- win_probabilities_theoretical(c(so1, so2), serve1_start = serving, serve5_start = serving5)
     if (isTRUE(simple)) {
         out$result_probabilities
     } else {
