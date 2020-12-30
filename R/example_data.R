@@ -2,12 +2,10 @@
 #'
 #' @references The example data files came from \url{https://www.volleynet.at/dvdownload/information/f-Damen/}
 #' @param choice numeric: which data file to return?
-#' \itemize{
-#'   \item{1 - the 2020 Austrian Women's Volley Cup played between Hartberg and UVC Graz}
-#' }
+#' * 1 - the 2020 Austrian Women's Volley Cup played between Hartberg and UVC Graz
 #' @return path to the file
 #'
-#' @seealso \code{\link[datavolley]{dv_read}}
+#' @seealso [datavolley::dv_read()]
 #'
 #' @examples
 #' \dontrun{
