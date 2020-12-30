@@ -13,7 +13,7 @@ vs_simulate_set(
   go_to = 25,
   simple = FALSE,
   id = NULL,
-  method = "monte carlo"
+  method = "theoretical"
 )
 
 vs_simulate_set_mc(...)
@@ -61,7 +61,7 @@ Integer (1 or 2) or a data frame, depending on the value of \code{simple}
   rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
                 vs_estimate_rates(x, target_team = visiting_team(x)))
   vs_simulate_set(rates) ## simulate a single set
-  vs_simulate_match(rates, n = 100, simple = TRUE) ## simulate a match 100 times
+  vs_simulate_match(rates, simple = TRUE) ## simulate a match
   ## so given the performances of the two teams during that match, we expect
   ##  that the home team should have won, with 3-0 being the most likely scoreline
 
@@ -85,7 +85,8 @@ sofun2 <- function(serving, point_won_by, ...) {
 rates <- list(list(sideout = 0.55), ## first team has constant 55\% sideout rate
                list(sideout = sofun2)) ## function for team 2's sideout rate
 
-vs_simulate_set(rates = rates, process_model = "sideout")
+## need to use method = "monte carlo" for this
+vs_simulate_set(rates = rates, process_model = "sideout", method = "monte carlo")
 
 }
 \seealso{

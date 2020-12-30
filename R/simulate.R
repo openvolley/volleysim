@@ -29,7 +29,7 @@
 #'   rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
 #'                 vs_estimate_rates(x, target_team = visiting_team(x)))
 #'   vs_simulate_set(rates) ## simulate a single set
-#'   vs_simulate_match(rates, n = 100, simple = TRUE) ## simulate a match 100 times
+#'   vs_simulate_match(rates, simple = TRUE) ## simulate a match
 #'   ## so given the performances of the two teams during that match, we expect
 #'   ##  that the home team should have won, with 3-0 being the most likely scoreline
 #'
@@ -53,10 +53,11 @@
 #' rates <- list(list(sideout = 0.55), ## first team has constant 55% sideout rate
 #'                list(sideout = sofun2)) ## function for team 2's sideout rate
 #'
-#' vs_simulate_set(rates = rates, process_model = "sideout")
+#' ## need to use method = "monte carlo" for this
+#' vs_simulate_set(rates = rates, process_model = "sideout", method = "monte carlo")
 #'
 #' @export
-vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, simple = FALSE, id = NULL, method = "monte carlo") {
+vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, simple = FALSE, id = NULL, method = "theoretical") {
     assert_that(is.string(process_model))
     process_model <- tolower(process_model)
     process_model <- match.arg(process_model, c("phase", "sideout"))
@@ -312,15 +313,16 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
 #'   rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
 #'                 vs_estimate_rates(x, target_team = visiting_team(x)))
 #'   vs_simulate_set(rates) ## simulate a single set
-#'   vs_simulate_match(rates, n = 100, simple = TRUE) ## simulate a match 100 times
-#'   ## so we expect the home team to win, with 3-0 being the most likely scoreline
+#'   vs_simulate_match(rates, simple = TRUE) ## simulate a match
+#'   ## so given the performances of the two teams during that match, we expect
+#'   ##  that the home team should have won, with 3-0 being the most likely scoreline
 #'
 #'   ## compare to the actual match result
 #'   summary(x)
 #' }
 #'
 #' @export
-vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, n = 2000, simple = FALSE, method = "monte carlo") {
+vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, n = 2000, simple = FALSE, method = "theoretical") {
     assert_that(is.string(process_model))
     process_model <- tolower(process_model)
     process_model <- match.arg(process_model, c("phase", "sideout"))

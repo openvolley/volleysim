@@ -6,7 +6,7 @@ test_that("Simulation with known parameters gives expected results", {
              trans_att_error = 0, trans_att_kill = 1.0, trans_att_replayed = 0, rec_block= 0, trans_block = 0),
         list(serve_ace = 0, serve_error = 0, rec_set_error = 0, rec_att_error = 0, rec_att_kill = 0.5, rec_att_replayed = 0, trans_set_error = 0,
              trans_att_error = 0, trans_att_kill = 1.0, trans_att_replayed = 0, rec_block= 0, trans_block = 0))
-    res <- bind_rows(lapply(seq_len(5e3), function(z) vs_simulate_set(rates)))
+    res <- bind_rows(lapply(seq_len(5e3), function(z) vs_simulate_set(rates, method = "monte carlo")))
     chk <- table(res[, c("serving", "point_won_by")])
     chk <- t(apply(chk, 1, function(z) z/sum(z))) ## normalize by row sums, i.e. percentage of outcome by serving team
     ## all should be around 0.5
@@ -14,7 +14,7 @@ test_that("Simulation with known parameters gives expected results", {
 
     ## team 1 recycles reception phase attacks 
     rates[[1]]$rec_att_replayed <- 0.5
-    res <- bind_rows(lapply(seq_len(5e3), function(z) vs_simulate_set(rates)))
+    res <- bind_rows(lapply(seq_len(5e3), function(z) vs_simulate_set(rates, method = "monte carlo")))
     chk <- table(res[, c("serving", "point_won_by")])
     chk <- t(apply(chk, 1, function(z) z/sum(z)))
     ## team 1 serving, should see 50% team 2 wins on rec_att_kill and 50% team 1 wins on their transition attack
@@ -44,8 +44,8 @@ test_that("Simulation varies according to who served first", {
         list(serve_ace = 0.1, serve_error = 0.1, rec_set_error = 0, rec_att_error = 0.1, rec_att_kill = 0.4, rec_att_replayed = 0.1, trans_set_error = 0,
              trans_att_error = 0.1, trans_att_kill = 0.35, trans_att_replayed = 0.1, rec_block= 0.05, trans_block = 0.05))
 
-    res1 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, simple = TRUE, serving = TRUE))
-    res2 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, simple = TRUE, serving = FALSE))
+    res1 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, simple = TRUE, serving = TRUE, method = "monte carlo"))
+    res2 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, simple = TRUE, serving = FALSE, method = "monte carlo"))
 
     ## the probability of reaching set 5 should not depend on who served first
     expect_true(abs((res1$scores$`3-2` + res1$scores$`2-3`) - (res2$scores$`3-2` + res2$scores$`2-3`)) < 0.02)
