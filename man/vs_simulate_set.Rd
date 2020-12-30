@@ -89,5 +89,5 @@ vs_simulate_set(rates = rates, process_model = "sideout")
 
 }
 \seealso{
-\link{vs_estimate_rates} \link{vs_simulate_match}
+\code{\link[=vs_estimate_rates]{vs_estimate_rates()}} \code{\link[=vs_simulate_match]{vs_simulate_match()}}
 }

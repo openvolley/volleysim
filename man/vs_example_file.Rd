@@ -9,7 +9,7 @@ vs_example_file(choice = 1)
 \arguments{
 \item{choice}{numeric: which data file to return?
 \itemize{
-\item{1 - the 2020 Austrian Women's Volley Cup played between Hartberg and UVC Graz}
+\item 1 - the 2020 Austrian Women's Volley Cup played between Hartberg and UVC Graz
 }}
 }
 \value{
@@ -30,5 +30,5 @@ Example DataVolley files provided as part of the volleysim package
 The example data files came from \url{https://www.volleynet.at/dvdownload/information/f-Damen/}
 }
 \seealso{
-\code{\link[datavolley]{dv_read}}
+\code{\link[datavolley:read_dv]{datavolley::dv_read()}}
 }

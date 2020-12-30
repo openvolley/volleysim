@@ -10,6 +10,7 @@ vs_simulate_match(
   rates,
   process_model = "phase",
   serving = NA,
+  serving5 = NA,
   n = 2000,
   simple = FALSE,
   method = "monte carlo"
@@ -24,7 +25,9 @@ vs_simulate_match_theor(...)
 
 \item{process_model}{string: either "sideout" or "phase". Details TBD}
 
-\item{serving}{logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random. The team serving first in set 5 (if the match gets that far) is always chosen at random}
+\item{serving}{logical: if \code{TRUE}, team 1 will serve first in the match. If \code{NA}, the team serving first will be chosen at random}
+
+\item{serving5}{logical: if \code{TRUE}, team 1 will serve first in set 5 (if the match gets that far). If \code{NA}, the team serving first in set 5 will be chosen at random}
 
 \item{n}{integer: the number of simulations to run}
 
@@ -53,5 +56,5 @@ Currently hard-coded to indoor, best-of-5-set scoring.
 
 }
 \seealso{
-\link{vs_estimate_rates} \link{vs_simulate_match}
+\code{\link[=vs_estimate_rates]{vs_estimate_rates()}} \code{\link[=vs_simulate_set]{vs_simulate_set()}}
 }

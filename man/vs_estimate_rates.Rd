@@ -7,7 +7,7 @@
 vs_estimate_rates(x, target_team, by = "none", moderate = TRUE)
 }
 \arguments{
-\item{x}{datavolleyplays: the plays component of a datavolley object as returned by \code{\link[datavolley]{dv_read}}}
+\item{x}{datavolleyplays: the plays component of a datavolley object as returned by \code{\link[datavolley:read_dv]{datavolley::dv_read()}}}
 
 \item{target_team}{string: the team name to calculate rates for. If missing or NULL, rates will be calculated across the entire data.frame \code{x}. If \code{target_team} is "each", rates will be calculated for each team separately}
 
@@ -39,5 +39,5 @@ Estimate parameters required for simulation
 }
 }
 \seealso{
-\code{\link{vs_simulate_set}}
+\code{\link[=vs_simulate_set]{vs_simulate_set()}}
 }
