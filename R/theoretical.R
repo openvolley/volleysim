@@ -205,6 +205,35 @@ win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = 
 } 
 
 
+#' Estimate theoretical sideout rates given 'phase' parameters
+#'
+#' The [vs_estimate_rates()] function returns a team's performance rates across a range of aspects of play, including serve ace rate, serve error rate, and so on. Using [vs_theoretical_sideout_rates()] We can estimate the theoretical sideout rate that we would expect to see, given those parameters. This can be compared to the actual sideout rate achieved by the team.
+#'
+#' @param rates list: rates as returned by [vs_estimate_rates()]
+#'
+#' @return The theoretical sideout rates of the two teams
+#'
+#' @seealso [vs_estimate_rates()]
+#'
+#' @examples
+#' \dontrun{
+#'   library(datavolley)
+#'   x <- dv_read(dv_example_file())
+#'   rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
+#'                 vs_estimate_rates(x, target_team = visiting_team(x)))
+#'
+#'   ## the theoretical sideout rates
+#'   vs_theoretical_sideout_rates(rates)
+#'
+#'   ## compare to their actual sideout rates
+#'   c(rates[[1]]$sideout, rates[[2]]$sideout)
+#'}
+#' @export
+vs_theoretical_sideout_rates <- function(rates) {
+    c(estimate_sideout_rates(rates[[2]], rates[[1]]), estimate_sideout_rates(rates[[1]], rates[[2]]))
+}
+
+
 estimate_sideout_rates <- function(serving, receiving){
 
     ## estimate sideout probabilities from rate stats using terminating Markov chain theory
