@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">volleysim</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -113,26 +113,26 @@
 
 <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span><span class="va">rates</span>, simple <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt; $pwin</span>
-<span class="co">#&gt; [1] 0.9862626</span>
+<span class="co">#&gt; [1] 0.9850286</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores</span>
 <span class="co">#&gt; $scores$`3-0`</span>
-<span class="co">#&gt; [1] 0.712122</span>
+<span class="co">#&gt; [1] 0.7021917</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-1`</span>
-<span class="co">#&gt; [1] 0.2285911</span>
+<span class="co">#&gt; [1] 0.2341905</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-2`</span>
-<span class="co">#&gt; [1] 0.04554954</span>
+<span class="co">#&gt; [1] 0.0486464</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`2-3`</span>
-<span class="co">#&gt; [1] 0.009230424</span>
+<span class="co">#&gt; [1] 0.009934415</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`1-3`</span>
-<span class="co">#&gt; [1] 0.00328189</span>
+<span class="co">#&gt; [1] 0.003663221</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
-<span class="co">#&gt; [1] 0.001225043</span></code></pre></div>
+<span class="co">#&gt; [1] 0.001373782</span></code></pre></div>
 <p>So given the performances of the two teams during that match, we expect that the home team should have won, with 3-0 being the most likely scoreline. Compare this to the actual match result:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
@@ -156,138 +156,70 @@
 <span class="st">"Other team"</span>, <span class="fl">0.069</span>, <span class="fl">0.190</span>, <span class="fl">0.014</span>, <span class="fl">0.063</span>, <span class="fl">0.523</span>, <span class="fl">0.05</span>, <span class="fl">0.021</span>, <span class="fl">0.102</span>, <span class="fl">0.435</span>, <span class="fl">0.05</span>, <span class="fl">0.683</span>, <span class="fl">0.083</span>, <span class="fl">0.109</span><span class="op">)</span>
 <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span></code></pre></div>
 <table class="table">
-<thead><tr>
-<th style="text-align:left;">
-team
-</th>
-<th style="text-align:right;">
-serve_ace
-</th>
-<th style="text-align:right;">
-serve_error
-</th>
-<th style="text-align:right;">
-rec_set_error
-</th>
-<th style="text-align:right;">
-rec_att_error
-</th>
-<th style="text-align:right;">
-rec_att_kill
-</th>
-<th style="text-align:right;">
-rec_att_replayed
-</th>
-<th style="text-align:right;">
-trans_set_error
-</th>
-<th style="text-align:right;">
-trans_att_error
-</th>
-<th style="text-align:right;">
-trans_att_kill
-</th>
-<th style="text-align:right;">
-trans_att_replayed
-</th>
-<th style="text-align:right;">
-sideout
-</th>
-<th style="text-align:right;">
-rec_block
-</th>
-<th style="text-align:right;">
-trans_block
-</th>
+<colgroup>
+<col width="5%">
+<col width="5%">
+<col width="6%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="9%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="9%">
+<col width="4%">
+<col width="5%">
+<col width="6%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">team</th>
+<th align="right">serve_ace</th>
+<th align="right">serve_error</th>
+<th align="right">rec_set_error</th>
+<th align="right">rec_att_error</th>
+<th align="right">rec_att_kill</th>
+<th align="right">rec_att_replayed</th>
+<th align="right">trans_set_error</th>
+<th align="right">trans_att_error</th>
+<th align="right">trans_att_kill</th>
+<th align="right">trans_att_replayed</th>
+<th align="right">sideout</th>
+<th align="right">rec_block</th>
+<th align="right">trans_block</th>
 </tr></thead>
 <tbody>
-<tr>
-<td style="text-align:left;">
-My team
-</td>
-<td style="text-align:right;">
-0.062
-</td>
-<td style="text-align:right;">
-0.156
-</td>
-<td style="text-align:right;">
-0.009
-</td>
-<td style="text-align:right;">
-0.071
-</td>
-<td style="text-align:right;">
-0.499
-</td>
-<td style="text-align:right;">
-0.05
-</td>
-<td style="text-align:right;">
-0.018
-</td>
-<td style="text-align:right;">
-0.082
-</td>
-<td style="text-align:right;">
-0.452
-</td>
-<td style="text-align:right;">
-0.05
-</td>
-<td style="text-align:right;">
-0.668
-</td>
-<td style="text-align:right;">
-0.075
-</td>
-<td style="text-align:right;">
-0.079
-</td>
+<tr class="odd">
+<td align="left">My team</td>
+<td align="right">0.062</td>
+<td align="right">0.156</td>
+<td align="right">0.009</td>
+<td align="right">0.071</td>
+<td align="right">0.499</td>
+<td align="right">0.05</td>
+<td align="right">0.018</td>
+<td align="right">0.082</td>
+<td align="right">0.452</td>
+<td align="right">0.05</td>
+<td align="right">0.668</td>
+<td align="right">0.075</td>
+<td align="right">0.079</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-Other team
-</td>
-<td style="text-align:right;">
-0.069
-</td>
-<td style="text-align:right;">
-0.190
-</td>
-<td style="text-align:right;">
-0.014
-</td>
-<td style="text-align:right;">
-0.063
-</td>
-<td style="text-align:right;">
-0.523
-</td>
-<td style="text-align:right;">
-0.05
-</td>
-<td style="text-align:right;">
-0.021
-</td>
-<td style="text-align:right;">
-0.102
-</td>
-<td style="text-align:right;">
-0.435
-</td>
-<td style="text-align:right;">
-0.05
-</td>
-<td style="text-align:right;">
-0.683
-</td>
-<td style="text-align:right;">
-0.083
-</td>
-<td style="text-align:right;">
-0.109
-</td>
+<tr class="even">
+<td align="left">Other team</td>
+<td align="right">0.069</td>
+<td align="right">0.190</td>
+<td align="right">0.014</td>
+<td align="right">0.063</td>
+<td align="right">0.523</td>
+<td align="right">0.05</td>
+<td align="right">0.021</td>
+<td align="right">0.102</td>
+<td align="right">0.435</td>
+<td align="right">0.05</td>
+<td align="right">0.683</td>
+<td align="right">0.083</td>
+<td align="right">0.109</td>
 </tr>
 </tbody>
 </table>
@@ -295,26 +227,26 @@ Other team
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span><span class="va">rates</span>, simple <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt; $pwin</span>
-<span class="co">#&gt; [1] 0.4729047</span>
+<span class="co">#&gt; [1] 0.4847279</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores</span>
 <span class="co">#&gt; $scores$`3-0`</span>
-<span class="co">#&gt; [1] 0.1124977</span>
+<span class="co">#&gt; [1] 0.1185286</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-1`</span>
-<span class="co">#&gt; [1] 0.1745712</span>
+<span class="co">#&gt; [1] 0.1811204</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-2`</span>
-<span class="co">#&gt; [1] 0.1858358</span>
+<span class="co">#&gt; [1] 0.1850789</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`2-3`</span>
-<span class="co">#&gt; [1] 0.1882711</span>
+<span class="co">#&gt; [1] 0.1901302</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`1-3`</span>
-<span class="co">#&gt; [1] 0.2004283</span>
+<span class="co">#&gt; [1] 0.1938788</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
-<span class="co">#&gt; [1] 0.1383959</span></code></pre></div>
+<span class="co">#&gt; [1] 0.131263</span></code></pre></div>
 <p>Looks like we expect a close match, but My team is most probably going to lose.</p>
 <p>Perhaps as the coach of My team there are some adjustments I could make — in choosing the players in our starting lineup, or in our match tactics. Can simulation help us explore which option might be most beneficial?</p>
 <p>Let’s say that one of our options is to substitute in a different pass-hitter: Betty, who has a more aggressive serve and attack but who is a weaker passer than our starting pass-hitter Agnes. With Betty in the lineup instead of Agnes, we guesstimate our new team parameters to be:</p>
@@ -330,26 +262,26 @@ Other team
 
 <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span><span class="va">rates2</span>, simple <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt; $pwin</span>
-<span class="co">#&gt; [1] 0.5387848</span>
+<span class="co">#&gt; [1] 0.5389318</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores</span>
 <span class="co">#&gt; $scores$`3-0`</span>
-<span class="co">#&gt; [1] 0.1420413</span>
+<span class="co">#&gt; [1] 0.1417528</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-1`</span>
-<span class="co">#&gt; [1] 0.2037891</span>
+<span class="co">#&gt; [1] 0.2037515</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-2`</span>
-<span class="co">#&gt; [1] 0.1929545</span>
+<span class="co">#&gt; [1] 0.1934275</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`2-3`</span>
-<span class="co">#&gt; [1] 0.1806263</span>
+<span class="co">#&gt; [1] 0.1805792</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`1-3`</span>
-<span class="co">#&gt; [1] 0.1712096</span>
+<span class="co">#&gt; [1] 0.1712485</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
-<span class="co">#&gt; [1] 0.1093793</span></code></pre></div>
+<span class="co">#&gt; [1] 0.1092405</span></code></pre></div>
 <p>That makes a slight improvement. Our second option is to change our serving tactics: we will serve more aggressively in order to put more pressure on Other team’s reception but accepting that we will make more serve errors in doing so:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rates3</span> <span class="op">&lt;-</span> <span class="va">rates</span>
@@ -361,26 +293,26 @@ Other team
 <span class="va">rates3</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"rec_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">rates3</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"rec_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">-</span> <span class="fl">0.05</span>
 <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span><span class="va">rates3</span>, simple <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt; $pwin</span>
-<span class="co">#&gt; [1] 0.5825496</span>
+<span class="co">#&gt; [1] 0.5791922</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores</span>
 <span class="co">#&gt; $scores$`3-0`</span>
-<span class="co">#&gt; [1] 0.1592201</span>
+<span class="co">#&gt; [1] 0.161008</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-1`</span>
-<span class="co">#&gt; [1] 0.2187684</span>
+<span class="co">#&gt; [1] 0.22047</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-2`</span>
-<span class="co">#&gt; [1] 0.2045611</span>
+<span class="co">#&gt; [1] 0.1977142</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`2-3`</span>
-<span class="co">#&gt; [1] 0.1651655</span>
+<span class="co">#&gt; [1] 0.1718007</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`1-3`</span>
-<span class="co">#&gt; [1] 0.1562129</span>
+<span class="co">#&gt; [1] 0.1545149</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
-<span class="co">#&gt; [1] 0.09607191</span></code></pre></div>
+<span class="co">#&gt; [1] 0.09449215</span></code></pre></div>
 <p>This looks like it might be a better option (assuming, of course, that we have estimated the changes in rates correctly).</p>
 </div>
 <div id="example-3" class="section level2">
@@ -405,27 +337,27 @@ Other team
 <span class="va">sim_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span>rates <span class="op">=</span> <span class="va">rates</span>, simple <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">sim_result</span>
 <span class="co">#&gt; $pwin</span>
-<span class="co">#&gt; [1] 0.3083764</span>
+<span class="co">#&gt; [1] 0.314285</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores</span>
 <span class="co">#&gt; $scores$`3-0`</span>
-<span class="co">#&gt; [1] 0.06000609</span>
+<span class="co">#&gt; [1] 0.06099924</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-1`</span>
-<span class="co">#&gt; [1] 0.1095411</span>
+<span class="co">#&gt; [1] 0.1110245</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-2`</span>
-<span class="co">#&gt; [1] 0.1388292</span>
+<span class="co">#&gt; [1] 0.1422613</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`2-3`</span>
-<span class="co">#&gt; [1] 0.2016856</span>
+<span class="co">#&gt; [1] 0.1998572</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`1-3`</span>
-<span class="co">#&gt; [1] 0.2646274</span>
+<span class="co">#&gt; [1] 0.2632404</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
-<span class="co">#&gt; [1] 0.2253107</span></code></pre></div>
-<p>The simulations suggest that Hartberg had a 30.8% chance of winning, with the most likely scoreline being 1-3 — consistent with the actual result.</p>
+<span class="co">#&gt; [1] 0.2226173</span></code></pre></div>
+<p>The simulations suggest that Hartberg had a 31.4% chance of winning, with the most likely scoreline being 1-3 — consistent with the actual result.</p>
 <p>Now let’s say that the two teams will be playing again soon, and the Hartberg coach thinks that their first-ball attack could be improved by improving their passing. What difference might we expect in the match outcome for an improvement in this area?</p>
 <p>First let’s get a handle on the relevant performance parameters. “Positive” passes here means passes that were rated as perfect or positive.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -482,27 +414,27 @@ Other team
 <span class="va">new_sim_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span>rates <span class="op">=</span> <span class="va">rates</span>, simple <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">new_sim_result</span>
 <span class="co">#&gt; $pwin</span>
-<span class="co">#&gt; [1] 0.3275502</span>
+<span class="co">#&gt; [1] 0.3582752</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores</span>
 <span class="co">#&gt; $scores$`3-0`</span>
-<span class="co">#&gt; [1] 0.06257077</span>
+<span class="co">#&gt; [1] 0.07394493</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-1`</span>
-<span class="co">#&gt; [1] 0.1131905</span>
+<span class="co">#&gt; [1] 0.1288044</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`3-2`</span>
-<span class="co">#&gt; [1] 0.1517889</span>
+<span class="co">#&gt; [1] 0.1555258</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`2-3`</span>
-<span class="co">#&gt; [1] 0.1920594</span>
+<span class="co">#&gt; [1] 0.2006886</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`1-3`</span>
-<span class="co">#&gt; [1] 0.2611342</span>
+<span class="co">#&gt; [1] 0.2459659</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
-<span class="co">#&gt; [1] 0.2192562</span></code></pre></div>
-<p>Giving a match win probability of 32.8% (up from 30.8%).</p>
+<span class="co">#&gt; [1] 0.1950702</span></code></pre></div>
+<p>Giving a match win probability of 35.8% (up from 31.4%).</p>
 </div>
 </div>
   </div>
@@ -520,6 +452,7 @@ Other team
 <h2>Developers</h2>
 <ul class="list-unstyled">
 <li>Ben Raymond <br><small class="roles"> Author, maintainer </small>  </li>
+<li>Dwight Wynne <br><small class="roles"> Author </small>  </li>
 <li>Adrien Ickowicz <br><small class="roles"> Author </small>  </li>
 </ul>
 </div>
@@ -536,7 +469,7 @@ Other team
 
 
       <footer><div class="copyright">
-  <p>Developed by Ben Raymond, Adrien Ickowicz.</p>
+  <p>Developed by Ben Raymond, Dwight Wynne, Adrien Ickowicz.</p>
 </div>
 
 <div class="pkgdown">

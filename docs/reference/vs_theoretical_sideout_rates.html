@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Simulate a volleyball match — vs_simulate_match • volleysim</title>
+<title>Estimate theoretical sideout rates given 'phase' parameters — vs_theoretical_sideout_rates • volleysim</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Simulate a volleyball match — vs_simulate_match" />
-<meta property="og:description" content="Currently hard-coded to indoor, best-of-5-set scoring." />
+<meta property="og:title" content="Estimate theoretical sideout rates given 'phase' parameters — vs_theoretical_sideout_rates" />
+<meta property="og:description" content="The vs_estimate_rates() function returns a team's performance rates across a range of aspects of play, including serve ace rate, serve error rate, and so on. Using vs_theoretical_sideout_rates() We can estimate the theoretical sideout rate that we would expect to see, given those parameters. This can be compared to the actual sideout rate achieved by the team." />
 
 
 
@@ -103,69 +103,32 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Simulate a volleyball match</h1>
+    <h1>Estimate theoretical sideout rates given 'phase' parameters</h1>
     
-    <div class="hidden name"><code>vs_simulate_match.Rd</code></div>
+    <div class="hidden name"><code>vs_theoretical_sideout_rates.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Currently hard-coded to indoor, best-of-5-set scoring.</p>
+    <p>The <code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code> function returns a team's performance rates across a range of aspects of play, including serve ace rate, serve error rate, and so on. Using <code>vs_theoretical_sideout_rates()</code> We can estimate the theoretical sideout rate that we would expect to see, given those parameters. This can be compared to the actual sideout rate achieved by the team.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>vs_simulate_match</span><span class='op'>(</span>
-  <span class='va'>rates</span>,
-  process_model <span class='op'>=</span> <span class='st'>"phase"</span>,
-  serving <span class='op'>=</span> <span class='cn'>NA</span>,
-  serving5 <span class='op'>=</span> <span class='cn'>NA</span>,
-  n <span class='op'>=</span> <span class='fl'>2000</span>,
-  simple <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  method <span class='op'>=</span> <span class='st'>"theoretical"</span>
-<span class='op'>)</span>
-
-<span class='fu'>vs_simulate_match_mc</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span>
-
-<span class='fu'>vs_simulate_match_theor</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>vs_theoretical_sideout_rates</span><span class='op'>(</span><span class='va'>rates</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>rates</th>
-      <td><p>list: A two-element list, each element of which is a set of rates as returned by <code>vs_estimate_rates</code></p></td>
-    </tr>
-    <tr>
-      <th>process_model</th>
-      <td><p>string: either "sideout" or "phase". Details TBD</p></td>
-    </tr>
-    <tr>
-      <th>serving</th>
-      <td><p>logical: if <code>TRUE</code>, team 1 will serve first in the match. If <code>NA</code>, the team serving first will be chosen at random</p></td>
-    </tr>
-    <tr>
-      <th>serving5</th>
-      <td><p>logical: if <code>TRUE</code>, team 1 will serve first in set 5 (if the match gets that far). If <code>NA</code>, the team serving first in set 5 will be chosen at random</p></td>
-    </tr>
-    <tr>
-      <th>n</th>
-      <td><p>integer: the number of simulations to run</p></td>
-    </tr>
-    <tr>
-      <th>simple</th>
-      <td><p>logical: if <code>TRUE</code>, just return the probability of team winning and the probabilities of each possible set score. If <code>FALSE</code>, return extra details in a named list. The details will differ between <code>method = "monte carlo"</code> and <code>method = "theoretical"</code></p></td>
-    </tr>
-    <tr>
-      <th>method</th>
-      <td><p>string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>: parameters as for <code>vs_simulate_match</code>. <code>vs_simulate_match_theor</code> and <code>vs_simulate_match_mc</code> are convenience functions for <code>vs_simulate_match(..., method = "theoretical")</code> and <code>vs_simulate_match(..., method = "monte carlo")</code> respectively</p></td>
+      <td><p>list: rates as returned by <code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code></p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>The theoretical sideout rates of the two teams</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code> <code><a href='vs_simulate_set.html'>vs_simulate_set()</a></code></p></div>
+    <div class='dont-index'><p><code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
@@ -173,15 +136,13 @@
   <span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/read_dv.html'>dv_read</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/dv_example_file.html'>dv_example_file</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
   <span class='va'>rates</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fu'><a href='vs_estimate_rates.html'>vs_estimate_rates</a></span><span class='op'>(</span><span class='va'>x</span>, target_team <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/teams.html'>home_team</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span>,
                 <span class='fu'><a href='vs_estimate_rates.html'>vs_estimate_rates</a></span><span class='op'>(</span><span class='va'>x</span>, target_team <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/teams.html'>visiting_team</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
-  <span class='fu'><a href='vs_simulate_set.html'>vs_simulate_set</a></span><span class='op'>(</span><span class='va'>rates</span><span class='op'>)</span> <span class='co'>## simulate a single set</span>
-  <span class='fu'>vs_simulate_match</span><span class='op'>(</span><span class='va'>rates</span>, simple <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span> <span class='co'>## simulate a match</span>
-  <span class='co'>## so given the performances of the two teams during that match, we expect</span>
-  <span class='co'>##  that the home team should have won, with 3-0 being the most likely scoreline</span>
 
-  <span class='co'>## compare to the actual match result</span>
-  <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>
+  <span class='co'>## the theoretical sideout rates</span>
+  <span class='fu'>vs_theoretical_sideout_rates</span><span class='op'>(</span><span class='va'>rates</span><span class='op'>)</span>
+
+  <span class='co'>## compare to their actual sideout rates</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>rates</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>sideout</span>, <span class='va'>rates</span><span class='op'>[[</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>sideout</span><span class='op'>)</span>
 <span class='op'>}</span>
-
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
