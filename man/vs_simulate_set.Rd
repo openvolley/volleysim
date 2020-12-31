@@ -36,11 +36,7 @@ vs_simulate_set_theor(...)
 
 \item{go_to}{integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)}
 
-\item{simple}{logical: if \code{TRUE}, return simplified output. The content depends on the \code{method}:
-\itemize{
-\item \code{method = "monte carlo"}. If \code{simplified = TRUE}, return the team (1 or 2) that won the set. If \code{simplified = FALSE}, return extra details in a data.frame
-\item \code{method = "theoretical"}. If \code{simplified = TRUE}, return the probability that team 1 won the set. If \code{simplified = FALSE}, return additional details (TBD)
-}}
+\item{simple}{logical: if \code{TRUE}, return simplified output. Only applicable to \code{method} "monte carlo". If \code{simple = TRUE}, return the team (1 or 2) that won the set. If \code{simple = FALSE}, return extra details in a data.frame}
 
 \item{id}{: an optional value that (if non-\code{NULL}) will be returned in the \code{id} column of the returned data frame, if \code{simple} is \code{FALSE}}
 
@@ -58,10 +54,10 @@ Integer (1 or 2) or a data frame, depending on the value of \code{simple}
 \dontrun{
   library(datavolley)
   x <- dv_read(dv_example_file())
-  rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
-                vs_estimate_rates(x, target_team = visiting_team(x)))
+  rates <- vs_estimate_rates(x, target_team = "each")
+
   vs_simulate_set(rates) ## simulate a single set
-  vs_simulate_match(rates, simple = TRUE) ## simulate a match
+  vs_simulate_match(rates) ## simulate a match
   ## so given the performances of the two teams during that match, we expect
   ##  that the home team should have won, with 3-0 being the most likely scoreline
 

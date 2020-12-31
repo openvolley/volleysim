@@ -58,10 +58,9 @@ library(dplyr)
 x <- dv_read(dv_example_file())
 
 ## calculate the rates we need to simulate
-rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
-              vs_estimate_rates(x, target_team = visiting_team(x)))
+rates <- vs_estimate_rates(x, target_team = "each")
 
-vs_simulate_match(rates, simple = TRUE)
+vs_simulate_match(rates)
 #> $pwin
 #> [1] 0.9850286
 #> 
@@ -124,7 +123,7 @@ that both teams play to their season-average parameters, what outcome do
 we expect?
 
 ``` r
-vs_simulate_match(rates, simple = TRUE)
+vs_simulate_match(rates)
 #> $pwin
 #> [1] 0.4847279
 #> 
@@ -172,7 +171,7 @@ rates2[1, c("serve_ace", "serve_error", "rec_att_kill", "trans_att_kill")] <-
 ## increase opposition serve aces by 1%
 rates2[2, c("serve_ace")] <- rates2[2, c("serve_ace")] + 0.01
 
-vs_simulate_match(rates2, simple = TRUE)
+vs_simulate_match(rates2)
 #> $pwin
 #> [1] 0.5389318
 #> 
@@ -209,7 +208,7 @@ rates3[1, c("serve_ace", "serve_error")] <- rates3[1, c("serve_ace", "serve_erro
 
 ## decrease opposition reception kills by 5% due to their expected poorer passing
 rates3[2, c("rec_att_kill")] <- rates3[2, c("rec_att_kill")] - 0.05
-vs_simulate_match(rates3, simple = TRUE)
+vs_simulate_match(rates3)
 #> $pwin
 #> [1] 0.5791922
 #> 
@@ -262,7 +261,7 @@ during the match:
 ``` r
 rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
               vs_estimate_rates(x, target_team = visiting_team(x)))
-sim_result <- vs_simulate_match(rates = rates, simple = TRUE)
+sim_result <- vs_simulate_match(rates = rates)
 sim_result
 #> $pwin
 #> [1] 0.314285
@@ -374,7 +373,7 @@ a re-match:
 
 ``` r
 rates[[1]]$rec_att_kill <- new_rec_att_kill
-new_sim_result <- vs_simulate_match(rates = rates, simple = TRUE)
+new_sim_result <- vs_simulate_match(rates = rates)
 new_sim_result
 #> $pwin
 #> [1] 0.3582752

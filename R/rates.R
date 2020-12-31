@@ -14,16 +14,17 @@
 #' \dontrun{
 #'   library(datavolley)
 #'   x <- dv_read(dv_example_file())
-#'   rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
-#'                 vs_estimate_rates(x, target_team = visiting_team(x)))
+#'   rates <- vs_estimate_rates(x, target_team = "each")
+#'
 #'   vs_simulate_set(rates) ## simulate a single set
-#'   vs_simulate_match(rates, simple = TRUE) ## simulate a match
+#'   vs_simulate_match(rates) ## simulate a match
 #'   ## so given the performances of the two teams during that match, we expect
 #'   ##  that the home team should have won, with 3-0 being the most likely scoreline
 #'
 #'   ## compare to the actual match result
 #'   summary(x)
 #' }
+#'
 #' @export
 vs_estimate_rates <- function(x, target_team, by = "none", moderate = TRUE) {
     if (inherits(x, c("datavolley", "peranavolley"))) x <- x$plays

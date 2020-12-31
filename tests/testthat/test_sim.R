@@ -12,7 +12,7 @@ test_that("Simulation with known parameters gives expected results", {
     ## all should be around 0.5
     expect_true(all(abs(chk - 0.5) < 0.01))
 
-    ## team 1 recycles reception phase attacks 
+    ## team 1 recycles reception phase attacks
     rates[[1]]$rec_att_replayed <- 0.5
     res <- bind_rows(lapply(seq_len(5e3), function(z) vs_simulate_set(rates, method = "monte carlo")))
     chk <- table(res[, c("serving", "point_won_by")])
@@ -44,8 +44,8 @@ test_that("Simulation varies according to who served first", {
         list(serve_ace = 0.1, serve_error = 0.1, rec_set_error = 0, rec_att_error = 0.1, rec_att_kill = 0.4, rec_att_replayed = 0.1, trans_set_error = 0,
              trans_att_error = 0.1, trans_att_kill = 0.35, trans_att_replayed = 0.1, rec_block= 0.05, trans_block = 0.05))
 
-    res1 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, simple = TRUE, serving = TRUE, method = "monte carlo"))
-    res2 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, simple = TRUE, serving = FALSE, method = "monte carlo"))
+    res1 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, serving = TRUE, method = "monte carlo"))
+    res2 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, serving = FALSE, method = "monte carlo"))
 
     ## the probability of reaching set 5 should not depend on who served first
     expect_true(abs((res1$scores$`3-2` + res1$scores$`2-3`) - (res2$scores$`3-2` + res2$scores$`2-3`)) < 0.02)

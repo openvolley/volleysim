@@ -11,9 +11,7 @@
 #' @param process_model string: either "sideout" or "phase". Details TBD
 #' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
-#' @param simple logical: if `TRUE`, return simplified output. The content depends on the `method`:
-#' * `method = "monte carlo"`. If `simplified = TRUE`, return the team (1 or 2) that won the set. If `simplified = FALSE`, return extra details in a data.frame
-#' * `method = "theoretical"`. If `simplified = TRUE`, return the probability that team 1 won the set. If `simplified = FALSE`, return additional details (TBD)
+#' @param simple logical: if `TRUE`, return simplified output. Only applicable to `method` "monte carlo". If `simple = TRUE`, return the team (1 or 2) that won the set. If `simple = FALSE`, return extra details in a data.frame
 #' @param id : an optional value that (if non-`NULL`) will be returned in the `id` column of the returned data frame, if `simple` is `FALSE`
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
 #' @param ... : parameters as for `vs_simulate_set`. `vs_simulate_set_theor` and `vs_simulate_set_mc` are convenience functions for `vs_simulate_set(..., method = "theoretical")` and `vs_simulate_set(..., method = "monte carlo")` respectively
@@ -26,10 +24,10 @@
 #' \dontrun{
 #'   library(datavolley)
 #'   x <- dv_read(dv_example_file())
-#'   rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
-#'                 vs_estimate_rates(x, target_team = visiting_team(x)))
+#'   rates <- vs_estimate_rates(x, target_team = "each")
+#'
 #'   vs_simulate_set(rates) ## simulate a single set
-#'   vs_simulate_match(rates, simple = TRUE) ## simulate a match
+#'   vs_simulate_match(rates) ## simulate a match
 #'   ## so given the performances of the two teams during that match, we expect
 #'   ##  that the home team should have won, with 3-0 being the most likely scoreline
 #'
@@ -300,7 +298,7 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
 #' @param serving logical: if `TRUE`, team 1 will serve first in the match. If `NA`, the team serving first will be chosen at random
 #' @param serving5 logical: if `TRUE`, team 1 will serve first in set 5 (if the match gets that far). If `NA`, the team serving first in set 5 will be chosen at random
 #' @param n integer: the number of simulations to run
-#' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list. The details will differ between `method = "monte carlo"` and `method = "theoretical"` 
+#' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list. The details will differ between `method = "monte carlo"` and `method = "theoretical"`
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
 #' @param ... : parameters as for `vs_simulate_match`. `vs_simulate_match_theor` and `vs_simulate_match_mc` are convenience functions for `vs_simulate_match(..., method = "theoretical")` and `vs_simulate_match(..., method = "monte carlo")` respectively
 #'
@@ -310,10 +308,10 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
 #' \dontrun{
 #'   library(datavolley)
 #'   x <- dv_read(dv_example_file())
-#'   rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
-#'                 vs_estimate_rates(x, target_team = visiting_team(x)))
+#'   rates <- vs_estimate_rates(x, target_team = "each")
+#'
 #'   vs_simulate_set(rates) ## simulate a single set
-#'   vs_simulate_match(rates, simple = TRUE) ## simulate a match
+#'   vs_simulate_match(rates) ## simulate a match
 #'   ## so given the performances of the two teams during that match, we expect
 #'   ##  that the home team should have won, with 3-0 being the most likely scoreline
 #'
@@ -322,7 +320,7 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
 #' }
 #'
 #' @export
-vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, n = 2000, simple = FALSE, method = "theoretical") {
+vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, n = 2000, simple = TRUE, method = "theoretical") {
     assert_that(is.string(process_model))
     process_model <- tolower(process_model)
     process_model <- match.arg(process_model, c("phase", "sideout"))
