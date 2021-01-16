@@ -5,8 +5,9 @@
 #' @name volleysim
 #' @docType package
 #' @importFrom assertthat assert_that is.flag is.string
-#' @importFrom dplyr across bind_rows case_when group_by lead left_join mutate n pull
+#' @importFrom dplyr bind_rows case_when group_by group_by_at lead left_join mutate n pull ungroup
 #' @importFrom rlang .data
 #' @importFrom stats na.omit runif setNames
+#' @importFrom utils packageVersion
 
 NULL

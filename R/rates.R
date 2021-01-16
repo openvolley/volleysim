@@ -51,37 +51,35 @@ vs_estimate_rates <- function(x, target_team, by = "none", moderate = TRUE) {
     temp <- dplyr::ungroup(dplyr::mutate(group_by(dplyr::filter(x, .data$skill == "Attack"), .data$match_id, .data$point_id), made_next_attack = lead(.data$team) %eq% .data$team))
     x <- dplyr::select(left_join(x, dplyr::select(temp, "made_next_attack", "ROWNUM"), by = "ROWNUM"), -"ROWNUM")
     xt <- if (!is.null(target_team)) dplyr::filter(x, .data$team == target_team) else x
-    if (!is.null(by)) xt <- group_by(xt, across(by))
-    out <- dplyr::summarize(dplyr::filter(xt, .data$skill == "Serve"), serve_ace = mean(.data$evaluation == "Ace", na.rm = TRUE),
-                            serve_error = mean(.data$evaluation == "Error", na.rm = TRUE), .groups = "drop")
+    if (!is.null(by)) xt <- if (packageVersion("dplyr") >= "1.0.0") group_by(xt, dplyr::across(by)) else group_by_at(xt, by)
+    out <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Serve"), serve_ace = mean(.data$evaluation == "Ace", na.rm = TRUE),
+                                    serve_error = mean(.data$evaluation == "Error", na.rm = TRUE)))
     ## reception set error
     f_seterr <- if (moderate) function(z) min(0.05, z) else function(z) z
-    rset <- dplyr::summarize(dplyr::filter(xt, .data$phase == "Reception" & .data$skill == "Set"), rec_set_error = f_seterr(mean(.data$evaluation == "Error", na.rm = TRUE)), .groups = "drop")
+    rset <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Reception" & .data$skill == "Set"), rec_set_error = f_seterr(mean(.data$evaluation == "Error", na.rm = TRUE))))
 
     ## reception attack
-    ratt <- dplyr::summarize(dplyr::filter(xt, .data$phase == "Reception" & .data$skill == "Attack"), rec_att_error = mean(.data$evaluation == "Error", na.rm = TRUE),
-                             rec_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE),
-                             rec_att_replayed = mean(.data$evaluation %eq% "Blocked for reattack" | .data$special_code %eq% "Block control" | .data$made_next_attack, na.rm = TRUE),
-                             .groups = "drop")
+    ratt <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Reception" & .data$skill == "Attack"), rec_att_error = mean(.data$evaluation == "Error", na.rm = TRUE),
+                                     rec_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE),
+                                     rec_att_replayed = mean(.data$evaluation %eq% "Blocked for reattack" | .data$special_code %eq% "Block control" | .data$made_next_attack, na.rm = TRUE)))
 
     ## transition set error
-    tset <- dplyr::summarize(dplyr::filter(xt, .data$phase == "Transition" & .data$skill == "Set"), trans_set_error = f_seterr(mean(.data$evaluation == "Error", na.rm = TRUE)), .groups = "drop")
+    tset <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Transition" & .data$skill == "Set"), trans_set_error = f_seterr(mean(.data$evaluation == "Error", na.rm = TRUE))))
     ## transition attack
-    tatt <- dplyr::summarize(dplyr::filter(xt, .data$phase == "Transition" & .data$skill == "Attack"), trans_att_error = mean(.data$evaluation == "Error", na.rm = TRUE),
-                             trans_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE),
-                             trans_att_replayed = mean(.data$evaluation %eq% "Blocked for reattack" | .data$special_code %eq% "Block control" | .data$made_next_attack, na.rm = TRUE),
-                             .groups = "drop")
+    tatt <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Transition" & .data$skill == "Attack"), trans_att_error = mean(.data$evaluation == "Error", na.rm = TRUE),
+                                     trans_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE),
+                                     trans_att_replayed = mean(.data$evaluation %eq% "Blocked for reattack" | .data$special_code %eq% "Block control" | .data$made_next_attack, na.rm = TRUE)))
     ## blocking
     xnt <- if (!is.null(target_team)) dplyr::filter(x, .data$opposition == target_team) else x
-    if (!is.null(by)) xnt <- group_by(xnt, across(by))
+    if (!is.null(by)) xnt <- if (packageVersion("dplyr") >= "1.0.0") group_by(xnt, dplyr::across(by)) else group_by_at(xnt, by)
 
-    so <- dplyr::summarize(dplyr::filter(xnt, .data$skill == "Serve"), sideout = mean(.data$point_won_by == .data$opposition, na.rm = TRUE), .groups = "drop")
-    rblk <- dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Reception"), N_opp_rec_att = n(),
-                                       rec_block = mean(.data$evaluation == "Blocked", na.rm = TRUE), .groups = "drop")
+    so <- ungroup(dplyr::summarize(dplyr::filter(xnt, .data$skill == "Serve"), sideout = mean(.data$point_won_by == .data$opposition, na.rm = TRUE)))
+    rblk <- ungroup(dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Reception"), N_opp_rec_att = n(),
+                                     rec_block = mean(.data$evaluation == "Blocked", na.rm = TRUE)))
     ## invasions not used yet
     ##out$rec_block_invasion <- sum(xt$evaluation == "Invasion" & xt$phase == "Reception", na.rm = TRUE)/out$N_opp_rec_att
-    tblk <- dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Transition"), N_opp_trans_att = n(),
-                             trans_block = mean(.data$evaluation == "Blocked", na.rm = TRUE), .groups = "drop")
+    tblk <- ungroup(dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Transition"), N_opp_trans_att = n(),
+                                     trans_block = mean(.data$evaluation == "Blocked", na.rm = TRUE)))
     ##out$trans_block_invasion <- sum(xt$evaluation == "Invasion" & xt$phase == "Transition", na.rm = TRUE)/out$N_opp_trans_att
 
     if (is.null(by)) {
