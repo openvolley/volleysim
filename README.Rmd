@@ -87,11 +87,6 @@ knitr::kable(rates)
 
 "My team" is due to play "Other team" in our next match. If we assume that both teams play to their season-average parameters, what outcome do we expect?
 
-```{r ex2ah, echo = FALSE}
-set.seed(112)
-
-```
-
 ```{r ex2b}
 vs_simulate_match(rates)
 
@@ -143,10 +138,6 @@ summary(x)
 ```
 
 Let's see what result we expected given the team's actual performances during the match:
-
-```{r ex3ah, echo = FALSE}
-set.seed(121)
-```
 
 ```{r ex3b}
 rates <- list(vs_estimate_rates(x, target_team = home_team(x)),

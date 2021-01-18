@@ -330,7 +330,7 @@ fb_summary <- xp %>% dplyr::filter(skill == "Reception" & team == home_team(x)) 
 fb_summary
 #> # A tibble: 3 x 5
 #>   pass_quality     N `Attack %` `Attack kill %` `FBSO%`
-#>   <chr>        <int>      <dbl>           <dbl>   <dbl>
+#> * <chr>        <int>      <dbl>           <dbl>   <dbl>
 #> 1 Error            3        0             NaN       0  
 #> 2 Other           26       61.5            18.8    11.5
 #> 3 Positive        49       87.8            41.9    36.7
