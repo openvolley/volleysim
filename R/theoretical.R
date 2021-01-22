@@ -277,23 +277,162 @@ estimate_sideout_rates <- function(serving, receiving){
     return(point_prob[1,2]) #receiving team sideout rate is what we want
 }
 
-## estimate_win_rates <- function(rates){
-##     ## estimate the theoretical chance of winning a match
+
+## given two sets of rates, construct markovchain object(s) for one or both teams
+# @param name string: the name assigned internally to the object
+# @param process_model string: "phase" is as for e.g. vs_simulate_set
+rates_to_MC <- function(rates, process_model = "phase", target_team = "each", name = "M") {
+    assert_that(is.string(process_model))
+    rates <- precheck_rates(rates, process_model = process_model)
+    if (is.numeric(target_team)) target_team <- as.character(target_team)
+    assert_that(is.string(target_team))
+    target_team <- tolower(target_team)
+    target_team <- match.arg(target_team, c("each", "1", "2"))
+    if (target_team == "each") {
+        return(list(rates_to_MC(rates, process_model = process_model, target_team = "1", name = "M1"),
+                    rates_to_MC(rates, process_model = process_model, target_team = "2", name = "M2")))
+    } else if (target_team == "2") {
+        rates <- rev(rates)
+    }
+    state_names <- switch(tolower(process_model),
+                          phase = c("SS", "SS=", "SS#", "RR", "RRE=", "RRA", "RRA=", "RRA#", "RRA/",
+                                    "RT", "ST",
+                                    "STE=", "STA", "STA=", "STA#", "STA/",
+                                    "RTE=", "RTA", "RTA=", "RTA#", "RTA/"),
+                          phase_simple = c("SS", "SS=", "SS#", ## serving team serves (SS), serve ace (S#), serve error (S=)
+                                           "RR", "RR#", "RR=", ## receiving team receives (RR), wins on reception (R#), loses on reception (R=)
+                                           "RT", "ST", ## receiving team in transition (RT), serving team in transition (ST)
+                                           "ST#", "ST=",  ## serving team wins in transition (ST#), loses in transition (ST=)
+                                           "RT#", "RT="),
+                          stop("unrecognized process_model:", process_model)
+                          )
+    M <- matrix(0, length(state_names), length(state_names))
+    colnames(M) <- rownames(M) <- state_names
+    if (process_model == "phase") {
+        M["SS", "SS="] <- rates[[1]]$serve_error
+        M["SS", "SS#"] <- rates[[1]]$serve_ace
+        M["SS", "RR"] <- 1 - sum(M["SS", ])
+        M["RR", "RRE="] <- rates[[2]]$rec_set_error
+        M["RR", "RRA"] <- 1 - rates[[2]]$rec_set_error
+        M["RRA", "RRA="] <- rates[[2]]$rec_att_error
+        M["RRA", "RRA#"] <- rates[[2]]$rec_att_kill
+        M["RRA", "RRA/"] <- rates[[1]]$rec_block
+        M["RRA", "RT"] <- rates[[2]]$rec_att_replayed
+        M["RRA", "ST"] <- 1 - sum(M["RRA", ])
+
+        M["ST", "STE="] <- rates[[1]]$trans_set_error
+        M["ST", "STA"] <- 1 - rates[[1]]$trans_set_error
+        M["STA", "STA="] <- rates[[1]]$trans_att_error
+        M["STA", "STA#"] <- rates[[1]]$trans_att_kill
+        M["STA", "STA/"] <- rates[[2]]$trans_block
+        M["STA", "ST"] <- rates[[1]]$trans_att_replayed
+        M["STA", "RT"] <- 1 - sum(M["STA", ])
+
+        M["RT", "RTE="] <- rates[[2]]$trans_set_error
+        M["RT", "RTA"] <- 1 - rates[[2]]$trans_set_error
+        M["RTA", "RTA="] <- rates[[2]]$trans_att_error
+        M["RTA", "RTA#"] <- rates[[2]]$trans_att_kill
+        M["RTA", "RTA/"] <- rates[[1]]$trans_block
+        M["RTA", "RT"] <- rates[[2]]$trans_att_replayed
+        M["RTA", "ST"] <- 1 - sum(M["RTA", ])
+    } else if (process_model == "phase_simple") {
+        M["SS", "SS="] <- rates[[1]]$serve_error
+        M["SS", "SS#"] <- rates[[1]]$serve_ace
+        M["SS", "RR"] <- 1 - sum(M["SS", ])
+        M["RR", "RR="] <- rates[[2]]$rec_set_error + (1 - rates[[2]]$rec_set_error) * (rates[[2]]$rec_att_error + rates[[1]]$rec_block)
+        M["RR", "RR#"] <- (1 - rates[[2]]$rec_set_error) * (rates[[2]]$rec_att_kill)
+        M["RR", "RT"] <- (1 - rates[[2]]$rec_set_error) * rates[[2]]$rec_att_replayed
+        M["RR", "ST"] <- 1 - sum(M["RR", ])
+
+        M["ST", "ST="] <- rates[[1]]$trans_set_error + (1 - rates[[1]]$trans_set_error) * (rates[[1]]$trans_att_error + rates[[2]]$trans_block)
+        M["ST", "ST#"] <- (1 - rates[[1]]$trans_set_error) * rates[[1]]$trans_att_kill
+        M["ST", "ST"] <- (1 - rates[[1]]$trans_set_error) * rates[[1]]$trans_att_replayed
+        M["ST", "RT"] <- 1 - sum(M["ST", ])
+
+        M["RT", "RT="] <- rates[[2]]$trans_set_error + (1 - rates[[2]]$trans_set_error) * (rates[[2]]$trans_att_error + rates[[1]]$trans_block)
+        M["RT", "RT#"] <- (1 - rates[[2]]$trans_set_error) * rates[[2]]$trans_att_kill
+        M["RT", "RT"] <- (1 - rates[[2]]$trans_set_error) * rates[[2]]$trans_att_replayed
+        M["RT", "ST"] <- 1 - sum(M["RT", ])
+    } else {
+        stop("unrecognized process_model:", process_model)
+    }
+    ## all rally-ending states become sinks
+    for (tstate in grep("[/#=]$", state_names)) M[tstate, tstate] <- 1.0
+    if (!all(rowSums(M) == 1)) stop("row sums not 1")
+    new("markovchain", states = state_names, transitionMatrix = M, name = name)
+}
+
+## MM <- rates_to_MC(rates, process_model = "phase")
+## plot(MM[[1]])
+
+MC_sideout_rates <- function(servingM, receivingM) {
+    if (is.list(servingM) && length(servingM) == 2 & all(vapply(servingM, inherits, "markovchain", FUN.VALUE = TRUE))) {
+        receivingM <- servingM[[2]]
+        servingM <- servingM[[1]]
+    }
+    winR_states <- states(servingM)[grepl("^S.*[=/]$", states(servingM)) | grepl("^R.*#$", states(servingM))]
+    sum(absorptionProbabilities(servingM)[1, winR_states])
+}
+
+## given the team markovchain objects, construct the serve-sideout-breakpoint markovchain
+MC2MCP <- function(M1, M2) {
+    if (is.list(M1) && length(M1) == 2 & all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
+        M2 <- M1[[2]]
+        M1 <- M1[[1]]
+    }
+    ## take per-team MC matrices, calculate sideout and breakpoint rates, and create that MC object
+    ## sideout rates
+    ##so <- c(absorptionProbabilities(M2)[1, 2], absorptionProbabilities(M1)[1, 2])
+    winR_states <- states(M1)[grepl("^S.*[=/]$", states(M1)) | grepl("^R.*#$", states(M1))]
+    winS_states <- states(M1)[grepl("^S.*#$", states(M1)) | grepl("^R.*[=/]$", states(M1))]
+    so <- c(sum(absorptionProbabilities(M2)[1, winR_states]), sum(absorptionProbabilities(M1)[1, winR_states]))
+
+    state_names <- c("1S", "1BP", "2SO", "2S", "2BP", "1SO")
+    MM <- matrix(0, length(state_names), length(state_names))
+    colnames(MM) <- rownames(MM) <- state_names
+    MM["1S", "2SO"] <- so[2] ## team 1 serves, team 2 sides out
+    MM["1S", "1BP"] <- 1 - so[2] ## team 1 serves, team 1 wins breakpoint
+    MM["2S", "1SO"] <- so[1] ## team 2 serves, team 1 sides out
+    MM["2S", "2BP"] <- 1 - so[1] ## team 2 serves, team 2 wins breakpoint
+    MM["2SO", "2S"] <- MM["2BP", "2S"] <- MM["1SO", "1S"] <- MM["1BP", "1S"] <- 1.0
+    new("markovchain", states = state_names, transitionMatrix = MM, name = "MMP")
+}
+
+## relative proportion of serves by each team
+MCP_serve_proportions <- function(MMP) {
+    if (markovchain::name(MMP) != "MMP") stop("MMP needs to be a markovchain object as returned by MC2MCP")
+    sprop <- steadyStates(MMP)[1, c("1S", "2S")]
+    sprop/sum(sprop)
+}
+
+MC_to_points_breakdown <- function(M1, M2) {
+    if (is.list(M1) && length(M1) == 2 & all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
+        M2 <- M1[[2]]
+        M1 <- M1[[1]]
+    }
+    list(do_MC_to_points_breakdown(M1, M2), do_MC_to_points_breakdown(M2, M1))
+}
+do_MC_to_points_breakdown <- function(M1, M2) {
+    stopifnot(identical(states(M1), states(M2)))
+    winR_states <- states(M1)[grepl("^S.*[=/]$", states(M1)) | grepl("^R.*#$", states(M1))]
+    winS_states <- states(M1)[grepl("^S.*#$", states(M1)) | grepl("^R.*[=/]$", states(M1))]
+    ## points won by team 1
+    sprop <- MCP_serve_proportions(MC2MCP(M1, M2))
+    T1points <- c(absorptionProbabilities(M1)[1, winS_states]*sprop[1], absorptionProbabilities(M2)[1, winR_states]*sprop[2])
+    T1points <- T1points/sum(T1points)
+    names(T1points) <- substr(names(T1points), 2, 4)
+    temp <- list()
+    for (uu in unique(names(T1points))) temp[[uu]] <- sum(T1points[names(T1points) == uu])
+    temp <- unlist(temp)
+    data.frame(prop = temp, outcome = states2words(names(temp)), stringsAsFactors = FALSE)
+}
+states2words <- function(s) {
+    remap <- c("RA/" = "Rec attack block", "RA=" = "Rec attack error", "RA#" = "Rec attack kill", "S#" = "Serve ace", "S=" = "Serve error", "TA/" = "Trans attack block", "TA=" = "Trans attack error", "TA#" = "Trans attack kill", "TE=" = "Trans set error", "RE=" = "Rec set error", "R=" = "Rec loss", "R#" = "Rec win", "T=" = "Trans loss", "T#" = "Trans win")
+    for (us in na.omit(unique(s))) if (us %in% names(remap)) s[which(s == us)] <- remap[names(remap) == us]
+    s
+}
+## ## compare to monte carlo sim results
+## sim_result <- vs_simulate_match(rates = rates, n = 5e3, method = "monte carlo", simple = FALSE)
+## chk <- sim_result$simres14 %>% group_by(point_won_by) %>% count(outcome) %>% mutate(n = n/sum(n)) %>% ungroup 
 ## 
-##     ## it looks like the vs_simulate_match function can take a tibble or a list, so we need both as well
-##     ## rates is a tibble or list as shown like the volleysim examples
-##     
-##     ## Step 1: estimate sideout rates from rate stats
-##     if(data.class(rates) == "list"){
-##         so1 <- estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]])
-##         so2 <- estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]])
-##     } else {
-##         if(data.class(rates) %in% c("data.frame", "tbl_df")){
-##             so1 <- estimate_sideout_rates(serving = rates[2,], receiving = rates[1,])
-##             so2 <- estimate_sideout_rates(serving = rates[1,], receiving = rates[2,])
-##         }
-##     }
-##     
-##     ## Step 2: feed the sideout rates into the theoretical model and get win probabilities out
-##     win_probabilities_theoretical(c(so1, so2))
-## }
+## chk %>% dplyr::filter(point_won_by == 1) %>% left_join(temp, by = "outcome")

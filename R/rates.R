@@ -100,7 +100,7 @@ vs_estimate_rates <- function(x, target_team, by = "none", moderate = TRUE) {
 ## convert df to list
 precheck_rates <- function(rates, process_model = "sideout") {
     assert_that(is.string(process_model))
-    process_model <- match.arg(tolower(process_model), c("phase", "sideout"))
+    process_model <- match.arg(tolower(process_model), c("phase", "sideout", "phase_simple"))
     if (is.data.frame(rates)) {
         ## convert to two-element list, if we can
         if ("team" %in% names(rates) && length(unique(na.omit(rates$team))) == 2) {
@@ -114,7 +114,14 @@ precheck_rates <- function(rates, process_model = "sideout") {
     if (is.data.frame(rates[[1]])) rates[[1]] <- as.list(rates[[1]])
     if (is.data.frame(rates[[2]])) rates[[2]] <- as.list(rates[[2]])
     ## make sure that all elements are present
-    expected <- if (process_model == "phase") c("serve_ace", "serve_error", "rec_set_error", "rec_att_error", "rec_att_kill", "rec_att_replayed", "trans_set_error", "trans_att_error", "trans_att_kill", "trans_att_replayed", "rec_block", "trans_block") else "sideout"
+    if (process_model == "phase") {
+        expected <- c("serve_ace", "serve_error", "rec_set_error", "rec_att_error", "rec_att_kill", "rec_att_replayed", "trans_set_error", "trans_att_error", "trans_att_kill", "trans_att_replayed", "rec_block", "trans_block")
+    } else if (process_model == "phase_simple") {
+        ## TODO simplify
+        expected <- c("serve_ace", "serve_error", "rec_set_error", "rec_att_error", "rec_att_kill", "rec_att_replayed", "trans_set_error", "trans_att_error", "trans_att_kill", "trans_att_replayed", "rec_block", "trans_block")
+    } else {
+        expected <- "sideout"
+    }
     if (!all(expected %in% names(rates[[1]]))) stop("team 1 rates missing at least one parameter: ", paste(setdiff(expected, names(rates[[1]])), collapse = ", "))
     if (!all(expected %in% names(rates[[2]]))) stop("team 2 rates missing at least one parameter: ", paste(setdiff(expected, names(rates[[2]])), collapse = ", "))
     rates
