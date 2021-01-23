@@ -23,7 +23,7 @@ vs_simulate_match_theor(...)
 \arguments{
 \item{rates}{list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}}
 
-\item{process_model}{string: either "sideout" or "phase". Details TBD}
+\item{process_model}{string: either "sideout", "phase", or "phase_simple". Details TBD}
 
 \item{serving}{logical: if \code{TRUE}, team 1 will serve first in the match. If \code{NA}, the team serving first will be chosen at random}
 

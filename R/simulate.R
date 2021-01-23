@@ -7,8 +7,8 @@
 #' * `team_2_score` - the score of team 2 at each point in the set so far
 #' * `serving` - the serving team 1 or 2 at each point in the set so far
 #' * `point_won_by` - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
-#' * `outcome` - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if `process_model` is "sideout", or details TBD if `process_model` is "phase"
-#' @param process_model string: either "sideout" or "phase". Details TBD
+#' * `outcome` - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if `process_model` is "sideout", or details TBD if `process_model` is "phase" or "phase_simple"
+#' @param process_model string: either "sideout", "phase", or "phase_simple". Details TBD
 #' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
 #' @param simple logical: if `TRUE`, return simplified output. Only applicable to `method` "monte carlo". If `simple = TRUE`, return the team (1 or 2) that won the set. If `simple = FALSE`, return extra details in a data.frame
@@ -65,7 +65,6 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
     assert_that(is.string(method))
     method <- tolower(method)
     method <- match.arg(method, c("monte carlo", "theoretical"))
-    if (method == "monte carlo" && process_model == "phase_simple") stop("'phase_simple' process_model not implemented for method 'monte carlo' yet")
     rates <- precheck_rates(rates, process_model = process_model)
     sim_fun <- if (method == "monte carlo") do_sim_set_mc else do_sim_set_theor
     sim_fun(rates = rates, process_model = process_model, serving = serving, go_to = go_to, simple = simple, id = id)
@@ -89,7 +88,7 @@ do_sim_set_theor <- function(rates, process_model, serving, go_to, simple, id) {
         ## if process_model == "sideout", use the observed sideout rates directly
         so <- c(rates[[1]]$sideout, rates[[2]]$sideout)
     } else {
-        ## if process_model == "phase" then we use the per-action rates
+        ## if process_model is "phase" or "phase_simple" then we use the per-action rates
         ## sideout rates need to be estimated from Markov chain model
         so <- vs_theoretical_sideout_rates(rates, process_model = process_model)
     }
@@ -153,80 +152,127 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
                 lost_serve <- TRUE
                 outcome[ptr] <- "Serve error"
             } else {
-                ## rec phase by non-serving (other) team
-                if (tm2_prandf() <= rec_tm_rates$rec_set_error) {
-                    lost_serve <- FALSE
-                    outcome[ptr] <- "Rec set error"
-                } else {
-                    temp <- c(rec_tm_rates$rec_att_kill, rec_tm_rates$rec_att_error, srv_tm_rates$rec_block, rec_tm_rates$rec_att_replayed)
-                    if (sum(temp) > 1) stop("The reception-phase attack probabilities sum to more than 1")
-                    ra_outc <- sum(tm2_prandf() <= cumsum(temp))
-                    if (ra_outc == 4) {
+                if (process_model == "phase_simple") {
+                    temp <- c(rec_tm_rates$rec_win, rec_tm_rates$rec_loss, rec_tm_rates$rec_replayed)
+                    if (sum(temp) > 1) stop("The reception-phase probabilities sum to more than 1")
+                    r_outc <- sum(tm2_prandf() <= cumsum(temp))
+                    if (r_outc == 3) {
                         lost_serve <- TRUE
-                        outcome[ptr] <- "Rec attack kill"
-                    } else if (ra_outc == 3) {
+                        outcome[ptr] <- "Rec win"
+                    } else if (r_outc == 2) {
                         lost_serve <- FALSE
-                        outcome[ptr] <- "Rec attack error"
-                    } else if (ra_outc == 2) {
-                        lost_serve <- FALSE
-                        outcome[ptr] <- "Rec attack block"
+                        outcome[ptr] <- "Rec win"
                     } else {
-                        ## transition - iterate back and forth between teams until someone wins the point
-                        ## tptr is the team currently in transition, 1 = serving team, 2 = receiving team
-                        if (ra_outc == 1) {
-                            ## replayed, so next attack (first transition attack) is also by receiving team
-                            tptr <- 2L
-                        } else {
-                            tptr <- 1L ## serving team gets first transition attack opportunity
-                        }
+                        tptr <- 1L + (r_outc == 1) ## if replayed, first transition attack is by receiving team
                         lost_serve <- NA
                         while (is.na(lost_serve)) {
                             if (tptr < 2) {
-                                if (tm1_prandf() <= srv_tm_rates$trans_set_error) {
+                                temp <- c(srv_tm_rates$trans_win, srv_tm_rates$trans_loss, srv_tm_rates$trans_replayed)
+                                if (sum(temp) > 1) stop("The serving team transition-phase probabilities sum to more than 1")
+                                t_outc <- sum(tm1_prandf() <= cumsum(temp))
+                                if (t_outc == 3) {
+                                    lost_serve <- FALSE
+                                    outcome[ptr] <- "Trans win"
+                                } else if (t_outc == 2) {
                                     lost_serve <- TRUE
-                                    outcome[ptr] <- "Trans set error"
-                                    ta_outc <- -1
-                                } else {
-                                    temp <- c(srv_tm_rates$trans_att_kill, srv_tm_rates$trans_att_error, rec_tm_rates$trans_block, srv_tm_rates$trans_att_replayed)
-                                    if (sum(temp) > 1) stop("The transition-phase attack probabilities sum to more than 1")
-                                    ta_outc <- sum(tm1_prandf() <= cumsum(temp))
-                                    if (ta_outc == 4) {
-                                        lost_serve <- FALSE
-                                        outcome[ptr] <- "Trans attack kill"
-                                    } else if (ta_outc == 3) {
-                                        lost_serve <- TRUE
-                                        outcome[ptr] <- "Trans attack error"
-                                    } else if (ta_outc == 2) {
-                                        lost_serve <- TRUE
-                                        outcome[ptr] <- "Trans attack block"
-                                    }
+                                    outcome[ptr] <- "Trans loss"
                                 }
                             } else {
-                                if (tm2_prandf() <= rec_tm_rates$trans_set_error) {
+                                temp <- c(rec_tm_rates$trans_win, rec_tm_rates$trans_loss, rec_tm_rates$trans_replayed)
+                                if (sum(temp) > 1) stop("The receiving team transition-phase probabilities sum to more than 1")
+                                t_outc <- sum(tm2_prandf() <= cumsum(temp))
+                                if (t_outc == 3) {
+                                    lost_serve <- TRUE
+                                    outcome[ptr] <- "Trans win"
+                                } else if (t_outc == 2) {
                                     lost_serve <- FALSE
-                                    outcome[ptr] <- "Trans set error"
-                                    ta_outc <- -1
-                                } else {
-                                    temp <- c(rec_tm_rates$trans_att_kill, rec_tm_rates$trans_att_error, srv_tm_rates$trans_block, rec_tm_rates$trans_att_replayed)
-                                    if (sum(temp) > 1) stop("The transition-phase attack probabilities sum to more than 1")
-                                    ta_outc <- sum(tm2_prandf() <= cumsum(temp))
-                                    if (ta_outc == 4) {
-                                        lost_serve <- TRUE
-                                        outcome[ptr] <- "Trans attack kill"
-                                    } else if (ta_outc == 3) {
-                                        lost_serve <- FALSE
-                                        outcome[ptr] <- "Trans attack error"
-                                    } else if (ta_outc == 2) {
-                                        lost_serve <- FALSE
-                                        outcome[ptr] <- "Trans attack block"
-                                    }
+                                    outcome[ptr] <- "Trans loss"
                                 }
                             }
-                            if (ta_outc == 1) {
+                            if (t_outc == 1) {
                                 ## attack replayed, so same team gets another transition attack opportunity
                                 ## tptr remains the same
                             } else {
                                 tptr <- 3L - tptr ## other team now in transition attack phase
+                            }
+                        }
+                    }
+                } else {
+                    ## rec phase by non-serving (other) team
+                    if (tm2_prandf() <= rec_tm_rates$rec_set_error) {
+                        lost_serve <- FALSE
+                        outcome[ptr] <- "Rec set error"
+                    } else {
+                        temp <- c(rec_tm_rates$rec_att_kill, rec_tm_rates$rec_att_error, srv_tm_rates$rec_block, rec_tm_rates$rec_att_replayed)
+                        if (sum(temp) > 1) stop("The reception-phase attack probabilities sum to more than 1")
+                        ra_outc <- sum(tm2_prandf() <= cumsum(temp))
+                        if (ra_outc == 4) {
+                            lost_serve <- TRUE
+                            outcome[ptr] <- "Rec attack kill"
+                        } else if (ra_outc == 3) {
+                            lost_serve <- FALSE
+                            outcome[ptr] <- "Rec attack error"
+                        } else if (ra_outc == 2) {
+                            lost_serve <- FALSE
+                            outcome[ptr] <- "Rec attack block"
+                        } else {
+                            ## transition - iterate back and forth between teams until someone wins the point
+                            ## tptr is the team currently in transition, 1 = serving team, 2 = receiving team
+                            if (ra_outc == 1) {
+                                ## replayed, so next attack (first transition attack) is also by receiving team
+                                tptr <- 2L
+                            } else {
+                                tptr <- 1L ## serving team gets first transition attack opportunity
+                            }
+                            lost_serve <- NA
+                            while (is.na(lost_serve)) {
+                                if (tptr < 2) {
+                                    if (tm1_prandf() <= srv_tm_rates$trans_set_error) {
+                                        lost_serve <- TRUE
+                                        outcome[ptr] <- "Trans set error"
+                                        ta_outc <- -1
+                                    } else {
+                                        temp <- c(srv_tm_rates$trans_att_kill, srv_tm_rates$trans_att_error, rec_tm_rates$trans_block, srv_tm_rates$trans_att_replayed)
+                                        if (sum(temp) > 1) stop("The transition-phase attack probabilities sum to more than 1")
+                                        ta_outc <- sum(tm1_prandf() <= cumsum(temp))
+                                        if (ta_outc == 4) {
+                                            lost_serve <- FALSE
+                                            outcome[ptr] <- "Trans attack kill"
+                                        } else if (ta_outc == 3) {
+                                            lost_serve <- TRUE
+                                            outcome[ptr] <- "Trans attack error"
+                                        } else if (ta_outc == 2) {
+                                            lost_serve <- TRUE
+                                            outcome[ptr] <- "Trans attack block"
+                                        }
+                                    }
+                                } else {
+                                    if (tm2_prandf() <= rec_tm_rates$trans_set_error) {
+                                        lost_serve <- FALSE
+                                        outcome[ptr] <- "Trans set error"
+                                        ta_outc <- -1
+                                    } else {
+                                        temp <- c(rec_tm_rates$trans_att_kill, rec_tm_rates$trans_att_error, srv_tm_rates$trans_block, rec_tm_rates$trans_att_replayed)
+                                        if (sum(temp) > 1) stop("The transition-phase attack probabilities sum to more than 1")
+                                        ta_outc <- sum(tm2_prandf() <= cumsum(temp))
+                                        if (ta_outc == 4) {
+                                            lost_serve <- TRUE
+                                            outcome[ptr] <- "Trans attack kill"
+                                        } else if (ta_outc == 3) {
+                                            lost_serve <- FALSE
+                                            outcome[ptr] <- "Trans attack error"
+                                        } else if (ta_outc == 2) {
+                                            lost_serve <- FALSE
+                                            outcome[ptr] <- "Trans attack block"
+                                        }
+                                    }
+                                }
+                                if (ta_outc == 1) {
+                                    ## attack replayed, so same team gets another transition attack opportunity
+                                    ## tptr remains the same
+                                } else {
+                                    tptr <- 3L - tptr ## other team now in transition attack phase
+                                }
                             }
                         }
                     }
@@ -301,7 +347,7 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
 #' Currently hard-coded to indoor, best-of-5-set scoring.
 #'
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`
-#' @param process_model string: either "sideout" or "phase". Details TBD
+#' @param process_model string: either "sideout", "phase", or "phase_simple". Details TBD
 #' @param serving logical: if `TRUE`, team 1 will serve first in the match. If `NA`, the team serving first will be chosen at random
 #' @param serving5 logical: if `TRUE`, team 1 will serve first in set 5 (if the match gets that far). If `NA`, the team serving first in set 5 will be chosen at random
 #' @param n integer: the number of simulations to run
@@ -330,7 +376,7 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
 vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, n = 2000, simple = TRUE, method = "theoretical") {
     assert_that(is.string(process_model))
     process_model <- tolower(process_model)
-    process_model <- match.arg(process_model, c("phase", "sideout"))
+    process_model <- match.arg(process_model, c("phase", "sideout", "phase_simple"))
     assert_that(is.flag(simple), !is.na(simple))
     rates <- precheck_rates(rates, process_model = process_model)
     sim_fun <- if (method == "monte carlo") do_sim_match_mc else do_sim_match_theor
@@ -393,7 +439,7 @@ do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simpl
         ## if process_model == "sideout", use the observed sideout rates directly
         so <- c(rates[[1]]$sideout, rates[[2]]$sideout)
     } else {
-        ## if process_model == "phase" then we use the per-action rates
+        ## if process_model is "phase" or "phase_simple" then we use the per-action rates
         ## sideout rates need to be estimated from Markov chain model
         ##so <- c(estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]]),
         ##        estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]]))

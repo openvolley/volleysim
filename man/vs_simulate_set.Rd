@@ -27,10 +27,10 @@ vs_simulate_set_theor(...)
 \item \code{team_2_score} - the score of team 2 at each point in the set so far
 \item \code{serving} - the serving team 1 or 2 at each point in the set so far
 \item \code{point_won_by} - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
-\item \code{outcome} - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if \code{process_model} is "sideout", or details TBD if \code{process_model} is "phase"
+\item \code{outcome} - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if \code{process_model} is "sideout", or details TBD if \code{process_model} is "phase" or "phase_simple"
 }}
 
-\item{process_model}{string: either "sideout" or "phase". Details TBD}
+\item{process_model}{string: either "sideout", "phase", or "phase_simple". Details TBD}
 
 \item{serving}{logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random}
 
