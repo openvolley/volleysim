@@ -412,26 +412,33 @@ MC_to_points_breakdown <- function(M1, M2) {
         M2 <- M1[[2]]
         M1 <- M1[[1]]
     }
-    list(do_MC_to_points_breakdown(M1, M2), do_MC_to_points_breakdown(M2, M1))
+    out <- do_MC_to_points_breakdown(M1, M2, this_team = 1L)
+    out2 <- do_MC_to_points_breakdown(M2, M1, this_team = 2L)
+    rbind(out, out2)
 }
-do_MC_to_points_breakdown <- function(M1, M2) {
+do_MC_to_points_breakdown <- function(M1, M2, this_team) {
     stopifnot(identical(states(M1), states(M2)))
     winR_states <- states(M1)[grepl("^S.*[=/]$", states(M1)) | grepl("^R.*#$", states(M1))]
     winS_states <- states(M1)[grepl("^S.*#$", states(M1)) | grepl("^R.*[=/]$", states(M1))]
-    ## points won by team 1
+    ## relative number of serves by team
     sprop <- MCP_serve_proportions(MC2MCP(M1, M2))
-    T1points <- c(absorptionProbabilities(M1)[1, winS_states]*sprop[1], absorptionProbabilities(M2)[1, winR_states]*sprop[2])
+    ## points won by team 1, scaled by their serve proportion
+    T1points <- c(absorptionProbabilities(M1)[1, winS_states] * sprop[1], absorptionProbabilities(M2)[1, winR_states] * sprop[2])
     T1points <- T1points/sum(T1points)
     names(T1points) <- substr(names(T1points), 2, 4)
     temp <- list()
     for (uu in unique(names(T1points))) temp[[uu]] <- sum(T1points[names(T1points) == uu])
     temp <- unlist(temp)
-    data.frame(prop = temp, outcome = states2words(names(temp)), stringsAsFactors = FALSE)
+    out <- data.frame(point_won_by = this_team, outcome = states_to_factor(names(temp)), proportion = unname(temp), stringsAsFactors = FALSE)
+    out <- out[order(out$outcome), ]
+    out$outcome <- as.character(out$outcome)
+    rownames(out) <- NULL
+    out
 }
-states2words <- function(s) {
-    remap <- c("RA/" = "Rec attack block", "RA=" = "Rec attack error", "RA#" = "Rec attack kill", "S#" = "Serve ace", "S=" = "Serve error", "TA/" = "Trans attack block", "TA=" = "Trans attack error", "TA#" = "Trans attack kill", "TE=" = "Trans set error", "RE=" = "Rec set error", "R=" = "Rec loss", "R#" = "Rec win", "T=" = "Trans loss", "T#" = "Trans win")
+states_to_factor <- function(s) {
+    remap <- c("S=" = "Serve error", "S#" = "Serve ace", "RE=" = "Rec set error", "RA=" = "Rec attack error", "RA/" = "Rec attack block", "RA#" = "Rec attack kill", "R=" = "Rec loss", "R#" = "Rec win", "TE=" = "Trans set error", "TA=" = "Trans attack error", "TA#" = "Trans attack kill", "TA/" = "Trans attack block", "T=" = "Trans loss", "T#" = "Trans win")
     for (us in na.omit(unique(s))) if (us %in% names(remap)) s[which(s == us)] <- remap[names(remap) == us]
-    s
+    factor(s, levels = remap)
 }
 ## ## compare to monte carlo sim results
 ## sim_result <- vs_simulate_match(rates = rates, n = 5e3, method = "monte carlo", simple = FALSE)

@@ -449,6 +449,7 @@ do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simpl
     if (isTRUE(simple)) {
         out$result_probabilities
     } else {
+        out$points_breakdown <- MC_to_points_breakdown(rates_to_MC(rates, process_model = process_model))
         out
     }
 }
