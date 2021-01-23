@@ -4,10 +4,12 @@
 \alias{vs_theoretical_sideout_rates}
 \title{Estimate theoretical sideout rates given 'phase' parameters}
 \usage{
-vs_theoretical_sideout_rates(rates)
+vs_theoretical_sideout_rates(rates, process_model = "phase")
 }
 \arguments{
 \item{rates}{list: rates as returned by \code{\link[=vs_estimate_rates]{vs_estimate_rates()}}}
+
+\item{process_model}{string: "phase" or "phase_simple"}
 }
 \value{
 The theoretical sideout rates of the two teams

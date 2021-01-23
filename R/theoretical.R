@@ -201,8 +201,7 @@ win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = 
     return(list(team_serve = m$s.matrix, opponent_serve = m$o.matrix,
                 start_serve_set1_wins = s.wins, opponent_serve_set1_wins = o.wins,
                 result_probabilities = results))
-    
-} 
+}
 
 
 #' Estimate theoretical sideout rates given 'phase' parameters
@@ -210,6 +209,7 @@ win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = 
 #' The [vs_estimate_rates()] function returns a team's performance rates across a range of aspects of play, including serve ace rate, serve error rate, and so on. Using [vs_theoretical_sideout_rates()] We can estimate the theoretical sideout rate that we would expect to see, given those parameters. This can be compared to the actual sideout rate achieved by the team.
 #'
 #' @param rates list: rates as returned by [vs_estimate_rates()]
+#' @param process_model string: "phase" or "phase_simple"
 #'
 #' @return The theoretical sideout rates of the two teams
 #'
@@ -229,11 +229,14 @@ win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = 
 #'   c(rates[[1]]$sideout, rates[[2]]$sideout)
 #'}
 #' @export
-vs_theoretical_sideout_rates <- function(rates) {
-    c(estimate_sideout_rates(rates[[2]], rates[[1]]), estimate_sideout_rates(rates[[1]], rates[[2]]))
+vs_theoretical_sideout_rates <- function(rates, process_model = "phase") {
+    ##c(estimate_sideout_rates(rates[[2]], rates[[1]]), estimate_sideout_rates(rates[[1]], rates[[2]]))
+    MM <- rates_to_MC(rates, process_model = process_model, target_team = "each")
+    c(MC_sideout_rates(rev(MM)), MC_sideout_rates(MM))
 }
 
 
+## no longer used internally, see MC_sideout_rates
 estimate_sideout_rates <- function(serving, receiving){
 
     ## estimate sideout probabilities from rate stats using terminating Markov chain theory
@@ -339,26 +342,25 @@ rates_to_MC <- function(rates, process_model = "phase", target_team = "each", na
         M["SS", "SS="] <- rates[[1]]$serve_error
         M["SS", "SS#"] <- rates[[1]]$serve_ace
         M["SS", "RR"] <- 1 - sum(M["SS", ])
-        M["RR", "RR="] <- rates[[2]]$rec_set_error + (1 - rates[[2]]$rec_set_error) * (rates[[2]]$rec_att_error + rates[[1]]$rec_block)
-        M["RR", "RR#"] <- (1 - rates[[2]]$rec_set_error) * (rates[[2]]$rec_att_kill)
-        M["RR", "RT"] <- (1 - rates[[2]]$rec_set_error) * rates[[2]]$rec_att_replayed
+        M["RR", "RR="] <- rates[[2]]$rec_loss
+        M["RR", "RR#"] <- rates[[2]]$rec_win
+        M["RR", "RT"] <- rates[[2]]$rec_replayed
         M["RR", "ST"] <- 1 - sum(M["RR", ])
 
-        M["ST", "ST="] <- rates[[1]]$trans_set_error + (1 - rates[[1]]$trans_set_error) * (rates[[1]]$trans_att_error + rates[[2]]$trans_block)
-        M["ST", "ST#"] <- (1 - rates[[1]]$trans_set_error) * rates[[1]]$trans_att_kill
-        M["ST", "ST"] <- (1 - rates[[1]]$trans_set_error) * rates[[1]]$trans_att_replayed
+        M["ST", "ST="] <- rates[[1]]$trans_loss
+        M["ST", "ST#"] <- rates[[1]]$trans_win
+        M["ST", "ST"] <- rates[[1]]$trans_replayed
         M["ST", "RT"] <- 1 - sum(M["ST", ])
 
-        M["RT", "RT="] <- rates[[2]]$trans_set_error + (1 - rates[[2]]$trans_set_error) * (rates[[2]]$trans_att_error + rates[[1]]$trans_block)
-        M["RT", "RT#"] <- (1 - rates[[2]]$trans_set_error) * rates[[2]]$trans_att_kill
-        M["RT", "RT"] <- (1 - rates[[2]]$trans_set_error) * rates[[2]]$trans_att_replayed
+        M["RT", "RT="] <- rates[[2]]$trans_loss
+        M["RT", "RT#"] <- rates[[2]]$trans_win
+        M["RT", "RT"] <- rates[[2]]$trans_replayed
         M["RT", "ST"] <- 1 - sum(M["RT", ])
     } else {
         stop("unrecognized process_model:", process_model)
     }
     ## all rally-ending states become sinks
     for (tstate in grep("[/#=]$", state_names)) M[tstate, tstate] <- 1.0
-    if (!all(rowSums(M) == 1)) stop("row sums not 1")
     new("markovchain", states = state_names, transitionMatrix = M, name = name)
 }
 
@@ -366,7 +368,7 @@ rates_to_MC <- function(rates, process_model = "phase", target_team = "each", na
 ## plot(MM[[1]])
 
 MC_sideout_rates <- function(servingM, receivingM) {
-    if (is.list(servingM) && length(servingM) == 2 & all(vapply(servingM, inherits, "markovchain", FUN.VALUE = TRUE))) {
+    if (is.list(servingM) && length(servingM) == 2 && all(vapply(servingM, inherits, "markovchain", FUN.VALUE = TRUE))) {
         receivingM <- servingM[[2]]
         servingM <- servingM[[1]]
     }
@@ -376,7 +378,7 @@ MC_sideout_rates <- function(servingM, receivingM) {
 
 ## given the team markovchain objects, construct the serve-sideout-breakpoint markovchain
 MC2MCP <- function(M1, M2) {
-    if (is.list(M1) && length(M1) == 2 & all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
+    if (is.list(M1) && length(M1) == 2 && all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
         M2 <- M1[[2]]
         M1 <- M1[[1]]
     }
@@ -406,7 +408,7 @@ MCP_serve_proportions <- function(MMP) {
 }
 
 MC_to_points_breakdown <- function(M1, M2) {
-    if (is.list(M1) && length(M1) == 2 & all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
+    if (is.list(M1) && length(M1) == 2 && all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
         M2 <- M1[[2]]
         M1 <- M1[[1]]
     }

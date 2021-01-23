@@ -58,24 +58,15 @@
 vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, simple = FALSE, id = NULL, method = "theoretical") {
     assert_that(is.string(process_model))
     process_model <- tolower(process_model)
-    process_model <- match.arg(process_model, c("phase", "sideout"))
+    process_model <- match.arg(process_model, c("phase", "sideout", "phase_simple"))
     assert_that(is.flag(simple), !is.na(simple))
     if (missing(serving) || is.na(serving)) serving <- runif(1) > 0.5 ## random
     assert_that(is.flag(serving), !is.na(serving))
     assert_that(is.string(method))
     method <- tolower(method)
     method <- match.arg(method, c("monte carlo", "theoretical"))
+    if (method == "monte carlo" && process_model == "phase_simple") stop("'phase_simple' process_model not implemented for method 'monte carlo' yet")
     rates <- precheck_rates(rates, process_model = process_model)
-    if (process_model == "sideout") {
-        if (is.null(rates[[1]]$sideout) || is.null(rates[[2]]$sideout)) {
-            stop("one or both rates are missing their 'sideout' component")
-        }
-    } else {
-        rnms <- c("serve_ace", "serve_error", "rec_set_error", "rec_att_error", "rec_att_kill", "rec_block", "trans_set_error", "trans_att_error", "trans_att_kill", "trans_block")
-        if (!all(rnms %in% names(rates[[1]])) || !all(rnms %in% names(rates[[2]]))) {
-            stop("one or both rates are missing a required component (required: ", paste(rnms, collapse = ", "), ")")
-        }
-    }
     sim_fun <- if (method == "monte carlo") do_sim_set_mc else do_sim_set_theor
     sim_fun(rates = rates, process_model = process_model, serving = serving, go_to = go_to, simple = simple, id = id)
 }
@@ -94,7 +85,15 @@ vs_simulate_set_theor <- function(...) {
 
 do_sim_set_theor <- function(rates, process_model, serving, go_to, simple, id) {
     if (go_to < 1 | go_to > 25) stop("go_to must be between 1 and 25 inclusive")
-    m <- set_win_probabilities_theoretical(c(rates[[1]]$sideout, rates[[2]]$sideout))
+    if (process_model == "sideout") {
+        ## if process_model == "sideout", use the observed sideout rates directly
+        so <- c(rates[[1]]$sideout, rates[[2]]$sideout)
+    } else {
+        ## if process_model == "phase" then we use the per-action rates
+        ## sideout rates need to be estimated from Markov chain model
+        so <- vs_theoretical_sideout_rates(rates, process_model = process_model)
+    }
+    m <- set_win_probabilities_theoretical(so)
     if (isTRUE(serving)) {
         m$s.matrix[26-go_to, 26-go_to]
     } else {
@@ -392,15 +391,15 @@ do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simpl
     ## rates is a list
     if (process_model == "sideout") {
         ## if process_model == "sideout", use the observed sideout rates directly
-        so1 <- rates[[1]]$sideout
-        so2 <- rates[[2]]$sideout
+        so <- c(rates[[1]]$sideout, rates[[2]]$sideout)
     } else {
         ## if process_model == "phase" then we use the per-action rates
         ## sideout rates need to be estimated from Markov chain model
-        so1 <- estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]])
-        so2 <- estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]])
+        ##so <- c(estimate_sideout_rates(serving = rates[[2]], receiving = rates[[1]]),
+        ##        estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]]))
+        so <- vs_theoretical_sideout_rates(rates, process_model = process_model)
     }
-    out <- win_probabilities_theoretical(c(so1, so2), serve1_start = serving, serve5_start = serving5)
+    out <- win_probabilities_theoretical(so, serve1_start = serving, serve5_start = serving5)
     if (isTRUE(simple)) {
         out$result_probabilities
     } else {
