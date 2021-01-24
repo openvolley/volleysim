@@ -4,7 +4,13 @@
 \alias{vs_estimate_rates}
 \title{Estimate parameters required for simulation}
 \usage{
-vs_estimate_rates(x, target_team, by = "none", moderate = TRUE)
+vs_estimate_rates(
+  x,
+  target_team,
+  by = "none",
+  moderate = TRUE,
+  process_model = "all"
+)
 }
 \arguments{
 \item{x}{datavolleyplays: the plays component of a datavolley object as returned by \code{\link[datavolley:read_dv]{datavolley::dv_read()}}}
@@ -17,6 +23,8 @@ vs_estimate_rates(x, target_team, by = "none", moderate = TRUE)
 \itemize{
 \item setting error rates are limited to a maximum of 5\%. Some scouts do not include setting actions, except where they are errors or otherwise exceptional, which can lead to unrealistic estimates of setting error rates
 }}
+
+\item{process_model}{string: estimate the rates required for which process model? Either "sideout", "phase", "phase_simple", or "all"}
 }
 \value{
 A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, rec_att_replayed, trans_set_error, trans_att_error, trans_att_kill, trans_att_replayed, rec_block, and trans_block, plus (if \code{by} is "match") match_id and (if \code{by} is "set") set_number and (if \code{target_team} is "each") "team"

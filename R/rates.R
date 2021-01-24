@@ -5,6 +5,7 @@
 #' @param by string: grouping to calculate rates by. Either "none" (calculate whole-data set rates), "match" (by match), or "set" (by match and set)
 #' @param moderate logical: if `TRUE`, apply some checks to attempt to ensure that the estimated rates are reasonable. Currently these checks include:
 #' * setting error rates are limited to a maximum of 5%. Some scouts do not include setting actions, except where they are errors or otherwise exceptional, which can lead to unrealistic estimates of setting error rates
+#' @param process_model string: estimate the rates required for which process model? Either "sideout", "phase", "phase_simple", or "all"
 #'
 #' @return A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, rec_att_replayed, trans_set_error, trans_att_error, trans_att_kill, trans_att_replayed, rec_block, and trans_block, plus (if `by` is "match") match_id and (if `by` is "set") set_number and (if `target_team` is "each") "team"
 #'
@@ -26,17 +27,19 @@
 #' }
 #'
 #' @export
-vs_estimate_rates <- function(x, target_team, by = "none", moderate = TRUE) {
+vs_estimate_rates <- function(x, target_team, by = "none", moderate = TRUE, process_model = "all") {
     if (inherits(x, c("datavolley", "peranavolley"))) x <- x$plays
     if (missing(target_team)) target_team <- NULL else assert_that(is.string(target_team))
     assert_that(is.string(by))
     by <- match.arg(tolower(by), c("none", "match", "set"))
     assert_that(is.flag(moderate), !is.na(moderate))
+    process_model <- tolower(process_model)
+    process_model <- match.arg(process_model, c("phase", "sideout", "phase_simple", "all"))
     if (!"opposition" %in% names(x)) x <- mutate(x, opposition = case_when(.data$team == .data$home_team ~ .data$visiting_team,
                                                                            .data$team == .data$visiting_team ~ .data$home_team))
     if (!is.null(target_team) && target_team == "each") {
         return(dplyr::bind_rows(lapply(unique(na.omit(x$team)), function(tm) {
-            dplyr::select(dplyr::mutate(vs_estimate_rates(x, target_team = tm, by = by), team = tm), "team", dplyr::everything())
+            dplyr::select(dplyr::mutate(vs_estimate_rates(x, target_team = tm, by = by, process_model = process_model), team = tm), "team", dplyr::everything())
         })))
     }
     if (by == "none") {
@@ -67,88 +70,111 @@ vs_estimate_rates <- function(x, target_team, by = "none", moderate = TRUE) {
     ## did we make an attack during a given team touch?
     x <- dplyr::ungroup(mutate(group_by(x, .data$match_id, .data$team_touch_id), made_attack = any(.data$skill == "Attack")))
 
-    ## did we get a replay (make the next action that isn't a dig or block)
-    temp <- dplyr::slice(group_by(dplyr::filter(x, is_active_skill(.data$skill) & !.data$skill %in% c("Block", "Dig")), .data$match_id, .data$point_id, .data$team_touch_id), 1L)
-    temp <- mutate(group_by(temp, .data$match_id, .data$point_id), got_replay = lead(.data$team) == .data$team)
-    nrow0 <- nrow(x)
-    x <- mutate(left_join(x, temp[, c("match_id", "team_touch_id", "got_replay")], by = c("match_id", "team_touch_id")), got_replay = case_when(is.na(.data$got_replay) ~ FALSE, TRUE ~ .data$got_replay))
-    if (nrow(x) != nrow0) stop("error with got_replay")
+    if (process_model %in% c("phase_simple", "all")) {
+        ## did we get a replay (make the next action that isn't a dig or block)
+        temp <- dplyr::slice(group_by(dplyr::filter(x, is_active_skill(.data$skill) & !.data$skill %in% c("Block", "Dig")), .data$match_id, .data$point_id, .data$team_touch_id), 1L)
+        temp <- mutate(group_by(temp, .data$match_id, .data$point_id), got_replay = lead(.data$team) == .data$team)
+        nrow0 <- nrow(x)
+        x <- mutate(left_join(x, temp[, c("match_id", "team_touch_id", "got_replay")], by = c("match_id", "team_touch_id")), got_replay = case_when(is.na(.data$got_replay) ~ FALSE, TRUE ~ .data$got_replay))
+        if (nrow(x) != nrow0) stop("error with got_replay")
+    }
 
     xt <- if (!is.null(target_team)) dplyr::filter(x, .data$team == target_team) else x
     if (!is.null(by)) xt <- if (packageVersion("dplyr") >= "1.0.0") group_by(xt, dplyr::across(by)) else group_by_at(xt, by)
-    out <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Serve"),
-                                    serve_ace = mean(.data$evaluation == "Ace", na.rm = TRUE),
-                                    serve_error = mean(.data$evaluation == "Error", na.rm = TRUE)))
-    ## reception set error
-    f_seterr <- if (moderate) function(z) min(0.05, z) else function(z) z
-    rset <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Reception" & .data$skill == "Set"),
-                                     rec_set_error = f_seterr(mean(.data$evaluation == "Error", na.rm = TRUE))))
+    if (process_model %in% c("sideout")) {
+        out <- NULL
+    } else {
+        out <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Serve"),
+                                        serve_ace = mean(.data$evaluation == "Ace", na.rm = TRUE),
+                                        serve_error = mean(.data$evaluation == "Error", na.rm = TRUE)))
+    }
 
-    ## reception attack
-    ratt <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Reception" & .data$skill == "Attack"),
-                                     rec_att_error = mean(.data$evaluation == "Error", na.rm = TRUE),
-                                     rec_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE),
-                                     rec_att_replayed = mean(.data$evaluation %eq% "Blocked for reattack" | .data$special_code %eq% "Block control" | .data$made_next_attack, na.rm = TRUE)))
-    ## reception-phase point loss/win excluding reception errors (these are counted in serve aces)
-    ## these don't add to 1 because the rally does not need to end in reception phase
-    rlw <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Reception" & .data$evaluation != "Error"),
+    if (process_model %in% c("phase", "all")) {
+        ## reception set error
+        f_seterr <- if (moderate) function(z) min(0.05, z) else function(z) z
+        rset <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Reception" & .data$skill == "Set"),
+                                         rec_set_error = f_seterr(mean(.data$evaluation == "Error", na.rm = TRUE))))
+        ## reception attack
+        ratt <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Reception" & .data$skill == "Attack"),
+                                         rec_att_error = mean(.data$evaluation == "Error", na.rm = TRUE),
+                                         rec_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE),
+                                         rec_att_replayed = mean(.data$evaluation %eq% "Blocked for reattack" | .data$special_code %eq% "Block control" | .data$made_next_attack, na.rm = TRUE)))
+    }
+
+    if (process_model %in% c("phase_simple", "all")) {
+        ## reception-phase point loss/win excluding reception errors (these are counted in serve aces)
+        ## these don't add to 1 because the rally does not need to end in reception phase
+        rlw <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Reception" & .data$evaluation != "Error"),
                                         rec_loss = mean(.data$was_last_touch & .data$point_won_by != .data$team, na.rm = TRUE),
                                         rec_win = mean(.data$was_last_touch & .data$point_won_by == .data$team, na.rm = TRUE)))
 
-    rnoatt <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Reception" & .data$evaluation != "Error"), rec_no_att = mean(!.data$made_attack, na.rm = TRUE)))
+        rnoatt <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Reception" & .data$evaluation != "Error"), rec_no_att = mean(!.data$made_attack, na.rm = TRUE)))
+        r_replayed <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Reception" & .data$evaluation != "Error"), rec_replayed = mean(.data$got_replay, na.rm = TRUE)))
+    }
 
-    r_replayed <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$skill == "Reception" & .data$evaluation != "Error"), rec_replayed = mean(.data$got_replay, na.rm = TRUE)))
+    if (process_model %in% c("phase", "all")) {
+        ## transition set error
+        tset <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Transition" & .data$skill == "Set"),
+                                         trans_set_error = f_seterr(mean(.data$evaluation == "Error", na.rm = TRUE))))
+        ## transition attack
+        tatt <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Transition" & .data$skill == "Attack"),
+                                         trans_att_error = mean(.data$evaluation == "Error", na.rm = TRUE),
+                                         trans_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE),
+                                         trans_att_replayed = mean(.data$evaluation %eq% "Blocked for reattack" | .data$special_code %eq% "Block control" | .data$made_next_attack, na.rm = TRUE)))
+    }
 
-    ## transition set error
-    tset <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Transition" & .data$skill == "Set"),
-                                     trans_set_error = f_seterr(mean(.data$evaluation == "Error", na.rm = TRUE))))
-    ## transition attack
-    tatt <- ungroup(dplyr::summarize(dplyr::filter(xt, .data$phase == "Transition" & .data$skill == "Attack"),
-                                     trans_att_error = mean(.data$evaluation == "Error", na.rm = TRUE),
-                                     trans_att_kill = mean(.data$evaluation == "Winning attack", na.rm = TRUE),
-                                     trans_att_replayed = mean(.data$evaluation %eq% "Blocked for reattack" | .data$special_code %eq% "Block control" | .data$made_next_attack, na.rm = TRUE)))
-    ## transition-phase point loss/win
-    ## these don't add to 1 because they are the probs of winning *on this team touch*, but the rally can continue
-    temp <- ungroup(dplyr::slice(group_by(dplyr::filter(xt, .data$phase == "Transition" & is_active_skill(.data$skill)), .data$team_touch_id, .add = TRUE), 1L))
-    if (!is.null(by)) temp <- if (packageVersion("dplyr") >= "1.0.0") group_by(temp, dplyr::across(by)) else group_by_at(temp, by)
-    tlw <- ungroup(dplyr::summarize(temp, trans_loss = mean(.data$was_last_touch & .data$point_won_by != .data$team, na.rm = TRUE),
-                                    trans_win = mean(.data$was_last_touch & .data$point_won_by == .data$team, na.rm = TRUE)))
+    if (process_model %in% c("phase_simple", "all")) {
+        ## transition-phase point loss/win
+        ## these don't add to 1 because they are the probs of winning *on this team touch*, but the rally can continue
+        temp <- ungroup(dplyr::slice(group_by(dplyr::filter(xt, .data$phase == "Transition" & is_active_skill(.data$skill)), .data$team_touch_id, .add = TRUE), 1L))
+        if (!is.null(by)) temp <- if (packageVersion("dplyr") >= "1.0.0") group_by(temp, dplyr::across(by)) else group_by_at(temp, by)
+        tlw <- ungroup(dplyr::summarize(temp, trans_loss = mean(.data$was_last_touch & .data$point_won_by != .data$team, na.rm = TRUE),
+                                        trans_win = mean(.data$was_last_touch & .data$point_won_by == .data$team, na.rm = TRUE)))
 
-    temp <- ungroup(dplyr::slice(group_by(dplyr::filter(xt, .data$phase == "Transition" & is_active_skill(.data$skill) & !(.data$skill %in% c("Dig", "Block") & .data$evaluation == "Error") & !(.data$skill == "Block" & grepl("opposition to replay", .data$evaluation, fixed = TRUE))), .data$team_touch_id, .add = TRUE), 1L)) ## one row from each transition team touch excluding dig/block errors and block replays
-    if (!is.null(by)) temp <- if (packageVersion("dplyr") >= "1.0.0") group_by(temp, dplyr::across(by)) else group_by_at(temp, by)
-    tnoatt <- ungroup(dplyr::summarize(temp, trans_no_att = mean(!.data$made_attack, na.rm = TRUE), trans_replayed = mean(.data$got_replay, na.rm = TRUE)))
+        temp <- ungroup(dplyr::slice(group_by(dplyr::filter(xt, .data$phase == "Transition" & is_active_skill(.data$skill) & !(.data$skill %in% c("Dig", "Block") & .data$evaluation == "Error") & !(.data$skill == "Block" & grepl("opposition to replay", .data$evaluation, fixed = TRUE))), .data$team_touch_id, .add = TRUE), 1L)) ## one row from each transition team touch excluding dig/block errors and block replays
+        if (!is.null(by)) temp <- if (packageVersion("dplyr") >= "1.0.0") group_by(temp, dplyr::across(by)) else group_by_at(temp, by)
+        tnoatt <- ungroup(dplyr::summarize(temp, trans_no_att = mean(!.data$made_attack, na.rm = TRUE), trans_replayed = mean(.data$got_replay, na.rm = TRUE)))
+    }
 
     ## blocking
     xnt <- if (!is.null(target_team)) dplyr::filter(x, .data$opposition == target_team) else x
     if (!is.null(by)) xnt <- if (packageVersion("dplyr") >= "1.0.0") group_by(xnt, dplyr::across(by)) else group_by_at(xnt, by)
-
     so <- ungroup(dplyr::summarize(dplyr::filter(xnt, .data$skill == "Serve"), sideout = mean(.data$point_won_by == .data$opposition, na.rm = TRUE)))
-    rblk <- ungroup(dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Reception"), N_opp_rec_att = n(),
-                                     rec_block = mean(.data$evaluation == "Blocked", na.rm = TRUE)))
-    ## invasions not used yet
-    ##out$rec_block_invasion <- sum(xt$evaluation == "Invasion" & xt$phase == "Reception", na.rm = TRUE)/out$N_opp_rec_att
-    tblk <- ungroup(dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Transition"), N_opp_trans_att = n(),
-                                     trans_block = mean(.data$evaluation == "Blocked", na.rm = TRUE)))
-    ##out$trans_block_invasion <- sum(xt$evaluation == "Invasion" & xt$phase == "Transition", na.rm = TRUE)/out$N_opp_trans_att
+
+    if (process_model %in% c("phase", "all")) {
+        rblk <- ungroup(dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Reception"), N_opp_rec_att = n(),
+                                         rec_block = mean(.data$evaluation == "Blocked", na.rm = TRUE)))
+        ## invasions not used yet
+        ##out$rec_block_invasion <- sum(xt$evaluation == "Invasion" & xt$phase == "Reception", na.rm = TRUE)/out$N_opp_rec_att
+        tblk <- ungroup(dplyr::summarize(dplyr::filter(xnt, .data$skill == "Attack" & .data$phase == "Transition"), N_opp_trans_att = n(),
+                                         trans_block = mean(.data$evaluation == "Blocked", na.rm = TRUE)))
+        ##out$trans_block_invasion <- sum(xt$evaluation == "Invasion" & xt$phase == "Transition", na.rm = TRUE)/out$N_opp_trans_att
+    }
 
     if (is.null(by)) {
-        out <- cbind(out, rset, ratt, rlw, rnoatt, r_replayed, tset, tatt, tlw, tnoatt, so, rblk, tblk)
+        out <- if (is.null(out)) so else cbind(out, so)
+        if (process_model %in% c("phase", "all")) out <- cbind(out, rset, ratt, tset, tatt, rblk, tblk)
+        if (process_model %in% c("phase_simple", "all")) out <- cbind(out, rlw, rnoatt, r_replayed, tlw, tnoatt)
     } else {
-        out <- left_join(out, rset, by = by)
-        out <- left_join(out, ratt, by = by)
-        out <- left_join(out, rlw, by = by)
-        out <- left_join(out, rnoatt, by = by)
-        out <- left_join(out, r_replayed, by = by)
-        out <- left_join(out, tset, by = by)
-        out <- left_join(out, tatt, by = by)
-        out <- left_join(out, tlw, by = by)
-        out <- left_join(out, tnoatt, by = by)
-        out <- left_join(out, so, by = by)
-        out <- left_join(out, rblk, by = by)
-        out <- left_join(out, tblk, by = by)
+        out <- if (is.null(out)) so else left_join(out, so, by = by)
+        if (process_model %in% c("phase", "all")) {
+            out <- left_join(out, rset, by = by)
+            out <- left_join(out, ratt, by = by)
+            out <- left_join(out, tset, by = by)
+            out <- left_join(out, tatt, by = by)
+            out <- left_join(out, rblk, by = by)
+            out <- left_join(out, tblk, by = by)
+        }
+        if (process_model %in% c("phase_simple", "all")) {
+            out <- left_join(out, rlw, by = by)
+            out <- left_join(out, rnoatt, by = by)
+            out <- left_join(out, r_replayed, by = by)
+            out <- left_join(out, tlw, by = by)
+            out <- left_join(out, tnoatt, by = by)
+        }
     }
     out <- dplyr::mutate_all(out, function(z) ifelse(is.na(z), 0, z))
-    dplyr::select(out, -"N_opp_rec_att", -"N_opp_trans_att")
+    out[, setdiff(names(out), c("N_opp_rec_att", "N_opp_trans_att"))]
 }
 
 ## convert df to list
