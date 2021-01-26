@@ -22,6 +22,7 @@ test_that("sideout rates match between markovchain and other", {
 })
 
 test_that("phase and phase_simple process models are consistent", {
+    skip("skipping until phase_simple rate estimation revised")
     x <- datavolley::dv_read(datavolley::dv_example_file())
     rates <- vs_estimate_rates(x, target_team = "each")
 
