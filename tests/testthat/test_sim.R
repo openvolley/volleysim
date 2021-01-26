@@ -2,10 +2,10 @@ context("Tests of simulation results")
 
 test_that("Simulation with known parameters gives expected results", {
     rates <- list(
-        list(serve_ace = 0, serve_error = 0, rec_set_error = 0, rec_att_error = 0, rec_att_kill = 0.5, rec_att_replayed = 0, trans_set_error = 0,
-             trans_att_error = 0, trans_att_kill = 1.0, trans_att_replayed = 0, rec_block= 0, trans_block = 0),
-        list(serve_ace = 0, serve_error = 0, rec_set_error = 0, rec_att_error = 0, rec_att_kill = 0.5, rec_att_replayed = 0, trans_set_error = 0,
-             trans_att_error = 0, trans_att_kill = 1.0, trans_att_replayed = 0, rec_block= 0, trans_block = 0))
+        list(serve_ace = 0, serve_error = 0, rec_loss_other = 0, rec_att_error = 0, rec_att_kill = 0.5, rec_att_replayed = 0, rec_no_att = 0, trans_loss_other = 0,
+             trans_att_error = 0, trans_att_kill = 1.0, trans_att_replayed = 0, trans_no_att = 0, rec_block= 0, trans_block = 0),
+        list(serve_ace = 0, serve_error = 0, rec_loss_other = 0, rec_att_error = 0, rec_att_kill = 0.5, rec_att_replayed = 0, rec_no_att = 0, trans_loss_other = 0,
+             trans_att_error = 0, trans_att_kill = 1.0, trans_att_replayed = 0, trans_no_att = 0, rec_block= 0, trans_block = 0))
     res <- bind_rows(lapply(seq_len(5e3), function(z) vs_simulate_set(rates, method = "monte carlo")))
     chk <- table(res[, c("serving", "point_won_by")])
     chk <- t(apply(chk, 1, function(z) z/sum(z))) ## normalize by row sums, i.e. percentage of outcome by serving team
@@ -39,13 +39,21 @@ test_that("Simulation varies according to who served first", {
 
     ## now check the same against simulations
     rates <- list(
-        list(serve_ace = 0.1, serve_error = 0.1, rec_set_error = 0, rec_att_error = 0.1, rec_att_kill = 0.5, rec_att_replayed = 0.1, trans_set_error = 0,
-             trans_att_error = 0.1, trans_att_kill = 0.4, trans_att_replayed = 0.1, rec_block= 0.05, trans_block = 0.05),
-        list(serve_ace = 0.1, serve_error = 0.1, rec_set_error = 0, rec_att_error = 0.1, rec_att_kill = 0.4, rec_att_replayed = 0.1, trans_set_error = 0,
-             trans_att_error = 0.1, trans_att_kill = 0.35, trans_att_replayed = 0.1, rec_block= 0.05, trans_block = 0.05))
+        list(serve_ace = 0.1, serve_error = 0.1, rec_loss_other = 0, rec_att_error = 0.1, rec_att_kill = 0.5, rec_att_replayed = 0.1, rec_no_att = 0.1, trans_loss_other = 0,
+             trans_att_error = 0.1, trans_att_kill = 0.4, trans_att_replayed = 0.1, trans_no_att = 0.1, rec_block= 0.05, trans_block = 0.05),
+        list(serve_ace = 0.1, serve_error = 0.1, rec_loss_other = 0, rec_att_error = 0.1, rec_att_kill = 0.4, rec_att_replayed = 0.1, rec_no_att = 0.1, trans_loss_other = 0,
+             trans_att_error = 0.1, trans_att_kill = 0.35, trans_att_replayed = 0.1, trans_no_att = 0.1, rec_block= 0.05, trans_block = 0.05))
 
     res1 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, serving = TRUE, method = "monte carlo"))
     res2 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, serving = FALSE, method = "monte carlo"))
+
+    ## the probability of reaching set 5 should not depend on who served first
+    expect_true(abs((res1$scores$`3-2` + res1$scores$`2-3`) - (res2$scores$`3-2` + res2$scores$`2-3`)) < 0.02)
+    ## the overall win rates for res1 and res2 should be the same, because this comes down to who served first in set 5 (which is random here)
+    expect_true(abs(res1$pwin - res2$pwin) < 0.02)
+    
+    res1 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, serving = TRUE, method = "theoretical"))
+    res2 <- suppressWarnings(vs_simulate_match(rates, n = 5e3, serving = FALSE, method = "theoretical"))
 
     ## the probability of reaching set 5 should not depend on who served first
     expect_true(abs((res1$scores$`3-2` + res1$scores$`2-3`) - (res2$scores$`3-2` + res2$scores$`2-3`)) < 0.02)

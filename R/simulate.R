@@ -161,8 +161,9 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
                         outcome[ptr] <- "Rec win"
                     } else if (r_outc == 2) {
                         lost_serve <- FALSE
-                        outcome[ptr] <- "Rec win"
+                        outcome[ptr] <- "Rec loss"
                     } else {
+                        ## either replayed, or no attack/non-terminal attack in play
                         tptr <- 1L + (r_outc == 1) ## if replayed, first transition attack is by receiving team
                         lost_serve <- NA
                         while (is.na(lost_serve)) {
@@ -198,80 +199,102 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
                         }
                     }
                 } else {
+                    ## "phase" process model
                     ## rec phase by non-serving (other) team
-                    if (tm2_prandf() <= rec_tm_rates$rec_set_error) {
+                    temp <- c(rec_tm_rates$rec_loss_other, rec_tm_rates$rec_no_att)
+                    r_outc <- sum(tm2_prandf() <= cumsum(temp))
+                    if (r_outc == 2) {
                         lost_serve <- FALSE
-                        outcome[ptr] <- "Rec set error"
+                        outcome[ptr] <- "Rec other loss"
                     } else {
-                        temp <- c(rec_tm_rates$rec_att_kill, rec_tm_rates$rec_att_error, srv_tm_rates$rec_block, rec_tm_rates$rec_att_replayed)
-                        if (sum(temp) > 1) stop("The reception-phase attack probabilities sum to more than 1")
-                        ra_outc <- sum(tm2_prandf() <= cumsum(temp))
-                        if (ra_outc == 4) {
-                            lost_serve <- TRUE
-                            outcome[ptr] <- "Rec attack kill"
-                        } else if (ra_outc == 3) {
-                            lost_serve <- FALSE
-                            outcome[ptr] <- "Rec attack error"
-                        } else if (ra_outc == 2) {
-                            lost_serve <- FALSE
-                            outcome[ptr] <- "Rec attack block"
+                        lost_serve <- NA
+                        if (r_outc == 1) {
+                            ## no attack, serving team has first transition
+                            tptr <- 1L ## serving team gets first transition attack opportunity
                         } else {
+                            ## reception phase attack by receiving team
+                            temp <- c(rec_tm_rates$rec_att_kill, rec_tm_rates$rec_att_error, srv_tm_rates$rec_block, rec_tm_rates$rec_att_replayed)
+                            if (sum(temp) > 1) stop("The reception-phase attack probabilities sum to more than 1")
+                            ra_outc <- sum(tm2_prandf() <= cumsum(temp))
+                            if (ra_outc == 4) {
+                                lost_serve <- TRUE
+                                outcome[ptr] <- "Rec attack kill"
+                            } else if (ra_outc == 3) {
+                                lost_serve <- FALSE
+                                outcome[ptr] <- "Rec attack error"
+                            } else if (ra_outc == 2) {
+                                lost_serve <- FALSE
+                                outcome[ptr] <- "Rec attack block"
+                            } else {
+                                if (ra_outc == 1) {
+                                    ## replayed, so next attack (first transition attack) is also by receiving team
+                                    tptr <- 2L
+                                } else {
+                                    tptr <- 1L ## serving team gets first transition attack opportunity
+                                }
+                            }
+                        }
+                        ## if lost_serve is NA, then we go into transition play
+                        if (is.na(lost_serve)) {
                             ## transition - iterate back and forth between teams until someone wins the point
                             ## tptr is the team currently in transition, 1 = serving team, 2 = receiving team
-                            if (ra_outc == 1) {
-                                ## replayed, so next attack (first transition attack) is also by receiving team
-                                tptr <- 2L
-                            } else {
-                                tptr <- 1L ## serving team gets first transition attack opportunity
-                            }
-                            lost_serve <- NA
                             while (is.na(lost_serve)) {
                                 if (tptr < 2) {
-                                    if (tm1_prandf() <= srv_tm_rates$trans_set_error) {
+                                    temp <- c(srv_tm_rates$trans_loss_other, srv_tm_rates$trans_no_att)
+                                    t_outc <- sum(tm1_prandf() <= cumsum(temp))
+                                    if (t_outc == 2) {
                                         lost_serve <- TRUE
-                                        outcome[ptr] <- "Trans set error"
+                                        outcome[ptr] <- "Trans loss other"
                                         ta_outc <- -1
                                     } else {
-                                        temp <- c(srv_tm_rates$trans_att_kill, srv_tm_rates$trans_att_error, rec_tm_rates$trans_block, srv_tm_rates$trans_att_replayed)
-                                        if (sum(temp) > 1) stop("The transition-phase attack probabilities sum to more than 1")
-                                        ta_outc <- sum(tm1_prandf() <= cumsum(temp))
-                                        if (ta_outc == 4) {
-                                            lost_serve <- FALSE
-                                            outcome[ptr] <- "Trans attack kill"
-                                        } else if (ta_outc == 3) {
-                                            lost_serve <- TRUE
-                                            outcome[ptr] <- "Trans attack error"
-                                        } else if (ta_outc == 2) {
-                                            lost_serve <- TRUE
-                                            outcome[ptr] <- "Trans attack block"
+                                        if (t_outc == 1) {
+                                            ## no attack
+                                            tptr <- 3L - tptr ## other team now in transition attack phase
+                                        } else {
+                                            temp <- c(srv_tm_rates$trans_att_kill, srv_tm_rates$trans_att_error, rec_tm_rates$trans_block, srv_tm_rates$trans_att_replayed)
+                                            if (sum(temp) > 1) stop("The transition-phase attack probabilities sum to more than 1")
+                                            ta_outc <- sum(tm1_prandf() <= cumsum(temp))
+                                            if (ta_outc == 4) {
+                                                lost_serve <- FALSE
+                                                outcome[ptr] <- "Trans attack kill"
+                                            } else if (ta_outc == 3) {
+                                                lost_serve <- TRUE
+                                                outcome[ptr] <- "Trans attack error"
+                                            } else if (ta_outc == 2) {
+                                                lost_serve <- TRUE
+                                                outcome[ptr] <- "Trans attack block"
+                                            }
+                                            if (ta_outc != 1) tptr <- 3L - tptr ## other team now in transition attack phase
                                         }
                                     }
                                 } else {
-                                    if (tm2_prandf() <= rec_tm_rates$trans_set_error) {
+                                    temp <- c(rec_tm_rates$trans_loss_other, rec_tm_rates$trans_no_att)
+                                    t_outc <- sum(tm2_prandf() <= cumsum(temp))
+                                    if (t_outc == 2) {
                                         lost_serve <- FALSE
-                                        outcome[ptr] <- "Trans set error"
+                                        outcome[ptr] <- "Trans loss other"
                                         ta_outc <- -1
                                     } else {
-                                        temp <- c(rec_tm_rates$trans_att_kill, rec_tm_rates$trans_att_error, srv_tm_rates$trans_block, rec_tm_rates$trans_att_replayed)
-                                        if (sum(temp) > 1) stop("The transition-phase attack probabilities sum to more than 1")
-                                        ta_outc <- sum(tm2_prandf() <= cumsum(temp))
-                                        if (ta_outc == 4) {
-                                            lost_serve <- TRUE
-                                            outcome[ptr] <- "Trans attack kill"
-                                        } else if (ta_outc == 3) {
-                                            lost_serve <- FALSE
-                                            outcome[ptr] <- "Trans attack error"
-                                        } else if (ta_outc == 2) {
-                                            lost_serve <- FALSE
-                                            outcome[ptr] <- "Trans attack block"
+                                        if (t_outc == 1) {
+                                            ## no attack
+                                            tptr <- 3L - tptr ## other team now in transition attack phase
+                                        } else {
+                                            temp <- c(rec_tm_rates$trans_att_kill, rec_tm_rates$trans_att_error, srv_tm_rates$trans_block, rec_tm_rates$trans_att_replayed)
+                                            if (sum(temp) > 1) stop("The transition-phase attack probabilities sum to more than 1")
+                                            ta_outc <- sum(tm2_prandf() <= cumsum(temp))
+                                            if (ta_outc == 4) {
+                                                lost_serve <- TRUE
+                                                outcome[ptr] <- "Trans attack kill"
+                                            } else if (ta_outc == 3) {
+                                                lost_serve <- FALSE
+                                                outcome[ptr] <- "Trans attack error"
+                                            } else if (ta_outc == 2) {
+                                                lost_serve <- FALSE
+                                                outcome[ptr] <- "Trans attack block"
+                                            }
+                                            if (ta_outc != 1) tptr <- 3L - tptr ## other team now in transition attack phase
                                         }
                                     }
-                                }
-                                if (ta_outc == 1) {
-                                    ## attack replayed, so same team gets another transition attack opportunity
-                                    ## tptr remains the same
-                                } else {
-                                    tptr <- 3L - tptr ## other team now in transition attack phase
                                 }
                             }
                         }
@@ -429,6 +452,10 @@ do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple) 
     if (!simple) {
         out$simres14 <- bind_rows(simres14s, simres14r)
         out$simres5 <- simres5
+        out$points_breakdown14 <- dplyr::select(ungroup(mutate(dplyr::count(group_by(out$simres14, .data$point_won_by), .data$outcome), proportion = .data$n/sum(.data$n))), -"n")
+        out$points_breakdown14 <- out$points_breakdown14[order(out$points_breakdown14$point_won_by, factor(out$points_breakdown14$outcome, levels = states_as_factors())), ]
+        out$points_breakdown5 <- dplyr::select(ungroup(mutate(dplyr::count(group_by(out$simres5, .data$point_won_by), .data$outcome), proportion = .data$n/sum(.data$n))), -"n")
+        out$points_breakdown5 <- out$points_breakdown5[order(out$points_breakdown5$point_won_by, factor(out$points_breakdown5$outcome, levels = states_as_factors())), ]
     }
     out
 }

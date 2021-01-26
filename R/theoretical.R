@@ -298,10 +298,10 @@ rates_to_MC <- function(rates, process_model = "phase", target_team = "each", na
         rates <- rev(rates)
     }
     state_names <- switch(tolower(process_model),
-                          phase = c("SS", "SS=", "SS#", "RR", "RRE=", "RRA", "RRA=", "RRA#", "RRA/",
+                          phase = c("SS", "SS=", "SS#", "RR", "RRO=", "RRA", "RRA=", "RRA#", "RRA/",
                                     "RT", "ST",
-                                    "STE=", "STA", "STA=", "STA#", "STA/",
-                                    "RTE=", "RTA", "RTA=", "RTA#", "RTA/"),
+                                    "STO=", "STA", "STA=", "STA#", "STA/",
+                                    "RTO=", "RTA", "RTA=", "RTA#", "RTA/"),
                           phase_simple = c("SS", "SS=", "SS#", ## serving team serves (SS), serve ace (S#), serve error (S=)
                                            "RR", "RR#", "RR=", ## receiving team receives (RR), wins on reception (R#), loses on reception (R=)
                                            "RT", "ST", ## receiving team in transition (RT), serving team in transition (ST)
@@ -315,24 +315,27 @@ rates_to_MC <- function(rates, process_model = "phase", target_team = "each", na
         M["SS", "SS="] <- rates[[1]]$serve_error
         M["SS", "SS#"] <- rates[[1]]$serve_ace
         M["SS", "RR"] <- 1 - sum(M["SS", ])
-        M["RR", "RRE="] <- rates[[2]]$rec_set_error
-        M["RR", "RRA"] <- 1 - rates[[2]]$rec_set_error
+        M["RR", "RRO="] <- rates[[2]]$rec_loss_other
+        M["RR", "ST"] <- rates[[2]]$rec_no_att
+        M["RR", "RRA"] <- 1 - sum(M["RR", ])
         M["RRA", "RRA="] <- rates[[2]]$rec_att_error
         M["RRA", "RRA#"] <- rates[[2]]$rec_att_kill
         M["RRA", "RRA/"] <- rates[[1]]$rec_block
         M["RRA", "RT"] <- rates[[2]]$rec_att_replayed
         M["RRA", "ST"] <- 1 - sum(M["RRA", ])
 
-        M["ST", "STE="] <- rates[[1]]$trans_set_error
-        M["ST", "STA"] <- 1 - rates[[1]]$trans_set_error
+        M["ST", "STO="] <- rates[[1]]$trans_loss_other
+        M["ST", "RT"] <- rates[[1]]$trans_no_att
+        M["ST", "STA"] <- 1 - sum(M["ST", ])
         M["STA", "STA="] <- rates[[1]]$trans_att_error
         M["STA", "STA#"] <- rates[[1]]$trans_att_kill
         M["STA", "STA/"] <- rates[[2]]$trans_block
         M["STA", "ST"] <- rates[[1]]$trans_att_replayed
         M["STA", "RT"] <- 1 - sum(M["STA", ])
 
-        M["RT", "RTE="] <- rates[[2]]$trans_set_error
-        M["RT", "RTA"] <- 1 - rates[[2]]$trans_set_error
+        M["RT", "RTO="] <- rates[[2]]$trans_loss_other
+        M["RT", "ST"] <- rates[[2]]$trans_no_att
+        M["RT", "RTA"] <- 1 - sum(M["RT", ])
         M["RTA", "RTA="] <- rates[[2]]$trans_att_error
         M["RTA", "RTA#"] <- rates[[2]]$trans_att_kill
         M["RTA", "RTA/"] <- rates[[1]]$trans_block
@@ -345,7 +348,7 @@ rates_to_MC <- function(rates, process_model = "phase", target_team = "each", na
         M["RR", "RR="] <- rates[[2]]$rec_loss
         M["RR", "RR#"] <- rates[[2]]$rec_win
         M["RR", "RT"] <- rates[[2]]$rec_replayed
-        M["RR", "ST"] <- 1 - sum(M["RR", ])
+        M["RR", "ST"] <- 1 - sum(M["RR", ]) ## no attack or attack in play
 
         M["ST", "ST="] <- rates[[1]]$trans_loss
         M["ST", "ST#"] <- rates[[1]]$trans_win
@@ -435,8 +438,9 @@ do_MC_to_points_breakdown <- function(M1, M2, this_team) {
     rownames(out) <- NULL
     out
 }
+states_as_factors <- function() c("S=" = "Serve error", "S#" = "Serve ace", "RO=" = "Rec other loss", "RA=" = "Rec attack error", "RA/" = "Rec attack block", "RA#" = "Rec attack kill", "R=" = "Rec loss", "R#" = "Rec win", "TO=" = "Trans other loss", "TA=" = "Trans attack error", "TA#" = "Trans attack kill", "TA/" = "Trans attack block", "T=" = "Trans loss", "T#" = "Trans win")
 states_to_factor <- function(s) {
-    remap <- c("S=" = "Serve error", "S#" = "Serve ace", "RE=" = "Rec set error", "RA=" = "Rec attack error", "RA/" = "Rec attack block", "RA#" = "Rec attack kill", "R=" = "Rec loss", "R#" = "Rec win", "TE=" = "Trans set error", "TA=" = "Trans attack error", "TA#" = "Trans attack kill", "TA/" = "Trans attack block", "T=" = "Trans loss", "T#" = "Trans win")
+    remap <- states_as_factors()
     for (us in na.omit(unique(s))) if (us %in% names(remap)) s[which(s == us)] <- remap[names(remap) == us]
     factor(s, levels = remap)
 }
