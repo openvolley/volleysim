@@ -16,3 +16,22 @@ test_that("set probs to match probs are consistent between methods", {
     p2 <- vs_set_probs_to_match(pu.s, pu.o, pu.s5)
     expect_true(all(abs(unlist(p1) - unlist(p2)) < 0.01))
 })
+
+test_that("theoretical and monte carlo give consistent results", {
+    x <- datavolley::dv_read(datavolley::dv_example_file())
+    rates <- vs_estimate_rates(x, target_team = "each")
+    set.seed(123)
+    res_t <- vs_simulate_match(rates = rates, process_model = "phase", method = "theoretical", simple = FALSE)
+    res_mo <- vs_simulate_match(rates = rates, process_model = "phase", n = 1e3, method = "monte carlo", simple = FALSE)
+    ## overall win prob
+    expect_lt(abs(res_t$result_probabilities$pwin - res_mo$pwin), 0.01)
+    ## match score distribution
+    expect_true(all(abs(unlist(res_t$result_probabilities$scores) - unlist(res_mo$scores)) < 0.02))
+    ## compare point breakdowns
+    pbd_t <- res_t$points_breakdown
+    pbd_mo <- res_mo$points_breakdown14
+    names(pbd_mo)[names(pbd_mo) == "proportion"] <- "proportion_mo"
+    chk <- merge(pbd_t, pbd_mo)
+    chk$diff <- chk$proportion - chk$proportion_mo
+    expect_true(all(abs(chk$diff) < 0.01))
+})
