@@ -385,13 +385,12 @@ MC2MCP <- function(M1, M2) {
         M2 <- M1[[2]]
         M1 <- M1[[1]]
     }
-    ## take per-team MC matrices, calculate sideout and breakpoint rates, and create that MC object
-    ## sideout rates
-    ##so <- c(absorptionProbabilities(M2)[1, 2], absorptionProbabilities(M1)[1, 2])
+    ## take per-team MC matrices, calculate sideout rates
     winR_states <- states(M1)[grepl("^S.*[=/]$", states(M1)) | grepl("^R.*#$", states(M1))]
     winS_states <- states(M1)[grepl("^S.*#$", states(M1)) | grepl("^R.*[=/]$", states(M1))]
     so <- c(sum(absorptionProbabilities(M2)[1, winR_states]), sum(absorptionProbabilities(M1)[1, winR_states]))
 
+    ## the markovchain object representing the serve-sideout-breakpoint process
     state_names <- c("1S", "1BP", "2SO", "2S", "2BP", "1SO")
     MM <- matrix(0, length(state_names), length(state_names))
     colnames(MM) <- rownames(MM) <- state_names
@@ -444,8 +443,3 @@ states_to_factor <- function(s) {
     for (us in na.omit(unique(s))) if (us %in% names(remap)) s[which(s == us)] <- remap[names(remap) == us]
     factor(s, levels = remap)
 }
-## ## compare to monte carlo sim results
-## sim_result <- vs_simulate_match(rates = rates, n = 5e3, method = "monte carlo", simple = FALSE)
-## chk <- sim_result$simres14 %>% group_by(point_won_by) %>% count(outcome) %>% mutate(n = n/sum(n)) %>% ungroup 
-## 
-## chk %>% dplyr::filter(point_won_by == 1) %>% left_join(temp, by = "outcome")
