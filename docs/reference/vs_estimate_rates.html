@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">volleysim</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -112,7 +112,13 @@
     <p>Estimate parameters required for simulation</p>
     </div>
 
-    <pre class="usage"><span class='fu'>vs_estimate_rates</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>target_team</span>, by <span class='op'>=</span> <span class='st'>"none"</span>, moderate <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>vs_estimate_rates</span><span class='op'>(</span>
+  <span class='va'>x</span>,
+  <span class='va'>target_team</span>,
+  by <span class='op'>=</span> <span class='st'>"none"</span>,
+  moderate <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  process_model <span class='op'>=</span> <span class='st'>"all"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -135,11 +141,15 @@
 <li><p>setting error rates are limited to a maximum of 5%. Some scouts do not include setting actions, except where they are errors or otherwise exceptional, which can lead to unrealistic estimates of setting error rates</p></li>
 </ul></td>
     </tr>
+    <tr>
+      <th>process_model</th>
+      <td><p>string: estimate the rates required for which process model? Either "sideout", "phase", or "all"</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A tibble, currently with the columns sideout, serve_ace, serve_error, rec_set_error, rec_att_error, rec_att_kill, rec_att_replayed, trans_set_error, trans_att_error, trans_att_kill, trans_att_replayed, rec_block, and trans_block, plus (if <code>by</code> is "match") match_id and (if <code>by</code> is "set") set_number and (if <code>target_team</code> is "each") "team"</p>
+    <p>A tibble, with columns match_id (if <code>by</code> is "match"), set_number (if <code>by</code> is "set"), and (if <code>target_team</code> is "each") "team". The remaining columns depend on the <code>process_model</code>: for "sideout", column sideout. If <code>process_model</code> is "phase" then additionally the columns serve_ace, serve_error, rec_loss_other, rec_att_error, rec_att_kill, rec_att_replayed, rec_no_att, rec_block, trans_loss_other, trans_att_error, trans_att_kill, trans_att_replayed, trans_no_att, and trans_block</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='vs_simulate_set.html'>vs_simulate_set()</a></code></p></div>
