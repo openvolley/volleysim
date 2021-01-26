@@ -34,18 +34,22 @@ ways:
 
     -   `serve_ace` (serve ace rate)
     -   `serve_error` (serve error rate)
-    -   `rec_set_error` (error rate on reception-phase sets)
+    -   `rec_loss_other` (loss of the point during reception-phase play,
+        excluding reception errors and attack errors — e.g. errors on
+        reception-phase sets)
     -   `rec_att_error` (error rate on reception-phase attacks)
     -   `rec_att_kill` (kill rate on reception-phase attacks)
     -   `rec_att_replayed` (rate at which reception-phase attacks are
         replayed by the attacking team for a second attack: either
         blocked for reattack, deliberately recycled off the block, or
         dug by the defending team but put back over as a freeball)
+    -   `rec_no_att` (proportion of receptions, excluding reception
+        errors, on which an attack is not made)
     -   `rec_block` (block kill rate against reception-phase attacks)
-    -   `trans_set_error`, `trans_att_error`, `trans_att_kill`,
-        `trans_att_replayed`, `trans_block` - as for the `rec_*`
-        parameters, but in transition phase (i.e. everything after the
-        reception-phase attack)
+    -   `trans_loss_other`, `trans_att_error`, `trans_att_kill`,
+        `trans_att_replayed`, `trans_no_att`, `trans_block` - as for the
+        `rec_*` parameters, but in transition phase (i.e. everything
+        after the reception-phase attack)
 
 ## Example 1
 
@@ -62,26 +66,26 @@ rates <- vs_estimate_rates(x, target_team = "each")
 
 vs_simulate_match(rates)
 #> $pwin
-#> [1] 0.9850286
+#> [1] 0.9860614
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.7021917
+#> [1] 0.7094635
 #> 
 #> $scores$`3-1`
-#> [1] 0.2341905
+#> [1] 0.230106
 #> 
 #> $scores$`3-2`
-#> [1] 0.0486464
+#> [1] 0.04649198
 #> 
 #> $scores$`2-3`
-#> [1] 0.009934415
+#> [1] 0.009293843
 #> 
 #> $scores$`1-3`
-#> [1] 0.003663221
+#> [1] 0.00338111
 #> 
 #> $scores$`0-3`
-#> [1] 0.001373782
+#> [1] 0.001263653
 ```
 
 So given the performances of the two teams during that match, we expect
@@ -107,16 +111,16 @@ parameters:
 
 ``` r
 library(dplyr)
-rates <- tribble(~team, ~serve_ace, ~serve_error, ~rec_set_error, ~rec_att_error, ~rec_att_kill, ~rec_att_replayed, ~trans_set_error, ~trans_att_error, ~trans_att_kill, ~trans_att_replayed, ~sideout, ~rec_block, ~trans_block,
-"My team",    0.062, 0.156, 0.009, 0.071, 0.499, 0.05, 0.018, 0.082, 0.452, 0.05, 0.668, 0.075, 0.079,
-"Other team", 0.069, 0.190, 0.014, 0.063, 0.523, 0.05, 0.021, 0.102, 0.435, 0.05, 0.683, 0.083, 0.109)
+rates <- tribble(~team, ~serve_ace, ~serve_error, ~rec_loss_other, ~rec_att_error, ~rec_att_kill, ~rec_att_replayed, ~rec_no_att, ~trans_loss_other, ~trans_att_error, ~trans_att_kill, ~trans_att_replayed, ~trans_no_att, ~rec_block, ~trans_block,
+"My team",    0.062, 0.156, 0.009, 0.071, 0.499, 0.05, 0.05, 0.018, 0.082, 0.452, 0.05, 0.08, 0.075, 0.079,
+"Other team", 0.069, 0.190, 0.014, 0.063, 0.523, 0.05, 0.05, 0.021, 0.102, 0.435, 0.05, 0.05, 0.083, 0.109)
 knitr::kable(rates)
 ```
 
-| team       | serve\_ace | serve\_error | rec\_set\_error | rec\_att\_error | rec\_att\_kill | rec\_att\_replayed | trans\_set\_error | trans\_att\_error | trans\_att\_kill | trans\_att\_replayed | sideout | rec\_block | trans\_block |
-|:-----------|-----------:|-------------:|----------------:|----------------:|---------------:|-------------------:|------------------:|------------------:|-----------------:|---------------------:|--------:|-----------:|-------------:|
-| My team    |      0.062 |        0.156 |           0.009 |           0.071 |          0.499 |               0.05 |             0.018 |             0.082 |            0.452 |                 0.05 |   0.668 |      0.075 |        0.079 |
-| Other team |      0.069 |        0.190 |           0.014 |           0.063 |          0.523 |               0.05 |             0.021 |             0.102 |            0.435 |                 0.05 |   0.683 |      0.083 |        0.109 |
+| team       | serve\_ace | serve\_error | rec\_loss\_other | rec\_att\_error | rec\_att\_kill | rec\_att\_replayed | rec\_no\_att | trans\_loss\_other | trans\_att\_error | trans\_att\_kill | trans\_att\_replayed | trans\_no\_att | rec\_block | trans\_block |
+|:-----------|-----------:|-------------:|-----------------:|----------------:|---------------:|-------------------:|-------------:|-------------------:|------------------:|-----------------:|---------------------:|---------------:|-----------:|-------------:|
+| My team    |      0.062 |        0.156 |            0.009 |           0.071 |          0.499 |               0.05 |         0.05 |              0.018 |             0.082 |            0.452 |                 0.05 |           0.08 |      0.075 |        0.079 |
+| Other team |      0.069 |        0.190 |            0.014 |           0.063 |          0.523 |               0.05 |         0.05 |              0.021 |             0.102 |            0.435 |                 0.05 |           0.05 |      0.083 |        0.109 |
 
 “My team” is due to play “Other team” in our next match. If we assume
 that both teams play to their season-average parameters, what outcome do
@@ -125,26 +129,26 @@ we expect?
 ``` r
 vs_simulate_match(rates)
 #> $pwin
-#> [1] 0.4847279
+#> [1] 0.478248
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.1185286
+#> [1] 0.1159543
 #> 
 #> $scores$`3-1`
-#> [1] 0.1811204
+#> [1] 0.1784148
 #> 
 #> $scores$`3-2`
-#> [1] 0.1850789
+#> [1] 0.1838789
 #> 
 #> $scores$`2-3`
-#> [1] 0.1901302
+#> [1] 0.1910657
 #> 
 #> $scores$`1-3`
-#> [1] 0.1938788
+#> [1] 0.1965849
 #> 
 #> $scores$`0-3`
-#> [1] 0.131263
+#> [1] 0.1341014
 ```
 
 Looks like we expect a close match, but My team is most probably going
@@ -173,26 +177,26 @@ rates2[2, c("serve_ace")] <- rates2[2, c("serve_ace")] + 0.01
 
 vs_simulate_match(rates2)
 #> $pwin
-#> [1] 0.5389318
+#> [1] 0.5305033
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.1417528
+#> [1] 0.1379761
 #> 
 #> $scores$`3-1`
-#> [1] 0.2037515
+#> [1] 0.2002373
 #> 
 #> $scores$`3-2`
-#> [1] 0.1934275
+#> [1] 0.19229
 #> 
 #> $scores$`2-3`
-#> [1] 0.1805792
+#> [1] 0.1822207
 #> 
 #> $scores$`1-3`
-#> [1] 0.1712485
+#> [1] 0.1747627
 #> 
 #> $scores$`0-3`
-#> [1] 0.1092405
+#> [1] 0.1125133
 ```
 
 That makes a slight improvement. Our second option is to change our
@@ -210,26 +214,26 @@ rates3[1, c("serve_ace", "serve_error")] <- rates3[1, c("serve_ace", "serve_erro
 rates3[2, c("rec_att_kill")] <- rates3[2, c("rec_att_kill")] - 0.05
 vs_simulate_match(rates3)
 #> $pwin
-#> [1] 0.5791922
+#> [1] 0.5605252
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.161008
+#> [1] 0.1518841
 #> 
 #> $scores$`3-1`
-#> [1] 0.22047
+#> [1] 0.2127369
 #> 
 #> $scores$`3-2`
-#> [1] 0.1977142
+#> [1] 0.1959041
 #> 
 #> $scores$`2-3`
-#> [1] 0.1718007
+#> [1] 0.1760242
 #> 
 #> $scores$`1-3`
-#> [1] 0.1545149
+#> [1] 0.1622593
 #> 
 #> $scores$`0-3`
-#> [1] 0.09449215
+#> [1] 0.1011914
 ```
 
 This looks like it might be a better option (assuming, of course, that
@@ -264,29 +268,29 @@ rates <- list(vs_estimate_rates(x, target_team = home_team(x)),
 sim_result <- vs_simulate_match(rates = rates)
 sim_result
 #> $pwin
-#> [1] 0.314285
+#> [1] 0.3275444
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.06099924
+#> [1] 0.0647837
 #> 
 #> $scores$`3-1`
-#> [1] 0.1110245
+#> [1] 0.1163446
 #> 
 #> $scores$`3-2`
-#> [1] 0.1422613
+#> [1] 0.1464161
 #> 
 #> $scores$`2-3`
-#> [1] 0.1998572
+#> [1] 0.2003236
 #> 
 #> $scores$`1-3`
-#> [1] 0.2632404
+#> [1] 0.2581142
 #> 
 #> $scores$`0-3`
-#> [1] 0.2226173
+#> [1] 0.2140178
 ```
 
-The simulations suggest that Hartberg had a 31.4% chance of winning,
+The simulations suggest that Hartberg had a 32.8% chance of winning,
 with the most likely scoreline being 1-3 — consistent with the actual
 result.
 
@@ -376,26 +380,26 @@ rates[[1]]$rec_att_kill <- new_rec_att_kill
 new_sim_result <- vs_simulate_match(rates = rates)
 new_sim_result
 #> $pwin
-#> [1] 0.3582752
+#> [1] 0.3664445
 #> 
 #> $scores
 #> $scores$`3-0`
-#> [1] 0.07394493
+#> [1] 0.07649556
 #> 
 #> $scores$`3-1`
-#> [1] 0.1288044
+#> [1] 0.132131
 #> 
 #> $scores$`3-2`
-#> [1] 0.1555258
+#> [1] 0.157818
 #> 
 #> $scores$`2-3`
-#> [1] 0.2006886
+#> [1] 0.2004959
 #> 
 #> $scores$`1-3`
-#> [1] 0.2459659
+#> [1] 0.2426869
 #> 
 #> $scores$`0-3`
-#> [1] 0.1950702
+#> [1] 0.1903727
 ```
 
-Giving a match win probability of 35.8% (up from 31.4%).
+Giving a match win probability of 36.6% (up from 32.8%).

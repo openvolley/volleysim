@@ -35,12 +35,13 @@ The `volleysim` package provides functions for simulating sets and matches of vo
 2. A more detailed "phase" parameterization. In this model, we specify the rates for each team for:
     - `serve_ace` (serve ace rate)
     - `serve_error` (serve error rate)
-    - `rec_set_error` (error rate on reception-phase sets)
+    - `rec_loss_other` (loss of the point during reception-phase play, excluding reception errors and attack errors --- e.g. errors on reception-phase sets)
     - `rec_att_error` (error rate on reception-phase attacks)
     - `rec_att_kill` (kill rate on reception-phase attacks)
     - `rec_att_replayed` (rate at which reception-phase attacks are replayed by the attacking team for a second attack: either blocked for reattack, deliberately recycled off the block, or dug by the defending team but put back over as a freeball)
+    - `rec_no_att` (proportion of receptions, excluding reception errors, on which an attack is not made)
     - `rec_block` (block kill rate against reception-phase attacks)
-    - `trans_set_error`, `trans_att_error`, `trans_att_kill`, `trans_att_replayed`, `trans_block` - as for the `rec_*` parameters, but in transition phase (i.e. everything after the reception-phase attack)
+    - `trans_loss_other`, `trans_att_error`, `trans_att_kill`, `trans_att_replayed`, `trans_no_att`, `trans_block` - as for the `rec_*` parameters, but in transition phase (i.e. everything after the reception-phase attack)
 
 ## Example 1
 
@@ -78,9 +79,9 @@ Let's say we have two teams with the following season-average parameters:
 
 ```{r ex2a, message = FALSE}
 library(dplyr)
-rates <- tribble(~team, ~serve_ace, ~serve_error, ~rec_set_error, ~rec_att_error, ~rec_att_kill, ~rec_att_replayed, ~trans_set_error, ~trans_att_error, ~trans_att_kill, ~trans_att_replayed, ~sideout, ~rec_block, ~trans_block,
-"My team",    0.062, 0.156, 0.009, 0.071, 0.499, 0.05, 0.018, 0.082, 0.452, 0.05, 0.668, 0.075, 0.079,
-"Other team", 0.069, 0.190, 0.014, 0.063, 0.523, 0.05, 0.021, 0.102, 0.435, 0.05, 0.683, 0.083, 0.109)
+rates <- tribble(~team, ~serve_ace, ~serve_error, ~rec_loss_other, ~rec_att_error, ~rec_att_kill, ~rec_att_replayed, ~rec_no_att, ~trans_loss_other, ~trans_att_error, ~trans_att_kill, ~trans_att_replayed, ~trans_no_att, ~rec_block, ~trans_block,
+"My team",    0.062, 0.156, 0.009, 0.071, 0.499, 0.05, 0.05, 0.018, 0.082, 0.452, 0.05, 0.08, 0.075, 0.079,
+"Other team", 0.069, 0.190, 0.014, 0.063, 0.523, 0.05, 0.05, 0.021, 0.102, 0.435, 0.05, 0.05, 0.083, 0.109)
 knitr::kable(rates)
 
 ```
