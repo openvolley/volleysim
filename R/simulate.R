@@ -7,8 +7,8 @@
 #' * `team_2_score` - the score of team 2 at each point in the set so far
 #' * `serving` - the serving team 1 or 2 at each point in the set so far
 #' * `point_won_by` - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
-#' * `outcome` - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if `process_model` is "sideout", or details TBD if `process_model` is "phase" or "phase_simple"
-#' @param process_model string: either "sideout", "phase", or "phase_simple". Details TBD
+#' * `outcome` - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if `process_model` is "sideout", or details TBD if `process_model` is "phase"
+#' @param process_model string: either "sideout" or "phase". The "sideout" model uses the estimated sideout rates (in the `rates` object) directly. The "phase" model breaks play down into different phases (serve, serve receive, etc) and uses the rates associated with those separate phases
 #' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
 #' @param simple logical: if `TRUE`, return simplified output. Only applicable to `method` "monte carlo". If `simple = TRUE`, return the team (1 or 2) that won the set. If `simple = FALSE`, return extra details in a data.frame
@@ -370,7 +370,7 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
 #' Currently hard-coded to indoor, best-of-5-set scoring.
 #'
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`
-#' @param process_model string: either "sideout", "phase", or "phase_simple". Details TBD
+#' @param process_model string: either "sideout" or "phase". See [vs_estimate_rates()]
 #' @param serving logical: if `TRUE`, team 1 will serve first in the match. If `NA`, the team serving first will be chosen at random
 #' @param serving5 logical: if `TRUE`, team 1 will serve first in set 5 (if the match gets that far). If `NA`, the team serving first in set 5 will be chosen at random
 #' @param n integer: the number of simulations to run

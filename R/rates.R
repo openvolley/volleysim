@@ -5,9 +5,10 @@
 #' @param by string: grouping to calculate rates by. Either "none" (calculate whole-data set rates), "match" (by match), or "set" (by match and set)
 #' @param moderate logical: if `TRUE`, apply some checks to attempt to ensure that the estimated rates are reasonable. Currently these checks include:
 #' * setting error rates are limited to a maximum of 5%. Some scouts do not include setting actions, except where they are errors or otherwise exceptional, which can lead to unrealistic estimates of setting error rates
-#' @param process_model string: estimate the rates required for which process model? Either "sideout", "phase", "phase_simple", or "all"
+#' @param process_model string: estimate the rates required for which process model? Either "sideout", "phase", or "all"
 #'
-#' @return A tibble, with columns match_id (if `by` is "match"), set_number (if `by` is "set"), and (if `target_team` is "each") "team". The remaining columns depend on the `process_model`: for "sideout", column sideout. If `process_model` is "phase" then additionally the columns serve_ace, serve_error, rec_loss_other, rec_att_error, rec_att_kill, rec_att_replayed, rec_no_att, rec_block, trans_loss_other, trans_att_error, trans_att_kill, trans_att_replayed, trans_no_att, and trans_block. If `process_model` is "phase_simple" then additionally the columns serve_ace, serve_error, rec_loss, rec_win, rec_replayed, trans_loss, trans_win, trans_replayed
+#' @return A tibble, with columns match_id (if `by` is "match"), set_number (if `by` is "set"), and (if `target_team` is "each") "team". The remaining columns depend on the `process_model`: for "sideout", column sideout. If `process_model` is "phase" then additionally the columns serve_ace, serve_error, rec_loss_other, rec_att_error, rec_att_kill, rec_att_replayed, rec_no_att, rec_block, trans_loss_other, trans_att_error, trans_att_kill, trans_att_replayed, trans_no_att, and trans_block
+#If `process_model` is "phase_simple" then additionally the columns serve_ace, serve_error, rec_loss, rec_win, rec_replayed, trans_loss, trans_win, trans_replayed
 #'
 #' @seealso [vs_simulate_set()]
 #'

@@ -24,10 +24,10 @@ vs_estimate_rates(
 \item setting error rates are limited to a maximum of 5\%. Some scouts do not include setting actions, except where they are errors or otherwise exceptional, which can lead to unrealistic estimates of setting error rates
 }}
 
-\item{process_model}{string: estimate the rates required for which process model? Either "sideout", "phase", "phase_simple", or "all"}
+\item{process_model}{string: estimate the rates required for which process model? Either "sideout", "phase", or "all"}
 }
 \value{
-A tibble, with columns match_id (if \code{by} is "match"), set_number (if \code{by} is "set"), and (if \code{target_team} is "each") "team". The remaining columns depend on the \code{process_model}: for "sideout", column sideout. If \code{process_model} is "phase" then additionally the columns serve_ace, serve_error, rec_loss_other, rec_att_error, rec_att_kill, rec_att_replayed, rec_no_att, rec_block, trans_loss_other, trans_att_error, trans_att_kill, trans_att_replayed, trans_no_att, and trans_block. If \code{process_model} is "phase_simple" then additionally the columns serve_ace, serve_error, rec_loss, rec_win, rec_replayed, trans_loss, trans_win, trans_replayed
+A tibble, with columns match_id (if \code{by} is "match"), set_number (if \code{by} is "set"), and (if \code{target_team} is "each") "team". The remaining columns depend on the \code{process_model}: for "sideout", column sideout. If \code{process_model} is "phase" then additionally the columns serve_ace, serve_error, rec_loss_other, rec_att_error, rec_att_kill, rec_att_replayed, rec_no_att, rec_block, trans_loss_other, trans_att_error, trans_att_kill, trans_att_replayed, trans_no_att, and trans_block
 }
 \description{
 Estimate parameters required for simulation

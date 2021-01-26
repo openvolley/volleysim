@@ -209,7 +209,7 @@ win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = 
 #' The [vs_estimate_rates()] function returns a team's performance rates across a range of aspects of play, including serve ace rate, serve error rate, and so on. Using [vs_theoretical_sideout_rates()] We can estimate the theoretical sideout rate that we would expect to see, given those parameters. This can be compared to the actual sideout rate achieved by the team.
 #'
 #' @param rates list: rates as returned by [vs_estimate_rates()]
-#' @param process_model string: "phase" or "phase_simple"
+#' @param process_model string: currently only "phase". See [vs_estimate_rates()]
 #'
 #' @return The theoretical sideout rates of the two teams
 #'

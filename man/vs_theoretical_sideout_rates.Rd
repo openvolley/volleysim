@@ -9,7 +9,7 @@ vs_theoretical_sideout_rates(rates, process_model = "phase")
 \arguments{
 \item{rates}{list: rates as returned by \code{\link[=vs_estimate_rates]{vs_estimate_rates()}}}
 
-\item{process_model}{string: "phase" or "phase_simple"}
+\item{process_model}{string: currently only "phase". See \code{\link[=vs_estimate_rates]{vs_estimate_rates()}}}
 }
 \value{
 The theoretical sideout rates of the two teams
