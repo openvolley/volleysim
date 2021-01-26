@@ -1,6 +1,6 @@
 Package: volleysim
 Title: Volleyball Match Simulation Tools
-Version: 0.1.99.9999
+Version: 0.2.0
 Authors@R: c(person("Ben", "Raymond", role = c("aut", "cre"), email = "ben@untan.gl"),
              person("Dwight", "Wynne", role = "aut"),
              person("Adrien", "Ickowicz", role = "aut"))
