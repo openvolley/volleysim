@@ -314,51 +314,51 @@ rates_to_MC <- function(rates, process_model = "phase", target_team = "each", na
     if (process_model == "phase") {
         M["SS", "SS="] <- rates[[1]]$serve_error
         M["SS", "SS#"] <- rates[[1]]$serve_ace
-        M["SS", "RR"] <- 1 - sum(M["SS", ])
+        M["SS", "RR"] <- abs(1 - sum(M["SS", ])) ## using abs(1 - ...) will avoid negative probs, which aren't picked up by markovchain
         M["RR", "RRO="] <- rates[[2]]$rec_loss_other
         M["RR", "ST"] <- rates[[2]]$rec_no_att
-        M["RR", "RRA"] <- 1 - sum(M["RR", ])
+        M["RR", "RRA"] <- abs(1 - sum(M["RR", ]))
         M["RRA", "RRA="] <- rates[[2]]$rec_att_error
         M["RRA", "RRA#"] <- rates[[2]]$rec_att_kill
         M["RRA", "RRA/"] <- rates[[1]]$rec_block
         M["RRA", "RT"] <- rates[[2]]$rec_att_replayed
-        M["RRA", "ST"] <- 1 - sum(M["RRA", ])
+        M["RRA", "ST"] <- abs(1 - sum(M["RRA", ]))
 
         M["ST", "STO="] <- rates[[1]]$trans_loss_other
         M["ST", "RT"] <- rates[[1]]$trans_no_att
-        M["ST", "STA"] <- 1 - sum(M["ST", ])
+        M["ST", "STA"] <- abs(1 - sum(M["ST", ]))
         M["STA", "STA="] <- rates[[1]]$trans_att_error
         M["STA", "STA#"] <- rates[[1]]$trans_att_kill
         M["STA", "STA/"] <- rates[[2]]$trans_block
         M["STA", "ST"] <- rates[[1]]$trans_att_replayed
-        M["STA", "RT"] <- 1 - sum(M["STA", ])
+        M["STA", "RT"] <- abs(1 - sum(M["STA", ]))
 
         M["RT", "RTO="] <- rates[[2]]$trans_loss_other
         M["RT", "ST"] <- rates[[2]]$trans_no_att
-        M["RT", "RTA"] <- 1 - sum(M["RT", ])
+        M["RT", "RTA"] <- abs(1 - sum(M["RT", ]))
         M["RTA", "RTA="] <- rates[[2]]$trans_att_error
         M["RTA", "RTA#"] <- rates[[2]]$trans_att_kill
         M["RTA", "RTA/"] <- rates[[1]]$trans_block
         M["RTA", "RT"] <- rates[[2]]$trans_att_replayed
-        M["RTA", "ST"] <- 1 - sum(M["RTA", ])
+        M["RTA", "ST"] <- abs(1 - sum(M["RTA", ]))
     } else if (process_model == "phase_simple") {
         M["SS", "SS="] <- rates[[1]]$serve_error
         M["SS", "SS#"] <- rates[[1]]$serve_ace
-        M["SS", "RR"] <- 1 - sum(M["SS", ])
+        M["SS", "RR"] <- abs(1 - sum(M["SS", ]))
         M["RR", "RR="] <- rates[[2]]$rec_loss
         M["RR", "RR#"] <- rates[[2]]$rec_win
         M["RR", "RT"] <- rates[[2]]$rec_replayed
-        M["RR", "ST"] <- 1 - sum(M["RR", ]) ## no attack or attack in play
+        M["RR", "ST"] <- abs(1 - sum(M["RR", ])) ## no attack or attack in play
 
         M["ST", "ST="] <- rates[[1]]$trans_loss
         M["ST", "ST#"] <- rates[[1]]$trans_win
         M["ST", "ST"] <- rates[[1]]$trans_replayed
-        M["ST", "RT"] <- 1 - sum(M["ST", ])
+        M["ST", "RT"] <- abs(1 - sum(M["ST", ]))
 
         M["RT", "RT="] <- rates[[2]]$trans_loss
         M["RT", "RT#"] <- rates[[2]]$trans_win
         M["RT", "RT"] <- rates[[2]]$trans_replayed
-        M["RT", "ST"] <- 1 - sum(M["RT", ])
+        M["RT", "ST"] <- abs(1 - sum(M["RT", ]))
     } else {
         stop("unrecognized process_model:", process_model)
     }

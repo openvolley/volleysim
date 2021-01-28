@@ -144,7 +144,9 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
             outcome[ptr] <- if (lost_serve) "Sideout" else "Breakpoint"
         } else {
             ## serve
-            serve_outc <- sum(tm1_prandf() <= cumsum(c(srv_tm_rates$serve_ace, srv_tm_rates$serve_error)))
+            temp <- c(srv_tm_rates$serve_ace, srv_tm_rates$serve_error)
+            if (sum(temp) > 1) stop("The serve-phase probabilities sum to more than 1")
+            serve_outc <- sum(tm1_prandf() <= cumsum(temp))
             if (serve_outc == 2) {
                 lost_serve <- FALSE
                 outcome[ptr] <- "Serve ace"
@@ -202,6 +204,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
                     ## "phase" process model
                     ## rec phase by non-serving (other) team
                     temp <- c(rec_tm_rates$rec_loss_other, rec_tm_rates$rec_no_att)
+                    if (sum(temp) > 1) stop("The reception-phase probabilities sum to more than 1")
                     r_outc <- sum(tm2_prandf() <= cumsum(temp))
                     if (r_outc == 2) {
                         lost_serve <- FALSE
@@ -241,6 +244,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
                             while (is.na(lost_serve)) {
                                 if (tptr < 2) {
                                     temp <- c(srv_tm_rates$trans_loss_other, srv_tm_rates$trans_no_att)
+                                    if (sum(temp) > 1) stop("The transition-phase probabilities sum to more than 1")
                                     t_outc <- sum(tm1_prandf() <= cumsum(temp))
                                     if (t_outc == 2) {
                                         lost_serve <- TRUE
@@ -269,6 +273,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
                                     }
                                 } else {
                                     temp <- c(rec_tm_rates$trans_loss_other, rec_tm_rates$trans_no_att)
+                                    if (sum(temp) > 1) stop("The transition-phase probabilities sum to more than 1")
                                     t_outc <- sum(tm2_prandf() <= cumsum(temp))
                                     if (t_outc == 2) {
                                         lost_serve <- FALSE
