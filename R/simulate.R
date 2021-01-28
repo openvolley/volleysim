@@ -452,9 +452,13 @@ do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple) 
     if (!simple) {
         out$simres14 <- bind_rows(simres14s, simres14r)
         out$simres5 <- simres5
-        out$points_breakdown14 <- dplyr::select(ungroup(mutate(dplyr::count(group_by(out$simres14, .data$point_won_by), .data$outcome), proportion = .data$n/sum(.data$n))), -"n")
+        this <- ungroup(dplyr::count(group_by(out$simres14, .data$point_won_by), .data$outcome, name = "proportion_of_team_points"))
+        this <- mutate(this, proportion_of_all_points = .data$proportion_of_team_points / sum(.data$proportion_of_team_points))
+        out$points_breakdown14 <- ungroup(mutate(group_by(this, .data$point_won_by), proportion_of_team_points = .data$proportion_of_team_points / sum(.data$proportion_of_team_points)))
         out$points_breakdown14 <- out$points_breakdown14[order(out$points_breakdown14$point_won_by, factor(out$points_breakdown14$outcome, levels = states_as_factors())), ]
-        out$points_breakdown5 <- dplyr::select(ungroup(mutate(dplyr::count(group_by(out$simres5, .data$point_won_by), .data$outcome), proportion = .data$n/sum(.data$n))), -"n")
+        this <- ungroup(dplyr::count(group_by(out$simres5, .data$point_won_by), .data$outcome, name = "proportion_of_team_points"))
+        this <- mutate(this, proportion_of_all_points = .data$proportion_of_team_points / sum(.data$proportion_of_team_points))
+        out$points_breakdown5 <- ungroup(mutate(group_by(this, .data$point_won_by), proportion_of_team_points = .data$proportion_of_team_points / sum(.data$proportion_of_team_points)))
         out$points_breakdown5 <- out$points_breakdown5[order(out$points_breakdown5$point_won_by, factor(out$points_breakdown5$outcome, levels = states_as_factors())), ]
     }
     out

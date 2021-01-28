@@ -424,14 +424,13 @@ do_MC_to_points_breakdown <- function(M1, M2, this_team) {
     winS_states <- states(M1)[grepl("^S.*#$", states(M1)) | grepl("^R.*[=/]$", states(M1))]
     ## relative number of serves by team
     sprop <- MCP_serve_proportions(MC2MCP(M1, M2))
-    ## points won by team 1, scaled by their serve proportion
+    ## relative proportion of points won by team 1 in serve/reception, scaled by their serve proportion
     T1points <- c(absorptionProbabilities(M1)[1, winS_states] * sprop[1], absorptionProbabilities(M2)[1, winR_states] * sprop[2])
-    T1points <- T1points/sum(T1points)
     names(T1points) <- substr(names(T1points), 2, 4)
     temp <- list()
     for (uu in unique(names(T1points))) temp[[uu]] <- sum(T1points[names(T1points) == uu])
     temp <- unlist(temp)
-    out <- data.frame(point_won_by = this_team, outcome = states_to_factor(names(temp)), proportion = unname(temp), stringsAsFactors = FALSE)
+    out <- data.frame(point_won_by = this_team, outcome = states_to_factor(names(temp)), proportion_of_team_points = unname(temp)/sum(temp), proportion_of_all_points = unname(temp), stringsAsFactors = FALSE)
     out <- out[order(out$outcome), ]
     out$outcome <- as.character(out$outcome)
     rownames(out) <- NULL
