@@ -5,9 +5,12 @@
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`. Experimental: for `process_model` "sideout", the `sideout` rate component can be a function. This function will be called at each step of the simulation with the parameters:
 #' * `team_1_score` - the score of team 1 at each point in the set so far
 #' * `team_2_score` - the score of team 2 at each point in the set so far
+#' * `team_1_rotation` - the rotation of team 1 at each point in the set so far (rotations are counted relative to the team's starting rotation, which is 1)
+#' * `team_2_rotation` - the rotation of team 2 at each point in the set so far (rotations are counted relative to the team's starting rotation, which is 1)
 #' * `serving` - the serving team 1 or 2 at each point in the set so far
 #' * `point_won_by` - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
 #' * `outcome` - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if `process_model` is "sideout", or details TBD if `process_model` is "phase"
+#' The function should return the sideout rate of the receiving team.
 #' @param process_model string: either "sideout" or "phase". The "sideout" model uses the estimated sideout rates (in the `rates` object) directly. The "phase" model breaks play down into different phases (serve, serve receive, etc) and uses the rates associated with those separate phases
 #' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
@@ -119,17 +122,29 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
     }
     tm1_prandf <- prandf()
     tm2_prandf <- prandf()
-    tm_scores <- matrix(NA_integer_, nrow = 100, ncol = 2)
+    tm_scores <- rots <- matrix(NA_integer_, nrow = 100, ncol = 2)
     outcome <- rep(NA_character_, 100)
     tm_srv <- rep(NA_integer_, 100)
     tm_point_won_by <- rep(NA_integer_, 100)
     ptr <- 1 ## pointer into those vectors
     tm_scores[1, ] <- c(0L, 0L) ## scores for team 1, team 2
+    rots[1, ] <- c(1L, 1L) ## rotations start at 1
     srv <- if (serving) 1L else 2L ## serving TRUE => team 1 starts serving
     tm_srv[1] <- srv
     sc <- tm_scores[ptr, ]
+    rates0 <- rates ## these might be functions
     while (all(sc < go_to) || abs(diff(sc)) < 2) {
         tm_scores[ptr + 1, ] <- tm_scores[ptr, ] ## scores at the START of the next point, updated below
+        rots[ptr + 1, ] <- rots[ptr, ] ## scores at the START of the next point, updated below
+        rates <- rates0
+        if (is.function(rates[[1]])) {
+            idx <- seq_len(ptr)
+            rates[[1]] <- rates[[1]](team_1_score = tm_scores[idx, 1], team_2_score = tm_scores[idx, 2], team_1_rotation = rots[idx, 1], team_2_rotation = rots[idx, 2], serving = tm_srv[idx], point_won_by = tm_point_won_by[idx],  outcome = outcome[idx], go_to = go_to)
+        }
+        if (is.function(rates[[2]])) {
+            idx <- seq_len(ptr)
+            rates[[2]] <- rates[[2]](team_1_score = tm_scores[idx, 1], team_2_score = tm_scores[idx, 2], team_1_rotation = rots[idx, 1], team_2_rotation = rots[idx, 2], serving = tm_srv[idx], point_won_by = tm_point_won_by[idx],  outcome = outcome[idx], go_to = go_to)
+        }
         srv_tm_rates <- rates[[srv]] ## serving team's rates
         rec_tm_rates <- rates[[3-srv]] ## other team's rates
         ## the simulation process is basically a hard-coded set of if-else statements here
@@ -138,7 +153,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
             this_so_rate <- rec_tm_rates$sideout
             if (is.function(this_so_rate)) {
                 idx <- seq_len(ptr)
-                this_so_rate <- this_so_rate(team_1_score = tm_scores[idx, 1], team_2_score = tm_scores[idx, 2], serving = tm_srv[idx], point_won_by = tm_point_won_by[idx],  outcome = outcome[idx], go_to = go_to)
+                this_so_rate <- this_so_rate(team_1_score = tm_scores[idx, 1], team_2_score = tm_scores[idx, 2], team_1_rotation = rots[idx, 1], team_2_rotation = rots[idx, 2], serving = tm_srv[idx], point_won_by = tm_point_won_by[idx],  outcome = outcome[idx], go_to = go_to)
             }
             lost_serve <- tm2_prandf() <= this_so_rate
             outcome[ptr] <- if (lost_serve) "Sideout" else "Breakpoint"
@@ -309,6 +324,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
         }
         if (lost_serve) {
             srv <- 3L - srv ## sided out, change server
+            rots[ptr + 1L, srv] <- rot16(rots[ptr, srv]) ## rotate
         }
         tm_point_won_by[ptr] <- srv ## who won this point
         tm_srv[ptr + 1] <- srv
@@ -324,6 +340,8 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
     } else {
         tm_scores <- tm_scores[seq_len(ptr - 1), ]
         out <- setNames(as.data.frame(tm_scores), c("team_1_score", "team_2_score"))
+        out$team_1_rotation <- rots[seq_len(ptr - 1), 1]
+        out$team_2_rotation <- rots[seq_len(ptr - 1), 2]
         out$serving <- tm_srv[seq_len(ptr - 1)]
         out$point_won_by <- tm_point_won_by[seq_len(ptr - 1)]
         out$set_won_by <- which.max(sc)
@@ -332,6 +350,9 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
         out
     }
 }
+
+## increment rotation 1 -> 2 -> 3 -> ... -> 6 -> 1
+rot16 <- function(z, by = 1L) (((z + by)-1L) %% 6) + 1L
 
 ## not exported
 ## given the probability of winning sets 1-4, and set 5, calculate the overall probability of winning the match

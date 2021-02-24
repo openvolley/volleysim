@@ -67,12 +67,14 @@ vs_estimate_rates <- function(x, target_team, by = "none", moderate = TRUE, proc
     x <- mutate(x, phase = case_when(.data$skill == "Block" & .data$phase == "Reception" ~ "Transition", TRUE ~ .data$phase))
 
     ## did the rally end on this team touch, excluding dig and block errors but including e.g. block kills?
+    if ("was_last_touch" %in% names(x)) x <- x[, setdiff(names(x), "was_last_touch")]
     temp <- dplyr::ungroup(dplyr::mutate(group_by(dplyr::filter(x, is_active_skill(.data$skill) & !(.data$skill %in% c("Dig", "Block") & .data$evaluation == "Error")), .data$match_id, .data$point_id), was_last_touch = .data$team_touch_id == max(.data$team_touch_id)))
     temp <- dplyr::distinct(temp, .data$match_id, .data$team_touch_id, .data$was_last_touch)
     nrow0 <- nrow(x)
     x <- mutate(left_join(x, temp, by = c("match_id", "team_touch_id")), was_last_touch = case_when(is.na(.data$was_last_touch) ~ FALSE, TRUE ~ .data$was_last_touch))
     if (nrow(x) != nrow0) stop("error with was_last_touch")
     ##  did we make the next team touch, excluding digs and blocks other than block kills (B# count as touch)
+    if ("made_next_touch" %in% names(x)) x <- x[, setdiff(names(x), "made_next_touch")]
     temp <- dplyr::ungroup(dplyr::mutate(group_by(dplyr::slice(group_by(dplyr::filter(x, is_active_skill(.data$skill) & .data$skill != "Dig" & !(.data$skill == "Block" & .data$evaluation != "Winning block")), .data$match_id, .data$team_touch_id), 1L), .data$match_id, .data$point_id), made_next_touch = .data$team == lead(.data$team)))
     temp <- dplyr::distinct(temp, .data$match_id, .data$team_touch_id, .data$made_next_touch)
     nrow0 <- nrow(x)
@@ -213,7 +215,7 @@ precheck_rates <- function(rates, process_model = "sideout") {
     } else {
         expected <- "sideout"
     }
-    if (!all(expected %in% names(rates[[1]]))) stop("team 1 rates missing parameter(s): ", paste(setdiff(expected, names(rates[[1]])), collapse = ", "))
-    if (!all(expected %in% names(rates[[2]]))) stop("team 2 rates missing parameter(s): ", paste(setdiff(expected, names(rates[[2]])), collapse = ", "))
+    if (!is.function(rates[[1]]) && !all(expected %in% names(rates[[1]]))) stop("team 1 rates missing parameter(s): ", paste(setdiff(expected, names(rates[[1]])), collapse = ", "))
+    if (!is.function(rates[[2]]) && !all(expected %in% names(rates[[2]]))) stop("team 2 rates missing parameter(s): ", paste(setdiff(expected, names(rates[[2]])), collapse = ", "))
     rates
 }

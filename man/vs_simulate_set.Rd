@@ -25,9 +25,12 @@ vs_simulate_set_theor(...)
 \itemize{
 \item \code{team_1_score} - the score of team 1 at each point in the set so far
 \item \code{team_2_score} - the score of team 2 at each point in the set so far
+\item \code{team_1_rotation} - the rotation of team 1 at each point in the set so far (rotations are counted relative to the team's starting rotation, which is 1)
+\item \code{team_2_rotation} - the rotation of team 2 at each point in the set so far (rotations are counted relative to the team's starting rotation, which is 1)
 \item \code{serving} - the serving team 1 or 2 at each point in the set so far
 \item \code{point_won_by} - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)
 \item \code{outcome} - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if \code{process_model} is "sideout", or details TBD if \code{process_model} is "phase"
+The function should return the sideout rate of the receiving team.
 }}
 
 \item{process_model}{string: either "sideout" or "phase". The "sideout" model uses the estimated sideout rates (in the \code{rates} object) directly. The "phase" model breaks play down into different phases (serve, serve receive, etc) and uses the rates associated with those separate phases}

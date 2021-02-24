@@ -371,7 +371,7 @@ rates_to_MC <- function(rates, process_model = "phase", target_team = "each", na
 ## plot(MM[[1]])
 
 MC_sideout_rates <- function(servingM, receivingM) {
-    if (is.list(servingM) && length(servingM) == 2 && all(vapply(servingM, inherits, "markovchain", FUN.VALUE = TRUE))) {
+    if (is.list(servingM) && (missing(receivingM) || is.null(receivingM)) && length(servingM) == 2 && all(vapply(servingM, inherits, "markovchain", FUN.VALUE = TRUE))) {
         receivingM <- servingM[[2]]
         servingM <- servingM[[1]]
     }
@@ -381,7 +381,7 @@ MC_sideout_rates <- function(servingM, receivingM) {
 
 ## given the team markovchain objects, construct the serve-sideout-breakpoint markovchain
 MC2MCP <- function(M1, M2) {
-    if (is.list(M1) && length(M1) == 2 && all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
+    if (is.list(M1) && (missing(M2) || is.null(M2)) && length(M1) == 2 && all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
         M2 <- M1[[2]]
         M1 <- M1[[1]]
     }
@@ -410,7 +410,7 @@ MCP_serve_proportions <- function(MMP) {
 }
 
 MC_to_points_breakdown <- function(M1, M2) {
-    if (is.list(M1) && length(M1) == 2 && all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
+    if (is.list(M1) && (missing(M2) || is.null(M2)) && length(M1) == 2 && all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
         M2 <- M1[[2]]
         M1 <- M1[[1]]
     }
