@@ -32,7 +32,7 @@ set_win_probabilities_theoretical <- function(so) {
     list(s.matrix = s.matrix, o.matrix = o.matrix)
 }
 
-win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = NA) {
+win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = NA, go_to = 25, go_to_tiebreak = 15) {
     ## create P(Team 1 Wins Set) and P(Team 1 Wins Match) as a function of
     ## so = vector c(P(Team 1 sideouts), P(Team 2 sideouts))
     ## serve1_start = TRUE if Team 1 starts match with serve, FALSE if Team 2 starts match with serve
@@ -46,10 +46,14 @@ win_probabilities_theoretical <- function(so, serve1_start = NA, serve5_start = 
     ## result_probabilities: a vector of match win/loss probabilities
 
     m <- set_win_probabilities_theoretical(so)
-    pu.s <- m$s.matrix[1,1] ##P(Win | Serve)
-    pu.o <- m$o.matrix[1,1] ##P(Win | Opp Serve)
-    pu.s5 <- m$s.matrix[11,11] ##P(Win Game 5 | Serve)
-    pu.o5 <- m$o.matrix[11,11] ##P(Win Game 5 | Opp Serve)
+    
+    zero_eq <- 25 - go_to
+    zero_eq_tiebreak <- 25 - go_to_tiebreak
+    
+    pu.s <- m$s.matrix[1 + zero_eq, 1 + zero_eq] ##P(Win | Serve)
+    pu.o <- m$o.matrix[1 + zero_eq, 1 + zero_eq] ##P(Win | Opp Serve)
+    pu.s5 <- m$s.matrix[1 + zero_eq_tiebreak, 1 + zero_eq_tiebreak] ##P(Win Game 5 | Serve)
+    pu.o5 <- m$o.matrix[1 + zero_eq_tiebreak, 1 + zero_eq_tiebreak] ##P(Win Game 5 | Opp Serve)
     
     
     # set chance of winning set 5 based on who starts
@@ -442,3 +446,161 @@ states_to_factor <- function(s) {
     for (us in na.omit(unique(s))) if (us %in% names(remap)) s[which(s == us)] <- remap[names(remap) == us]
     factor(s, levels = remap)
 }
+
+#' Create a win probability graph for a match
+#'
+#' @param pbp data frame: a data frame containing the set number, home team, visiting team, serving team, point-winning team, home team score, and visiting team score at the end of each point,
+#'  easiest to obtain by subsetting the plays component of a datavolley object as returned by [datavolley::dv_read()] to only include rows where `point == TRUE`
+#' @param so integer: a two-element vector of sideout rates for the home team and visiting team, 
+#' easiest to obtain using [vs_estimate_rates()]
+#' @param go_to integer: the minimum score that must be reached to end a non-tiebreaker set (typically 25 for indoor volleyball in sets 1 to 4, or 21 in beach volleyball)
+#' @param go_to_tiebreak integer: the minimum score that must be reached to end a tiebreaker set (typically 15)
+#' @param max_sets integer: the maximum number of sets that can be played, either 3 or 5
+#' @param show_plot logical: if `TRUE`, produce a graph showing the home team's win probability at each point in the match
+#'
+#' @return A data frame containing the home team's probability of winning the set (`set_probs`) and match (`match_probs`) at each point in the set. 
+#' The first row of the data frame refers to the start of the match (0-0, Set 1).
+#'
+#' @examples
+#' \dontrun{
+#'   library(datavolley)
+#'   x <- dv_read(vs_example_file())
+#'   sideout_rates <- vs_estimate_rates(x, target_team = "each")$sideout
+#'   play_by_play <- subset(plays(x), point)
+#'   
+#'   vs_match_win_probability(play_by_play, sideout_rates)  ## data frame is not printed to console
+#'   match_win_probs <- vs_match_win_probability(play_by_play, sideout_rates) ## but can be stored in a variable
+#'}
+#' @export
+#' 
+vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE){
+    
+    assert_that(max_sets %in% c(3,5), msg = "Only 3-set and 5-set matches are supported")
+    assert_that(go_to <= 25, go_to_tiebreak <= 25, msg = "Target set points must be at most 25")
+    assert_that(max(pbp$set_number) <= max_sets, msg = "More sets have been played in this match than maximum number of sets allowed")
+    
+    # Find the start and end points of each set
+    n <- nrow(pbp)
+    set.start.points <- c(1, (which(diff(pbp$set_number) != 0) - 1))
+    set.end.points <- c(which(diff(pbp$set_number)!=0), n)
+    
+    # Figure out who serves at start of match/set 5
+    match_start_serve <- pbp$serving_team[1] == pbp$home_team[1] # TRUE if home team starts match with serve
+    set5_start_serve <- case_when(
+        length(set.start.points) == 5 ~ pbp$serving_team[set.start.points[5]] == pbp$home_team[set.start.points[5]],
+        length(set.start.points) == 3 & max_sets == 3 ~ pbp$serving_team[set.start.points[5]] == pbp$home_team[set.start.points[5]],
+        TRUE ~ NA
+    )
+
+    wp_list <- win_probabilities_theoretical(so, 
+                                             serve1_start = match_start_serve,
+                                             serve5_start = set5_start_serve,
+                                             go_to = go_to,
+                                             go_to_tiebreak = go_to_tiebreak)
+    
+    zero_eq <- 25 - go_to
+    zero_eq_tiebreak <- 25 - go_to_tiebreak
+    
+    wp_df <- pbp %>% mutate(
+        index.left = 1 + zero_eq + home_team_score + (set_number == max_sets)*zero_eq_tiebreak,
+        index.right = 1 + zero_eq + visiting_team_score + (set_number == max_sets)*zero_eq_tiebreak
+    ) %>%
+        mutate(
+            set_probs = if_else(serving_team == home_team, 
+                                     diag(wp_list$team_serve[index.left, index.right]),  # these end up being matrices so have to take the diagonal values to get the right numbers
+                                     diag(wp_list$opponent_serve[index.left, index.right])
+                                     )
+        )
+
+    serve_list <- if(match_start_serve) wp_list$start_serve_set1_wins else wp_list$opponent_serve_set1_wins
+    
+    # need to know how many sets have been won by each team at this point in the match
+    set_winners <- wp_df %>% slice(set.end.points) %>%
+        transmute(
+            set_number,
+            set_won_by = if_else(home_team == point_won_by, home_team, visiting_team),
+            home_team_sets_won = lag(cumsum(set_won_by == home_team), default = 0),
+            visiting_team_sets_won = lag(cumsum(set_won_by == visiting_team), default = 0)
+        ) %>% right_join(wp_df, by = "set_number")
+    
+    if(max_sets == 5){ # Max sets is 5, normal for indoor
+        match_winners <- set_winners %>% transmute(
+            home_team,
+            visiting_team,
+            serving_team,
+            set_number,
+            home_team_score,
+            visiting_team_score,
+            set_probs,
+            match_probs = case_when(
+                home_team_sets_won == 0 & visiting_team_sets_won == 0 ~ set_probs*serve_list[2] + (1 - set_probs)*serve_list[3],
+                home_team_sets_won == 1 & visiting_team_sets_won == 0 ~ set_probs*serve_list[4] + (1 - set_probs)*serve_list[5],
+                home_team_sets_won == 0 & visiting_team_sets_won == 1 ~ set_probs*serve_list[5] + (1 - set_probs)*serve_list[6],
+                home_team_sets_won == 1 & visiting_team_sets_won == 1 ~ set_probs*serve_list[7] + (1 - set_probs)*serve_list[8],
+                home_team_sets_won == 2 & visiting_team_sets_won == 0 ~ set_probs + (1 - set_probs)*serve_list[7],
+                home_team_sets_won == 0 & visiting_team_sets_won == 2 ~ set_probs*serve_list[8],
+                home_team_sets_won == 2 & visiting_team_sets_won == 1 ~ set_probs + (1 - set_probs)*serve_list[9],
+                home_team_sets_won == 1 & visiting_team_sets_won == 2 ~ set_probs*serve_list[9],
+                home_team_sets_won == 2 & visiting_team_sets_won == 2 ~ set_probs,
+                TRUE ~ NA_real_ # if there is a problem here, just output NA and move on
+            )
+        )
+    } else { #max_sets is 3, equivalent to starting in set 3 with WL
+        match_winners <- set_winners %>% transmute(
+            home_team,
+            visiting_team,
+            serving_team,
+            set_number,
+            home_team_score,
+            visiting_team_score,
+            set_probs,
+            match_probs = case_when(
+                home_team_sets_won == 0 & visiting_team_sets_won == 0 ~ set_probs*serve_list[7] + (1 - set_probs)*serve_list[8],
+                home_team_sets_won == 1 & visiting_team_sets_won == 0 ~ set_probs + (1 - set_probs)*serve_list[9],
+                home_team_sets_won == 0 & visiting_team_sets_won == 1 ~ set_probs*serve_list[9],
+                home_team_sets_won == 1 & visiting_team_sets_won == 1 ~ set_probs,
+                TRUE ~ NA_real_ # if there is a problem here, just output NA and move on
+            )
+        )
+        
+    }
+    
+    # add the initial row for 0-0 at the beginning of the match
+    match_start <- match_winners[1,] %>% mutate(
+        home_team_score = 0,
+        visiting_team_score = 0,
+        set_probs = if(match_start_serve) wp_list$team_serve[1 + zero_eq, 1 + zero_eq] else wp_list$opponent_serve[1 + zero_eq, 1 + zero_eq],
+        match_probs = if(max_sets == 5) serve_list[1] else serve_list[5]
+    )
+    match_winners <- bind_rows(match_start, match_winners)
+    
+    # if we make the win probability graph, make it
+    if(show_plot){
+        
+        yaxis.label <- paste0("P(", pbp$home_team[1], " Win)")
+        title.label <- paste0(pbp$home_team[1], " vs. ", pbp$visiting_team[1])
+        
+        # Quick plot that can be made nicer with ggplot if desired
+        par(xaxt = "n")
+        plot(x = seq(0, nrow(match_winners) - 1),
+             y = match_winners$match_probs,
+             type = "l",
+             xlab = "",
+             ylab = yaxis.label,
+             main = title.label,
+             ylim = c(0,1))
+        abline(v = set.end.points[-length(set.end.points)], lty = 2)  # dashed lines at set breaks
+        
+        # Add set number labels
+        set.labels <- paste0("Set ", seq(1, length(set.end.points)))
+        # essentially, put the set number at top margin of graph
+        set.mid.points <- (set.start.points + set.end.points)/2
+        for (i in 1:length(set.mid.points)){
+         mtext(set.labels[i], side = 3, at = set.mid.points[i])   
+        }
+    }
+    
+    invisible(match_winners) # only return the data frame if there is somewhere to return to
+
+}
+
