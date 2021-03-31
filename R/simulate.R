@@ -435,12 +435,12 @@ vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serv
 do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple) {
     ## need to simulate explicitly with team 1 serving first and then receiving first, so that we can adjust for the different probs in sets 1 & 3 vs sets 2 & 4
     if (simple) {
-        simres14s <- sapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = TRUE, method = "monte carlo"))
-        simres14r <- sapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        simres14s <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        simres14r <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = TRUE, method = "monte carlo"))
         if (mean(is.na(c(simres14s, simres14r))) > 0.02) warning("More than 2% of set 1-4 simulations did not yield a result")
     } else {
-        simres14s <- bind_rows(lapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
-        simres14r <- bind_rows(lapply(seq_len(n/2), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        simres14s <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        simres14r <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
         nsims <- length(c(unique(simres14s$id), -unique(simres14s$id)))
         if (nsims/n < 0.98) warning("More than 2% of set 1-4 simulations did not yield a result")
     }
