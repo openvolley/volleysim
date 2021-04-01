@@ -457,7 +457,9 @@ states_to_factor <- function(s) {
 #' @param go_to_tiebreak integer: the minimum score that must be reached to end a tiebreaker set (typically 15)
 #' @param max_sets integer: the maximum number of sets that can be played, either 3 or 5
 #' @param show_plot logical: if `TRUE`, produce a graph showing the home team's win probability at each point in the match
-#'
+#' @param home_color string: the color used to indicate points in the match where the home team is favored to win
+#' @param visiting_color string: the same as `home_color`, but for the visiting team
+#' 
 #' @return A data frame containing the home team's probability of winning the set (`set_probs`) and match (`match_probs`) at each point in the set. 
 #' The first row of the data frame refers to the start of the match (0-0, Set 1).
 #'
@@ -473,7 +475,7 @@ states_to_factor <- function(s) {
 #'}
 #' @export
 #' 
-vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE){
+vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred"){
     
     assert_that(max_sets %in% c(3,5), msg = "Only 3-set and 5-set matches are supported")
     assert_that(go_to <= 25, go_to_tiebreak <= 25, msg = "Target set points must be at most 25")
@@ -508,13 +510,13 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
     ) %>%
         mutate(
             next_serve = if_else(is.na(next_serve), point_won_by, next_serve),
-            index.left = if_else(index.left > 26 | index.right > 26, 24 + pmax(0, home_team_score - visiting_team_score), index.left),
-            index.right = if_else(index.left > 26 | index.right > 26, 24 + pmax(0, visiting_team_score - home_team_score), index.right)
+            index.left2 = if_else(index.left > 26 | index.right > 26, 24 + pmax(0, home_team_score - visiting_team_score), index.left),
+            index.right2 = if_else(index.left > 26 | index.right > 26, 24 + pmax(0, visiting_team_score - home_team_score), index.right)
         ) %>%
         mutate(
             set_probs = if_else(serving_team == home_team, 
-                                     diag(wp_list$team_serve[index.left, index.right]),  # these end up being matrices so have to take the diagonal values to get the right numbers
-                                     diag(wp_list$opponent_serve[index.left, index.right])
+                                     diag(wp_list$team_serve[index.left2, index.right2]),  # these end up being matrices so have to take the diagonal values to get the right numbers
+                                     diag(wp_list$opponent_serve[index.left2, index.right2])
                                      )
         ) %>% ungroup()
 
@@ -590,12 +592,18 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
         par(xaxt = "n")
         plot(x = seq(0, nrow(match_winners) - 1),
              y = match_winners$match_probs,
-             type = "l",
+             type = "n",
              xlab = "",
              ylab = yaxis.label,
              main = title.label,
              ylim = c(0,1))
+        s <- seq(nrow(match_winners) - 1)
+        x <- c(0, s)
+        segments(x[s], match_winners$match_probs[s], x[s+1], match_winners$match_probs[s+1],
+                 col = (if_else(lead(match_winners$match_probs) >= 0.5, home_color, visitng_color)),
+                 lwd = 2)
         abline(v = set.end.points[-length(set.end.points)], lty = 2)  # dashed lines at set breaks
+        abline(v = c(0, set.end.points[length(set.end.points)]), lty = 1, lwd = 2)
         
         # Add set number labels
         set.labels <- paste0("Set ", seq(1, length(set.end.points)))
