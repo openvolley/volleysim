@@ -501,16 +501,22 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
     zero_eq <- 25 - go_to
     zero_eq_tiebreak <- 25 - go_to_tiebreak
     
-    wp_df <- pbp %>% mutate(
+    wp_df <- pbp %>% group_by(set_number) %>% mutate(
+        next_serve = lead(serving_team),
         index.left = 1 + zero_eq + home_team_score + (set_number == max_sets)*zero_eq_tiebreak,
         index.right = 1 + zero_eq + visiting_team_score + (set_number == max_sets)*zero_eq_tiebreak
     ) %>%
+        mutate(
+            next_serve = if_else(is.na(next_serve), point_won_by, next_serve),
+            index.left = if_else(index.left > 26 | index.right > 26, 24 + pmax(0, home_team_score - visiting_team_score), index.left),
+            index.right = if_else(index.left > 26 | index.right > 26, 24 + pmax(0, visiting_team_score - home_team_score), index.right)
+        ) %>%
         mutate(
             set_probs = if_else(serving_team == home_team, 
                                      diag(wp_list$team_serve[index.left, index.right]),  # these end up being matrices so have to take the diagonal values to get the right numbers
                                      diag(wp_list$opponent_serve[index.left, index.right])
                                      )
-        )
+        ) %>% ungroup()
 
     serve_list <- if(match_start_serve) wp_list$start_serve_set1_wins else wp_list$opponent_serve_set1_wins
     
