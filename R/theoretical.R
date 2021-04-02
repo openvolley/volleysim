@@ -497,7 +497,8 @@ states_to_factor <- function(s) {
 #'   play_by_play <- subset(plays(x), point)
 #'   
 #'   vs_match_win_probability(play_by_play, sideout_rates)  ## data frame is not printed to console
-#'   match_win_probs <- vs_match_win_probability(play_by_play, sideout_rates) ## but can be stored in a variable
+#'   ## but can be stored in a variable
+#'   match_win_probs <- vs_match_win_probability(play_by_play, sideout_rates)
 #'}
 #' @export
 #' 
@@ -529,20 +530,20 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
     zero_eq <- 25 - go_to
     zero_eq_tiebreak <- 25 - go_to_tiebreak
     
-    wp_df <- pbp %>% group_by(set_number) %>% mutate(
-        next_serve = lead(serving_team),
-        index.left = 1 + zero_eq + home_team_score + (set_number == max_sets)*zero_eq_tiebreak,
-        index.right = 1 + zero_eq + visiting_team_score + (set_number == max_sets)*zero_eq_tiebreak
+    wp_df <- pbp %>% group_by(.data$set_number) %>% mutate(
+        next_serve = lead(.data$serving_team),
+        index.left = 1 + zero_eq + .data$home_team_score + (.data$set_number == max_sets)*zero_eq_tiebreak,
+        index.right = 1 + zero_eq + .data$visiting_team_score + (.data$set_number == max_sets)*zero_eq_tiebreak
     ) %>%
         mutate(
-            next_serve = if_else(is.na(next_serve), point_won_by, next_serve),
-            index.left2 = if_else(index.left > 26 | index.right > 26, 24 + pmax(0, home_team_score - visiting_team_score), index.left),
-            index.right2 = if_else(index.left > 26 | index.right > 26, 24 + pmax(0, visiting_team_score - home_team_score), index.right)
+            next_serve = if_else(is.na(.data$next_serve), .data$point_won_by, .data$next_serve),
+            index.left2 = if_else(.data$index.left > 26 | .data$index.right > 26, 24 + pmax(0, .data$home_team_score - .data$visiting_team_score), .data$index.left),
+            index.right2 = if_else(.data$index.left > 26 | .data$index.right > 26, 24 + pmax(0, .data$visiting_team_score - .data$home_team_score), .data$index.right)
         ) %>%
         mutate(
-            set_probs = if_else(serving_team == home_team, 
-                                     diag(wp_list$team_serve[index.left2, index.right2]),  # these end up being matrices so have to take the diagonal values to get the right numbers
-                                     diag(wp_list$opponent_serve[index.left2, index.right2])
+            set_probs = if_else(.data$serving_team == .data$home_team, 
+                                     diag(wp_list$team_serve[.data$index.left2, .data$index.right2]),  # these end up being matrices so have to take the diagonal values to get the right numbers
+                                     diag(wp_list$opponent_serve[.data$index.left2, .data$index.right2])
                                      )
         ) %>% ungroup()
 
@@ -551,48 +552,48 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
     # need to know how many sets have been won by each team at this point in the match
     set_winners <- wp_df %>% slice(set.end.points) %>%
         transmute(
-            set_number,
-            set_won_by = if_else(home_team == point_won_by, home_team, visiting_team),
-            home_team_sets_won = lag(cumsum(set_won_by == home_team), default = 0),
-            visiting_team_sets_won = lag(cumsum(set_won_by == visiting_team), default = 0)
+            .data$set_number,
+            set_won_by = if_else(.data$home_team == .data$point_won_by, .data$home_team, .data$visiting_team),
+            home_team_sets_won = lag(cumsum(.data$set_won_by == .data$home_team), default = 0),
+            visiting_team_sets_won = lag(cumsum(.data$set_won_by == .data$visiting_team), default = 0)
         ) %>% right_join(wp_df, by = "set_number")
     
     if(max_sets == 5){ # Max sets is 5, normal for indoor
         match_winners <- set_winners %>% transmute(
-            home_team,
-            visiting_team,
-            serving_team,
-            set_number,
-            home_team_score,
-            visiting_team_score,
-            set_probs,
+            .data$home_team,
+            .data$visiting_team,
+            .data$serving_team,
+            .data$set_number,
+            .data$home_team_score,
+            .data$visiting_team_score,
+            .data$set_probs,
             match_probs = case_when(
-                home_team_sets_won == 0 & visiting_team_sets_won == 0 ~ set_probs*serve_list[2] + (1 - set_probs)*serve_list[3],
-                home_team_sets_won == 1 & visiting_team_sets_won == 0 ~ set_probs*serve_list[4] + (1 - set_probs)*serve_list[5],
-                home_team_sets_won == 0 & visiting_team_sets_won == 1 ~ set_probs*serve_list[5] + (1 - set_probs)*serve_list[6],
-                home_team_sets_won == 1 & visiting_team_sets_won == 1 ~ set_probs*serve_list[7] + (1 - set_probs)*serve_list[8],
-                home_team_sets_won == 2 & visiting_team_sets_won == 0 ~ set_probs + (1 - set_probs)*serve_list[7],
-                home_team_sets_won == 0 & visiting_team_sets_won == 2 ~ set_probs*serve_list[8],
-                home_team_sets_won == 2 & visiting_team_sets_won == 1 ~ set_probs + (1 - set_probs)*serve_list[9],
-                home_team_sets_won == 1 & visiting_team_sets_won == 2 ~ set_probs*serve_list[9],
-                home_team_sets_won == 2 & visiting_team_sets_won == 2 ~ set_probs,
+                .data$home_team_sets_won == 0 & .data$visiting_team_sets_won == 0 ~ .data$set_probs*serve_list[2] + (1 - .data$set_probs)*serve_list[3],
+                .data$home_team_sets_won == 1 & .data$visiting_team_sets_won == 0 ~ .data$set_probs*serve_list[4] + (1 - .data$set_probs)*serve_list[5],
+                .data$home_team_sets_won == 0 & .data$visiting_team_sets_won == 1 ~ .data$set_probs*serve_list[5] + (1 - .data$set_probs)*serve_list[6],
+                .data$home_team_sets_won == 1 & .data$visiting_team_sets_won == 1 ~ .data$set_probs*serve_list[7] + (1 - .data$set_probs)*serve_list[8],
+                .data$home_team_sets_won == 2 & .data$visiting_team_sets_won == 0 ~ .data$set_probs + (1 - .data$set_probs)*serve_list[7],
+                .data$home_team_sets_won == 0 & .data$visiting_team_sets_won == 2 ~ .data$set_probs*serve_list[8],
+                .data$home_team_sets_won == 2 & .data$visiting_team_sets_won == 1 ~ .data$set_probs + (1 - .data$set_probs)*serve_list[9],
+                .data$home_team_sets_won == 1 & .data$visiting_team_sets_won == 2 ~ .data$set_probs*serve_list[9],
+                .data$home_team_sets_won == 2 & .data$visiting_team_sets_won == 2 ~ .data$set_probs,
                 TRUE ~ NA_real_ # if there is a problem here, just output NA and move on
             )
         )
     } else { #max_sets is 3, equivalent to starting in set 3 with WL
         match_winners <- set_winners %>% transmute(
-            home_team,
-            visiting_team,
-            serving_team,
-            set_number,
-            home_team_score,
-            visiting_team_score,
-            set_probs,
+            .data$home_team,
+            .data$visiting_team,
+            .data$serving_team,
+            .data$set_number,
+            .data$home_team_score,
+            .data$visiting_team_score,
+            .data$set_probs,
             match_probs = case_when(
-                home_team_sets_won == 0 & visiting_team_sets_won == 0 ~ set_probs*serve_list[7] + (1 - set_probs)*serve_list[8],
-                home_team_sets_won == 1 & visiting_team_sets_won == 0 ~ set_probs + (1 - set_probs)*serve_list[9],
-                home_team_sets_won == 0 & visiting_team_sets_won == 1 ~ set_probs*serve_list[9],
-                home_team_sets_won == 1 & visiting_team_sets_won == 1 ~ set_probs,
+                .data$home_team_sets_won == 0 & .data$visiting_team_sets_won == 0 ~ .data$set_probs*serve_list[7] + (1 - .data$set_probs)*serve_list[8],
+                .data$home_team_sets_won == 1 & .data$visiting_team_sets_won == 0 ~ .data$set_probs + (1 - .data$set_probs)*serve_list[9],
+                .data$home_team_sets_won == 0 & .data$visiting_team_sets_won == 1 ~ .data$set_probs*serve_list[9],
+                .data$home_team_sets_won == 1 & .data$visiting_team_sets_won == 1 ~ .data$set_probs,
                 TRUE ~ NA_real_ # if there is a problem here, just output NA and move on
             )
         )
@@ -626,7 +627,7 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
         s <- seq(nrow(match_winners) - 1)
         x <- c(0, s)
         segments(x[s], match_winners$match_probs[s], x[s+1], match_winners$match_probs[s+1],
-                 col = (if_else(lead(match_winners$match_probs) >= 0.5, home_color, visitng_color)),
+                 col = (if_else(lead(match_winners$match_probs) >= 0.5, home_color, visiting_color)),
                  lwd = 2)
         abline(v = set.end.points[-length(set.end.points)], lty = 2)  # dashed lines at set breaks
         abline(v = c(0, set.end.points[length(set.end.points)]), lty = 1, lwd = 2)
