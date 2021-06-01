@@ -1,9 +1,10 @@
 Package: volleysim
 Title: Volleyball Match Simulation Tools
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: c(person("Ben", "Raymond", role = c("aut", "cre"), email = "ben@untan.gl"),
              person("Dwight", "Wynne", role = "aut"),
-             person("Adrien", "Ickowicz", role = "aut"))
+             person("Adrien", "Ickowicz", role = "aut"),
+             person("openvolley.org", role = "org"))
 Description: Functions for simulating volleyball match outcomes.
 Depends: R (>= 3.3.0)
 Imports:

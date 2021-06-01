@@ -439,15 +439,57 @@ MCP_serve_proportions <- function(MMP) {
     sprop/sum(sprop)
 }
 
-MC_to_points_breakdown <- function(M1, M2) {
-    if (is.list(M1) && (missing(M2) || is.null(M2)) && length(M1) == 2 && all(vapply(M1, inherits, "markovchain", FUN.VALUE = TRUE))) {
-        M2 <- M1[[2]]
-        M1 <- M1[[1]]
-    }
+MC_to_points_breakdown <- function(rates, process_model) {
+    M1 <- rates_to_MC(rates, process_model = process_model, target_team = "each")
+    so <- c(MC_sideout_rates(rev(M1)), MC_sideout_rates(M1)) ## theor sideout rates
+    ## separate the MC objects
+    M2 <- M1[[2]]
+    M1 <- M1[[1]]
     out <- do_MC_to_points_breakdown(M1, M2, this_team = 1L)
     out2 <- do_MC_to_points_breakdown(M2, M1, this_team = 2L)
-    rbind(out, out2)
+    out <- rbind(out, out2)
+
+    ## also do breakdown by points per set
+    ## first need the distribution of scores
+    ## sprop gives proportion of serves for team 1 and team 2
+    sprop <- MCP_serve_proportions(MC2MCP(M1, M2))
+    if (FALSE) {
+        ## this is much slower than using absorbp
+        SM1 <- scoreMC(so = so, serving = 1, go_to = 25, stop_at = 35)
+        ## set scores when team 1 is serving
+        ss <- states(SM1)[grep("^WIN", states(SM1))]
+        set_scores1 <- absorptionProbabilities(SM1)[1, ss]
+    } else {
+        A1 <- score_transition_matrix(so = so, serving = 1, go_to = 25, stop_at = 35)
+        set_scores1 <- absorbp(A1)[1, ]
+        set_scores1 <- set_scores1[grep("^WIN", names(set_scores1))]
+        ss <- names(set_scores1)
+    }
+    set_scores1 <- data.frame(p = set_scores1/sum(set_scores1), id = ss)
+    temp <- sub(".*@", "", ss)
+    set_scores1$team_1_score <- as.integer(sub(":.*", "", temp))
+    set_scores1$team_2_score <- as.integer(sub(".*:", "", temp))
+    mss1 <- c(sum(set_scores1$team_1_score * set_scores1$p), sum(set_scores1$team_2_score * set_scores1$p))
+    ## ss1 is the mean points per set by team, when team 1 starts serving
+    A2 <- score_transition_matrix(so = so, serving = 2, go_to = 25, stop_at = 35)
+    set_scores2 <- absorbp(A2)[1, ]
+    set_scores2 <- set_scores2[grep("^WIN", names(set_scores2))]
+    ss <- names(set_scores2)
+    set_scores2 <- data.frame(p = set_scores2/sum(set_scores2), id = ss)
+    temp <- sub(".*@", "", ss)
+    set_scores2$team_1_score <- as.integer(sub(":.*", "", temp))
+    set_scores2$team_2_score <- as.integer(sub(".*:", "", temp))
+    mss2 <- c(sum(set_scores2$team_1_score * set_scores2$p), sum(set_scores2$team_2_score * set_scores2$p))
+    ## combine to overall mss which is mean points per set by team, accounting for sprop
+    mss <- c(mss1[1] * sprop[1] + mss2[1] * sprop[2], mss1[2] * sprop[1] + mss2[2] * sprop[2])
+    ## now given mss and the res$points_breakdown (proportion_of_team_points) we can now estimate the breakdown in terms of points_per_set
+    out$points_per_set <- NA_real_
+    out$points_per_set[out$point_won_by == 1] <- out$proportion_of_team_points[out$point_won_by == 1] * mss[1]
+    out$points_per_set[out$point_won_by == 2] <- out$proportion_of_team_points[out$point_won_by == 2] * mss[2]
+
+    out
 }
+
 do_MC_to_points_breakdown <- function(M1, M2, this_team) {
     stopifnot(identical(states(M1), states(M2)))
     winR_states <- states(M1)[grepl("^S.*[=/]$", states(M1)) | grepl("^R.*#$", states(M1))]
@@ -466,7 +508,7 @@ do_MC_to_points_breakdown <- function(M1, M2, this_team) {
     rownames(out) <- NULL
     out
 }
-states_as_factors <- function() c("S=" = "Serve error", "S#" = "Serve ace", "RO=" = "Rec other loss", "RA=" = "Rec attack error", "RA/" = "Rec attack block", "RA#" = "Rec attack kill", "R=" = "Rec loss", "R#" = "Rec win", "TO=" = "Trans other loss", "TA=" = "Trans attack error", "TA#" = "Trans attack kill", "TA/" = "Trans attack block", "T=" = "Trans loss", "T#" = "Trans win")
+states_as_factors <- function() c("S=" = "Serve error", "S#" = "Serve ace", "RO=" = "Rec loss other", "RA=" = "Rec attack error", "RA/" = "Rec attack block", "RA#" = "Rec attack kill", "R=" = "Rec loss", "R#" = "Rec win", "TO=" = "Trans loss other", "TA=" = "Trans attack error", "TA#" = "Trans attack kill", "TA/" = "Trans attack block", "T=" = "Trans loss", "T#" = "Trans win")
 states_to_factor <- function(s) {
     remap <- states_as_factors()
     for (us in na.omit(unique(s))) if (us %in% names(remap)) s[which(s == us)] <- remap[names(remap) == us]
@@ -645,3 +687,104 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
 
 }
 
+## functions to build a markov chain of score transitions through a set
+sshash <- function(score1, score2, serving) serving * 10e4 + score1 * 10e2 + score2
+## what outcomes can we get from a given point?
+point_transition <- function(p) {
+    ## parms are c(starting_score1, starting_score2, so1, so2, serving, go_to, stop_at, current_index)
+    stopifnot(length(p) == 8)
+    t1won <- ifelse(p[5] < 2, 1 - p[4], p[3])
+    m <- matrix(c(p[1], p[1], ## col 1 = starting team_1_score
+                  p[2], p[2], ## 2 = starting team_2_score
+                  p[5], p[5], ## 3 = starting serving team
+                  p[1] + c(1, 0), ## 4 = next team_1_score
+                  p[2] + c(0, 1), ## 5 = next team_2_score
+                  t1won, 1 - t1won, ## 6 = prob
+                  1, 2, ## 7 = result - default to who is serving at the start of the next point
+                  sshash(p[1] + c(0, 0), p[2] + c(0, 0), p[5]), ## 8 = "hash" of starting scores and serving team
+                  rep(p[8], 2)), ## 9 = current_index
+                ncol = 9)
+    ## other 'result' values
+    m[m[, 4] >= p[7] | m[, 5] >= p[7], 7] <- 0 ## don't continue
+    m[m[, 4] > (m[, 5] + 1) & m[, 4] >= p[6], 7] <- 91 ## team 1 won
+    m[m[, 5] > (m[, 4] + 1) & m[, 5] >= p[6], 7] <- 92 ## team 2 won
+    m
+}
+
+## generate a long-form matrix representing score transitions
+score_transition_long_matrix <- function(so, serving = 1, go_to = 3, stop_at = 5) {
+    p <- c(0, 0, so, serving, go_to, stop_at, 0) ## starting params
+    ## preallocate
+    M <- matrix(NA_real_, nrow = 10000, ncol = 9)
+    qi <- c(1L) ## index of item in Q to process
+    seen <- c(0) ## hashes that we've queued/processed (don't queue again)
+    Q <- list(p) ## queue of items
+    i <- 1L ## index into M
+    while (length(qi) > 0) {
+        ## find the transitions from this set of starting_scores and serving team
+        res <- point_transition(Q[[qi[1]]])
+        M[c(i, i + 1L), ] <- res
+        ## add to the queue any result rows representing a continuing game (not won, not aborted)
+        ## also use the next score hash to avoid adding already-seen starting_score/serving team combos
+        next_hashes <- sshash(res[, 4], res[, 5], res[, 7])
+        res_propagate <- res[, 7] > 0 & res[, 7] < 3 & !next_hashes %in% seen
+        res[, 8] <- next_hashes ## the starting hashes for these are the "next" hashes from the point_transition output
+        res[, 9] <- c(i, i + 1L) ## update "from" for these
+        nextq <- res[res_propagate, c(4:5, 7:9), drop = FALSE] ## cols 1,2 = next starting scores, 3 = result (next serving team), 4 = hash, 5 = from
+        seen <- c(seen, nextq[, 4])
+        i <- i + 2L
+        qi <- qi[-1]
+        if (nrow(nextq) > 0) {
+            ## cat("\nnext_hashes was: ", capture.output(str(next_hashes)), "\n")
+            ## cat("res_propagate was: ", capture.output(str(res_propagate)), "\n")
+            ## cat("M contains hashes: ", paste(na.omit(M[, 8]), collapse = ", "), "\n")
+            ## cat("adding hashes to Q: ", paste(nextq[, 4], collapse = ", "), "\n")
+            Q <- c(Q, lapply(seq_len(nrow(nextq)), function(z) c(nextq[z, 1:2], so, nextq[z, 3], go_to, stop_at, nextq[z, 5])))
+            qi <- c(qi, length(Q) + 1 - seq_len(nrow(nextq)))
+        }
+    }
+    colnames(M) <- c("starting_team_1_score", "starting_team_2_score", "starting_serving_team", "team_1_score", "team_2_score", "prob", "result", "score_hash", "from")
+    M[seq_len(i - 1L), ]
+}
+
+score_transition_matrix <- function(so, serving = 1, go_to = 25, stop_at = 35) {
+    M <- score_transition_long_matrix(so = so, serving = serving, go_to = go_to, stop_at = stop_at)
+    M <- as.data.frame(M)
+    M$rowid <- seq_len(nrow(M))
+    M$from_id <- paste0(M$starting_serving_team, "@", M$starting_team_1_score, ":", M$starting_team_2_score)
+    M$to_id <- M$result
+    M$to_id[M$result == 91] <- "WIN1"
+    M$to_id[M$result == 92] <- "WIN2"
+    M$to_id <- paste0(M$to_id, "@", M$team_1_score, ":", M$team_2_score)
+    M$to_id[M$result < 1] <- "NO RESULT"
+    all_id <- sort(unique(c(M$from_id, M$to_id)))
+    temp <- setNames(seq_along(all_id), all_id)
+    from_idn <- unname(temp[M$from_id])
+    to_idn <- unname(temp[M$to_id])
+    A <- matrix(0, nrow = length(all_id), ncol = length(all_id))
+    for (i in seq_len(nrow(M))) {
+        A[from_idn[i], to_idn[i]] <- A[from_idn[i], to_idn[i]] + M$prob[i]
+    }
+    ## sink states
+    for (ss in grep("^(WIN|NO RESULT)", all_id)) A[ss, ss] <- 1.0
+    colnames(A) <- rownames(A) <- all_id
+    ## rearrange to canonical form
+    aidx <- diag(A) == 1
+    aidx <- c(which(!aidx), which(aidx))
+    A[aidx, aidx]
+}
+
+scoreMC <- function(so, serving = 1, go_to = 25, stop_at = 35) {
+    A <- score_transition_matrix(so = so, serving = serving, go_to = go_to, stop_at = stop_at)
+    new("markovchain", states = rownames(A), transitionMatrix = A, name = "SCM") ## note that this is fairly slow with a large transition matrix
+}
+
+## faster direct implementation of absorption probs
+absorbp <- function(A) {
+    aidx <- which(diag(A) == 1)
+    stopifnot(all(diff(aidx) == 1), max(aidx) == nrow(A))
+    Q <- A[seq_len(aidx[1] - 1L), seq_len(aidx[1] - 1L)]
+    R <- A[seq_len(aidx[1] - 1L), aidx]
+    N <- solve(diag(1, nrow(Q), ncol(Q)) - Q)
+    N %*% R
+}

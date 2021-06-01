@@ -223,7 +223,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
                     r_outc <- sum(tm2_prandf() <= cumsum(temp))
                     if (r_outc == 2) {
                         lost_serve <- FALSE
-                        outcome[ptr] <- "Rec other loss"
+                        outcome[ptr] <- "Rec loss other"
                     } else {
                         lost_serve <- NA
                         if (r_outc == 1) {
@@ -481,10 +481,16 @@ do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple) 
         this <- ungroup(dplyr::count(group_by(out$simres14, .data$point_won_by), .data$outcome, name = "proportion_of_team_points"))
         this <- mutate(this, proportion_of_all_points = .data$proportion_of_team_points / sum(.data$proportion_of_team_points))
         out$points_breakdown14 <- ungroup(mutate(group_by(this, .data$point_won_by), proportion_of_team_points = .data$proportion_of_team_points / sum(.data$proportion_of_team_points)))
+        temp <- ungroup(dplyr::count(group_by(out$simres14, .data$point_won_by), .data$outcome, name = "points_per_set"))
+        temp$points_per_set <- temp$points_per_set/(max(out$simres14$id) * 2)
+        out$points_breakdown14 <- left_join(out$points_breakdown14, temp, by = c("point_won_by", "outcome"))
         out$points_breakdown14 <- out$points_breakdown14[order(out$points_breakdown14$point_won_by, factor(out$points_breakdown14$outcome, levels = states_as_factors())), ]
         this <- ungroup(dplyr::count(group_by(out$simres5, .data$point_won_by), .data$outcome, name = "proportion_of_team_points"))
         this <- mutate(this, proportion_of_all_points = .data$proportion_of_team_points / sum(.data$proportion_of_team_points))
         out$points_breakdown5 <- ungroup(mutate(group_by(this, .data$point_won_by), proportion_of_team_points = .data$proportion_of_team_points / sum(.data$proportion_of_team_points)))
+        temp <- ungroup(dplyr::count(group_by(out$simres5, .data$point_won_by), .data$outcome, name = "points_per_set"))
+        temp$points_per_set <- temp$points_per_set/(max(out$simres5$id) * 2)
+        out$points_breakdown5 <- left_join(out$points_breakdown5, temp, by = c("point_won_by", "outcome"))
         out$points_breakdown5 <- out$points_breakdown5[order(out$points_breakdown5$point_won_by, factor(out$points_breakdown5$outcome, levels = states_as_factors())), ]
     }
     out
@@ -506,7 +512,7 @@ do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simpl
     if (isTRUE(simple)) {
         out$result_probabilities
     } else {
-        out$points_breakdown <- MC_to_points_breakdown(rates_to_MC(rates, process_model = process_model))
+        out$points_breakdown <- MC_to_points_breakdown(rates, process_model = process_model)
         out
     }
 }
