@@ -4,6 +4,7 @@
 \alias{vs_simulate_match}
 \alias{vs_simulate_match_mc}
 \alias{vs_simulate_match_theor}
+\alias{vs_simulate_match_beach}
 \title{Simulate a volleyball match}
 \usage{
 vs_simulate_match(
@@ -11,6 +12,9 @@ vs_simulate_match(
   process_model = "phase",
   serving = NA,
   serving5 = NA,
+  max_sets = 5,
+  go_to = 25,
+  go_to5 = 15,
   n = 2000,
   simple = TRUE,
   method = "theoretical"
@@ -19,6 +23,8 @@ vs_simulate_match(
 vs_simulate_match_mc(...)
 
 vs_simulate_match_theor(...)
+
+vs_simulate_match_beach(...)
 }
 \arguments{
 \item{rates}{list: A two-element list, each element of which is a set of rates as returned by \code{vs_estimate_rates}}
@@ -27,7 +33,13 @@ vs_simulate_match_theor(...)
 
 \item{serving}{logical: if \code{TRUE}, team 1 will serve first in the match. If \code{NA}, the team serving first will be chosen at random}
 
-\item{serving5}{logical: if \code{TRUE}, team 1 will serve first in set 5 (if the match gets that far). If \code{NA}, the team serving first in set 5 will be chosen at random}
+\item{serving5}{logical: if \code{TRUE}, team 1 will serve first in the tiebreaking set (if the match gets that far). If \code{NA}, the team serving first in that set will be chosen at random}
+
+\item{max_sets}{integer: the maximum number of sets to be played (either 3 or 5)}
+
+\item{go_to}{integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)}
+
+\item{go_to5}{integer: the minimum score that must be reached to end the tiebreaker set (typically 15 for indoor volleyball)}
 
 \item{n}{integer: the number of simulations to run}
 
@@ -35,10 +47,11 @@ vs_simulate_match_theor(...)
 
 \item{method}{string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD}
 
-\item{...}{: parameters as for \code{vs_simulate_match}. \code{vs_simulate_match_theor} and \code{vs_simulate_match_mc} are convenience functions for \code{vs_simulate_match(..., method = "theoretical")} and \code{vs_simulate_match(..., method = "monte carlo")} respectively}
+\item{...}{parameters as for \code{vs_simulate_match}. \code{vs_simulate_match_theor} and \code{vs_simulate_match_mc} are convenience functions for \code{vs_simulate_match(..., method = "theoretical")} and \code{vs_simulate_match(..., method = "monte carlo")} respectively.
+\code{vs_simulate_match_beach} is a convenience function for  \code{vs_simulate_match(..., max_sets = 3, go_to = 21, go_to5 = 21)} (typical beach volleyball settings).}
 }
 \description{
-Currently hard-coded to indoor, best-of-5-set scoring.
+Simulate a volleyball match using either best-of-5 or best-of-3 scoring
 }
 \examples{
 \dontrun{

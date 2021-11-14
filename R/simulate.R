@@ -357,7 +357,9 @@ rot16 <- function(z, by = 1L) (((z + by)-1L) %% 6) + 1L
 ## not exported
 ## given the probability of winning sets 1-4, and set 5, calculate the overall probability of winning the match
 ## currently best-of-5-sets only
-vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
+vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, max_sets = 5, serve_known = TRUE) {
+  assert_that(max_sets %in% c(3,5), msg = "Only 3-set and 5-set matches are supported")
+  if(max_sets == 5){
     ## all possible set outcomes in a 5-set match
     tposs_orig <- matrix(c(c(1, 1, 1, NA_real_, NA_real_), ## 3-0
                            c(1, 1, 0, 1, NA_real_), ## 3-1
@@ -377,32 +379,64 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
     tposs[, c(2, 4)] <- abs(1 - tposs[, c(2, 4)] - sp24)
     tposs[, 5] <- abs(1-tposs[, 5] - sp5)
     temp <- apply(tposs, 1, prod, na.rm = TRUE) ## prob of each of the possible ways to win
-
+    
     if (!serve_known) {
-        tposs2 <- rbind(tposs_orig, 1-tposs_orig)
-        tposs2[, c(1, 3)] <- abs(1 - tposs2[, c(1, 3)] - sp24)  ## if we don't know who started with serve then we have to flip sets 1/3 and 2/4
-        tposs2[, c(2, 4)] <- abs(1 - tposs2[, c(2, 4)] - sp13)
-        tposs2[, 5] <- abs(1-tposs2[, 5] - sp5)
-        temp2 <- apply(tposs2, 1, prod, na.rm = TRUE)
-        temp <- (temp + temp2)/2
+      tposs2 <- rbind(tposs_orig, 1-tposs_orig)
+      tposs2[, c(1, 3)] <- abs(1 - tposs2[, c(1, 3)] - sp24)  ## if we don't know who started with serve then we have to flip sets 1/3 and 2/4
+      tposs2[, c(2, 4)] <- abs(1 - tposs2[, c(2, 4)] - sp13)
+      tposs2[, 5] <- abs(1-tposs2[, 5] - sp5)
+      temp2 <- apply(tposs2, 1, prod, na.rm = TRUE)
+      temp <- (temp + temp2)/2
     }
-
-    list(pwin = sum(temp[1:10]), scores = list("3-0" = temp[1], "3-1" = sum(temp[pwinsc==1]), "3-2" = sum(temp[pwinsc==2]), "2-3" = sum(temp[pwinsc==5]), "1-3" = sum(temp[pwinsc==4]), "0-3" = sum(temp[pwinsc==3])))
+    
+    out <- list(pwin = sum(temp[1:10]), scores = list("3-0" = temp[1], "3-1" = sum(temp[pwinsc==1]), "3-2" = sum(temp[pwinsc==2]), "2-3" = sum(temp[pwinsc==5]), "1-3" = sum(temp[pwinsc==4]), "0-3" = sum(temp[pwinsc==3])))
+    
+  } else {
+    tposs_orig <- matrix(c(c(1, 1, NA_real_), ## 2-0
+                           c(1, 0, 1), ## 2-1
+                           c(0, 1, 1) ## 2-1
+                           ), 
+                         ncol = 3, byrow = TRUE)
+    pwinsc <- rowSums(1 - tposs_orig, na.rm = TRUE) ## losing team score on each of those possibilities
+    tposs <- rbind(tposs_orig, 1-tposs_orig)
+    pwinsc <- c(pwinsc, 2+pwinsc)
+    tposs[, 1] <- abs(1 - tposs[, 1] - sp13)
+    tposs[, 2] <- abs(1 - tposs[, 2] - sp24)
+    tposs[, 3] <- abs(1-tposs[, 3] - sp5)
+    temp <- apply(tposs, 1, prod, na.rm = TRUE) ## prob of each of the possible ways to win
+    
+    if (!serve_known) {
+      tposs2 <- rbind(tposs_orig, 1-tposs_orig)
+      tposs2[, 1] <- abs(1 - tposs2[, 1] - sp24)  ## if we don't know who started with serve then we have to flip sets 1/3 and 2/4
+      tposs2[, 2] <- abs(1 - tposs2[, 2] - sp13)
+      tposs2[, 3] <- abs(1-tposs2[, 3] - sp5)
+      temp2 <- apply(tposs2, 1, prod, na.rm = TRUE)
+      temp <- (temp + temp2)/2
+    }
+    
+    out <- list(pwin = sum(temp[1:3]), scores = list("2-0" = temp[1], "2-1" = sum(temp[pwinsc==1]), "1-2" = sum(temp[pwinsc==3]), "0-2" = sum(temp[pwinsc==2])))
+    
+  }
+  out
 }
 
 
 #' Simulate a volleyball match
 #'
-#' Currently hard-coded to indoor, best-of-5-set scoring.
+#' Simulate a volleyball match using either best-of-5 or best-of-3 scoring
 #'
 #' @param rates list: A two-element list, each element of which is a set of rates as returned by `vs_estimate_rates`
 #' @param process_model string: either "sideout" or "phase". See [vs_estimate_rates()]
 #' @param serving logical: if `TRUE`, team 1 will serve first in the match. If `NA`, the team serving first will be chosen at random
-#' @param serving5 logical: if `TRUE`, team 1 will serve first in set 5 (if the match gets that far). If `NA`, the team serving first in set 5 will be chosen at random
+#' @param serving5 logical: if `TRUE`, team 1 will serve first in the tiebreaking set (if the match gets that far). If `NA`, the team serving first in that set will be chosen at random
+#' @param max_sets integer: the maximum number of sets to be played (either 3 or 5)
+#' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
+#' @param go_to5 integer: the minimum score that must be reached to end the tiebreaker set (typically 15 for indoor volleyball)
 #' @param n integer: the number of simulations to run
 #' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list. The details will differ between `method = "monte carlo"` and `method = "theoretical"`
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
-#' @param ... : parameters as for `vs_simulate_match`. `vs_simulate_match_theor` and `vs_simulate_match_mc` are convenience functions for `vs_simulate_match(..., method = "theoretical")` and `vs_simulate_match(..., method = "monte carlo")` respectively
+#' @param ... parameters as for `vs_simulate_match`. `vs_simulate_match_theor` and `vs_simulate_match_mc` are convenience functions for `vs_simulate_match(..., method = "theoretical")` and `vs_simulate_match(..., method = "monte carlo")` respectively. 
+#' `vs_simulate_match_beach` is a convenience function for  `vs_simulate_match(..., max_sets = 3, go_to = 21, go_to5 = 21)` (typical beach volleyball settings).
 #'
 #' @seealso [vs_estimate_rates()] [vs_simulate_set()]
 #'
@@ -422,33 +456,34 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, serve_known = TRUE) {
 #' }
 #'
 #' @export
-vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, n = 2000, simple = TRUE, method = "theoretical") {
+vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, max_sets = 5, go_to = 25, go_to5 = 15, n = 2000, simple = TRUE, method = "theoretical") {
+    assert_that(max_sets %in% c(3,5), msg = "Only 3-set and 5-set matches are supported")
     assert_that(is.string(process_model))
     process_model <- tolower(process_model)
     process_model <- match.arg(process_model, c("phase", "sideout", "phase_simple"))
     assert_that(is.flag(simple), !is.na(simple))
     rates <- precheck_rates(rates, process_model = process_model)
     sim_fun <- if (method == "monte carlo") do_sim_match_mc else do_sim_match_theor
-    sim_fun(rates = rates, process_model = process_model, serving = serving, serving5 = serving5, n = n, simple = simple)
+    sim_fun(rates = rates, process_model = process_model, serving = serving, serving5 = serving5, n = n, simple = simple, max_sets = max_sets, go_to = go_to, go_to5 = go_to5)
 }
 
-do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple) {
+do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple, go_to = 25, go_to5 = 15, max_sets = 5) {
     ## need to simulate explicitly with team 1 serving first and then receiving first, so that we can adjust for the different probs in sets 1 & 3 vs sets 2 & 4
     if (simple) {
-        simres14s <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = TRUE, method = "monte carlo"))
-        simres14r <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = TRUE, method = "monte carlo"))
+        simres14s <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = go_to, simple = TRUE, method = "monte carlo"))
+        simres14r <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = go_to, simple = TRUE, method = "monte carlo"))
         if (mean(is.na(c(simres14s, simres14r))) > 0.02) warning("More than 2% of set 1-4 simulations did not yield a result")
     } else {
-        simres14s <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
-        simres14r <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = 25, simple = FALSE, id = z, method = "monte carlo")))
+        simres14s <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = go_to, simple = FALSE, id = z, method = "monte carlo")))
+        simres14r <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = go_to, simple = FALSE, id = z, method = "monte carlo")))
         nsims <- length(c(unique(simres14s$id), -unique(simres14s$id)))
         if (nsims/n < 0.98) warning("More than 2% of set 1-4 simulations did not yield a result")
     }
     if (simple) {
-        simres5 <- sapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = 15, simple = TRUE, method = "monte carlo"))
+        simres5 <- sapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = go_to5, simple = TRUE, method = "monte carlo"))
         if (mean(is.na(simres5)) > 0.02) warning("More than 2% of set 5 simulations did not yield a result")
     } else {
-        simres5 <- bind_rows(lapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = 15, simple = FALSE, id = z, method = "monte carlo")))
+        simres5 <- bind_rows(lapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = go_to5, simple = FALSE, id = z, method = "monte carlo")))
         if (length(unique(simres5$id))/n < 0.98) warning("More than 2% of set 5 simulations did not yield a result")
     }
     ## now convert set probabilities to match probabilities
@@ -474,7 +509,7 @@ do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple) 
         swby24 <- swby14s
     }
 
-    out <- vs_set_probs_to_match(sp13 = swby13, sp24 = swby24, sp5 = swby5, serve_known = TRUE)
+    out <- vs_set_probs_to_match(sp13 = swby13, sp24 = swby24, sp5 = swby5, max_sets = max_sets, serve_known = TRUE)
     if (!simple) {
         out$simres14 <- bind_rows(simres14s, simres14r)
         out$simres5 <- simres5
@@ -496,7 +531,7 @@ do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple) 
     out
 }
 
-do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simple) {
+do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simple, max_sets = 5, go_to = 25, go_to5 = 15) {
     ## rates is a list
     if (process_model == "sideout") {
         ## if process_model == "sideout", use the observed sideout rates directly
@@ -508,7 +543,7 @@ do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simpl
         ##        estimate_sideout_rates(serving = rates[[1]], receiving = rates[[2]]))
         so <- vs_theoretical_sideout_rates(rates, process_model = process_model)
     }
-    out <- win_probabilities_theoretical(so, serve1_start = serving, serve5_start = serving5)
+    out <- win_probabilities_theoretical(so, serve1_start = serving, serve5_start = serving5, max_sets = max_sets, go_to = go_to, go_to_tiebreak = go_to5)
     if (isTRUE(simple)) {
         out$result_probabilities
     } else {
@@ -527,4 +562,10 @@ vs_simulate_match_mc <- function(...) {
 #' @export
 vs_simulate_match_theor <- function(...) {
     vs_simulate_match(..., method = "theoretical")
+}
+
+#' @rdname vs_simulate_match
+#' @export
+vs_simulate_match_beach <- function(...){
+  vs_simulate_match(..., max_sets = 3, go_to = 21, go_to5 = 21)
 }
