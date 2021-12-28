@@ -67,11 +67,12 @@ test_that("Simulation copes with non-standard variable names", {
     xp <- x$plays
     xp <- xp[which(xp$point), ]
     p1 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred")
-    names(xp)[names(xp) == "visiting_team"] <- "away_team"
+    names(xp)[names(xp) == "set_number"] <- "unexpected_set_number_column_name"
     ## should error
-    expect_error(p2 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred"), "please rename")
-    names(xp)[names(xp) == "away_team"] <- "visiting_team"
+    expect_error(vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred"), "please rename")
+    names(xp)[names(xp) == "unexpected_set_number_column_name"] <- "set_number"
     names(xp)[names(xp) == "visiting_team_score"] <- "visiting_score"
     ## should work
     p2 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred")
+    expect_equal(p1, p2)
 })
