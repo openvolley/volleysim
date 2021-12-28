@@ -19,8 +19,7 @@ vs_match_win_probability(
 \item{pbp}{data frame: a data frame containing the set number, home team, visiting team, serving team, point-winning team, home team score, and visiting team score at the end of each point,
 easiest to obtain by subsetting the plays component of a datavolley object as returned by \code{\link[datavolley:read_dv]{datavolley::dv_read()}} to only include rows where \code{point == TRUE}}
 
-\item{so}{integer: a two-element vector of sideout rates for the home team and visiting team,
-easiest to obtain using \code{\link[=vs_estimate_rates]{vs_estimate_rates()}}}
+\item{so}{integer: a two-element vector of sideout rates for the home team and visiting team, easiest to obtain using \code{\link[=vs_estimate_rates]{vs_estimate_rates()}}}
 
 \item{go_to}{integer: the minimum score that must be reached to end a non-tiebreaker set (typically 25 for indoor volleyball in sets 1 to 4, or 21 in beach volleyball)}
 

@@ -519,8 +519,7 @@ states_to_factor <- function(s) {
 #'
 #' @param pbp data frame: a data frame containing the set number, home team, visiting team, serving team, point-winning team, home team score, and visiting team score at the end of each point,
 #'  easiest to obtain by subsetting the plays component of a datavolley object as returned by [datavolley::dv_read()] to only include rows where `point == TRUE`
-#' @param so integer: a two-element vector of sideout rates for the home team and visiting team, 
-#' easiest to obtain using [vs_estimate_rates()]
+#' @param so integer: a two-element vector of sideout rates for the home team and visiting team, easiest to obtain using [vs_estimate_rates()]
 #' @param go_to integer: the minimum score that must be reached to end a non-tiebreaker set (typically 25 for indoor volleyball in sets 1 to 4, or 21 in beach volleyball)
 #' @param go_to_tiebreak integer: the minimum score that must be reached to end a tiebreaker set (typically 15)
 #' @param max_sets integer: the maximum number of sets that can be played, either 3 or 5
@@ -545,30 +544,30 @@ states_to_factor <- function(s) {
 #' @export
 #' 
 vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred"){
-    
+
     assert_that("set_number" %in% names(pbp), msg = "Set number not detected - please rename the set column set_number")
     assert_that("serving_team" %in% names(pbp), msg = "Serving team not detected - please rename the serving team column serving_team")
     assert_that("point_won_by" %in% names(pbp), msg = "Point-winning team not detected - please rename the column containing the team winning the point to point_won_by")
-    
+
     assert_that(max_sets %in% c(3,5), msg = "Only 3-set and 5-set matches are supported")
     assert_that(go_to <= 25, go_to_tiebreak <= 25, msg = "Target set points must be at most 25")
     assert_that(max(pbp$set_number) <= max_sets, msg = "More sets have been played in this match than maximum number of sets allowed")
-    
+
     # fix potential issues with column names not matching exactly
-    if(!("visiting_team" %in% names(pbp)) & ("away_team" %in% names(pbp))){
-      dplyr::rename(pbp, visiting_team = "away_team")
+    if(!("visiting_team" %in% names(pbp)) && ("away_team" %in% names(pbp))){
+        pbp <- dplyr::rename(pbp, visiting_team = "away_team")
     }
 
-    if(!("visiting_team_score" %in% names(pbp)) & (("away_team_score" %in% names(pbp)))){
-        dplyr::rename(pbp, visiting_team_score = "away_team_score")
-    } else if(!("visiting_team_score" %in% names(pbp)) & (("away_score" %in% names(pbp)))){
-        dplyr::rename(pbp, visiting_team_score = "away_score")
-    } else if(!("visiting_team_score" %in% names(pbp)) & (("visiting_score" %in% names(pbp)))){
-        dplyr::rename(pbp, visiting_team_score = "visiting_score")
+    if(!("visiting_team_score" %in% names(pbp)) && (("away_team_score" %in% names(pbp)))){
+        pbp <- dplyr::rename(pbp, visiting_team_score = "away_team_score")
+    } else if(!("visiting_team_score" %in% names(pbp)) && (("away_score" %in% names(pbp)))){
+        pbp <- dplyr::rename(pbp, visiting_team_score = "away_score")
+    } else if(!("visiting_team_score" %in% names(pbp)) && (("visiting_score" %in% names(pbp)))){
+        pbp <- dplyr::rename(pbp, visiting_team_score = "visiting_score")
     }
 
-    if(!("home_team_score" %in% names(pbp)) & ("home_score" %in% names(pbp))){
-        dplyr::rename(pbp, home_team_score = "home_score")
+    if(!("home_team_score" %in% names(pbp)) && ("home_score" %in% names(pbp))){
+        pbp <- dplyr::rename(pbp, home_team_score = "home_score")
     }
 
     # Now let's add some asserts after hopefully fixing the issue
@@ -576,13 +575,12 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
     assert_that("visiting_team" %in% names(pbp), msg = "Visiting team not detected - please rename the visiting team column visiting_team")
     assert_that("home_team_score" %in% names(pbp), msg = "Home team score not detected - please rename the home team score column home_team_score")
     assert_that("visiting_team_score" %in% names(pbp), msg = "Visiting team score not detected - please rename the visiting team score column visiting_team_score")
-    
-    
+
     # Find the start and end points of each set
     n <- nrow(pbp)
     set.start.points <- c(1, (which(diff(pbp$set_number) != 0) - 1))
     set.end.points <- c(which(diff(pbp$set_number)!=0), n)
-    
+
     # Figure out who serves at start of match/set 5
     match_start_serve <- pbp$serving_team[1] == pbp$home_team[1] # TRUE if home team starts match with serve
     set5_start_serve <- case_when(
