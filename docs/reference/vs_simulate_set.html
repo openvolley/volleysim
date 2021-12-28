@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">volleysim</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.3</span>
       </span>
     </div>
 
@@ -134,9 +134,12 @@
       <td><p>list: A two-element list, each element of which is a set of rates as returned by <code>vs_estimate_rates</code>. Experimental: for <code>process_model</code> "sideout", the <code>sideout</code> rate component can be a function. This function will be called at each step of the simulation with the parameters:</p><ul>
 <li><p><code>team_1_score</code> - the score of team 1 at each point in the set so far</p></li>
 <li><p><code>team_2_score</code> - the score of team 2 at each point in the set so far</p></li>
+<li><p><code>team_1_rotation</code> - the rotation of team 1 at each point in the set so far (rotations are counted relative to the team's starting rotation, which is 1)</p></li>
+<li><p><code>team_2_rotation</code> - the rotation of team 2 at each point in the set so far (rotations are counted relative to the team's starting rotation, which is 1)</p></li>
 <li><p><code>serving</code> - the serving team 1 or 2 at each point in the set so far</p></li>
 <li><p><code>point_won_by</code> - which team won each point in the set so far (this will be NA for the last entry, because that's the current point that hasn't been simulated yet)</p></li>
-<li><p><code>outcome</code> - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if <code>process_model</code> is "sideout", or details TBD if <code>process_model</code> is "phase"</p></li>
+<li><p><code>outcome</code> - the outcome of each point in the set so far, either "Sideout" or "Breakpoint" if <code>process_model</code> is "sideout", or details TBD if <code>process_model</code> is "phase"
+The function should return the sideout rate of the receiving team.</p></li>
 </ul></td>
     </tr>
     <tr>
@@ -209,50 +212,94 @@
 
 <span class='co'>## need to use method = "monte carlo" for this</span>
 <span class='fu'>vs_simulate_set</span><span class='op'>(</span>rates <span class='op'>=</span> <span class='va'>rates</span>, process_model <span class='op'>=</span> <span class='st'>"sideout"</span>, method <span class='op'>=</span> <span class='st'>"monte carlo"</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;    team_1_score team_2_score serving point_won_by set_won_by    outcome
-#&gt; 1             0            0       2            1          2    Sideout
-#&gt; 2             1            0       1            1          2 Breakpoint
-#&gt; 3             2            0       1            1          2 Breakpoint
-#&gt; 4             3            0       1            2          2    Sideout
-#&gt; 5             3            1       2            1          2    Sideout
-#&gt; 6             4            1       1            2          2    Sideout
-#&gt; 7             4            2       2            1          2    Sideout
-#&gt; 8             5            2       1            1          2 Breakpoint
-#&gt; 9             6            2       1            2          2    Sideout
-#&gt; 10            6            3       2            2          2 Breakpoint
-#&gt; 11            6            4       2            2          2 Breakpoint
-#&gt; 12            6            5       2            1          2    Sideout
-#&gt; 13            7            5       1            1          2 Breakpoint
-#&gt; 14            8            5       1            2          2    Sideout
-#&gt; 15            8            6       2            1          2    Sideout
-#&gt; 16            9            6       1            1          2 Breakpoint
-#&gt; 17           10            6       1            2          2    Sideout
-#&gt; 18           10            7       2            2          2 Breakpoint
-#&gt; 19           10            8       2            1          2    Sideout
-#&gt; 20           11            8       1            2          2    Sideout
-#&gt; 21           11            9       2            2          2 Breakpoint
-#&gt; 22           11           10       2            2          2 Breakpoint
-#&gt; 23           11           11       2            2          2 Breakpoint
-#&gt; 24           11           12       2            1          2    Sideout
-#&gt; 25           12           12       1            2          2    Sideout
-#&gt; 26           12           13       2            2          2 Breakpoint
-#&gt; 27           12           14       2            2          2 Breakpoint
-#&gt; 28           12           15       2            1          2    Sideout
-#&gt; 29           13           15       1            1          2 Breakpoint
-#&gt; 30           14           15       1            2          2    Sideout
-#&gt; 31           14           16       2            1          2    Sideout
-#&gt; 32           15           16       1            2          2    Sideout
-#&gt; 33           15           17       2            2          2 Breakpoint
-#&gt; 34           15           18       2            2          2 Breakpoint
-#&gt; 35           15           19       2            1          2    Sideout
-#&gt; 36           16           19       1            2          2    Sideout
-#&gt; 37           16           20       2            2          2 Breakpoint
-#&gt; 38           16           21       2            2          2 Breakpoint
-#&gt; 39           16           22       2            2          2 Breakpoint
-#&gt; 40           16           23       2            1          2    Sideout
-#&gt; 41           17           23       1            2          2    Sideout
-#&gt; 42           17           24       2            1          2    Sideout
-#&gt; 43           18           24       1            2          2    Sideout</div><div class='input'>
+</div><div class='output co'>#&gt;    team_1_score team_2_score team_1_rotation team_2_rotation serving
+#&gt; 1             0            0               1               1       2
+#&gt; 2             1            0               2               1       1
+#&gt; 3             2            0               2               1       1
+#&gt; 4             3            0               2               1       1
+#&gt; 5             3            1               2               2       2
+#&gt; 6             4            1               3               2       1
+#&gt; 7             4            2               3               3       2
+#&gt; 8             5            2               4               3       1
+#&gt; 9             6            2               4               3       1
+#&gt; 10            6            3               4               4       2
+#&gt; 11            6            4               4               4       2
+#&gt; 12            6            5               4               4       2
+#&gt; 13            7            5               5               4       1
+#&gt; 14            8            5               5               4       1
+#&gt; 15            8            6               5               5       2
+#&gt; 16            9            6               6               5       1
+#&gt; 17           10            6               6               5       1
+#&gt; 18           10            7               6               6       2
+#&gt; 19           10            8               6               6       2
+#&gt; 20           11            8               1               6       1
+#&gt; 21           11            9               1               1       2
+#&gt; 22           11           10               1               1       2
+#&gt; 23           11           11               1               1       2
+#&gt; 24           11           12               1               1       2
+#&gt; 25           12           12               2               1       1
+#&gt; 26           12           13               2               2       2
+#&gt; 27           12           14               2               2       2
+#&gt; 28           12           15               2               2       2
+#&gt; 29           13           15               3               2       1
+#&gt; 30           14           15               3               2       1
+#&gt; 31           14           16               3               3       2
+#&gt; 32           15           16               4               3       1
+#&gt; 33           15           17               4               4       2
+#&gt; 34           15           18               4               4       2
+#&gt; 35           15           19               4               4       2
+#&gt; 36           16           19               5               4       1
+#&gt; 37           16           20               5               5       2
+#&gt; 38           16           21               5               5       2
+#&gt; 39           16           22               5               5       2
+#&gt; 40           16           23               5               5       2
+#&gt; 41           17           23               6               5       1
+#&gt; 42           17           24               6               6       2
+#&gt; 43           18           24               1               6       1
+#&gt;    point_won_by set_won_by    outcome
+#&gt; 1             1          2    Sideout
+#&gt; 2             1          2 Breakpoint
+#&gt; 3             1          2 Breakpoint
+#&gt; 4             2          2    Sideout
+#&gt; 5             1          2    Sideout
+#&gt; 6             2          2    Sideout
+#&gt; 7             1          2    Sideout
+#&gt; 8             1          2 Breakpoint
+#&gt; 9             2          2    Sideout
+#&gt; 10            2          2 Breakpoint
+#&gt; 11            2          2 Breakpoint
+#&gt; 12            1          2    Sideout
+#&gt; 13            1          2 Breakpoint
+#&gt; 14            2          2    Sideout
+#&gt; 15            1          2    Sideout
+#&gt; 16            1          2 Breakpoint
+#&gt; 17            2          2    Sideout
+#&gt; 18            2          2 Breakpoint
+#&gt; 19            1          2    Sideout
+#&gt; 20            2          2    Sideout
+#&gt; 21            2          2 Breakpoint
+#&gt; 22            2          2 Breakpoint
+#&gt; 23            2          2 Breakpoint
+#&gt; 24            1          2    Sideout
+#&gt; 25            2          2    Sideout
+#&gt; 26            2          2 Breakpoint
+#&gt; 27            2          2 Breakpoint
+#&gt; 28            1          2    Sideout
+#&gt; 29            1          2 Breakpoint
+#&gt; 30            2          2    Sideout
+#&gt; 31            1          2    Sideout
+#&gt; 32            2          2    Sideout
+#&gt; 33            2          2 Breakpoint
+#&gt; 34            2          2 Breakpoint
+#&gt; 35            1          2    Sideout
+#&gt; 36            2          2    Sideout
+#&gt; 37            2          2 Breakpoint
+#&gt; 38            2          2 Breakpoint
+#&gt; 39            2          2 Breakpoint
+#&gt; 40            1          2    Sideout
+#&gt; 41            2          2    Sideout
+#&gt; 42            1          2    Sideout
+#&gt; 43            2          2    Sideout</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

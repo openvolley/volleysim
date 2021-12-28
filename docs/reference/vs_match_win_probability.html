@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Estimate theoretical sideout rates given 'phase' parameters — vs_theoretical_sideout_rates • volleysim</title>
+<title>Create a win probability graph for a match — vs_match_win_probability • volleysim</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Estimate theoretical sideout rates given 'phase' parameters — vs_theoretical_sideout_rates" />
-<meta property="og:description" content="The vs_estimate_rates() function returns a team's performance rates across a range of aspects of play, including serve ace rate, serve error rate, and so on. Using vs_theoretical_sideout_rates() We can estimate the theoretical sideout rate that we would expect to see, given those parameters. This can be compared to the actual sideout rate achieved by the team." />
+<meta property="og:title" content="Create a win probability graph for a match — vs_match_win_probability" />
+<meta property="og:description" content="Create a win probability graph for a match" />
 
 
 
@@ -103,49 +103,79 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Estimate theoretical sideout rates given 'phase' parameters</h1>
+    <h1>Create a win probability graph for a match</h1>
     
-    <div class="hidden name"><code>vs_theoretical_sideout_rates.Rd</code></div>
+    <div class="hidden name"><code>vs_match_win_probability.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The <code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code> function returns a team's performance rates across a range of aspects of play, including serve ace rate, serve error rate, and so on. Using <code>vs_theoretical_sideout_rates()</code> We can estimate the theoretical sideout rate that we would expect to see, given those parameters. This can be compared to the actual sideout rate achieved by the team.</p>
+    <p>Create a win probability graph for a match</p>
     </div>
 
-    <pre class="usage"><span class='fu'>vs_theoretical_sideout_rates</span><span class='op'>(</span><span class='va'>rates</span>, process_model <span class='op'>=</span> <span class='st'>"phase"</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>vs_match_win_probability</span><span class='op'>(</span>
+  <span class='va'>pbp</span>,
+  <span class='va'>so</span>,
+  go_to <span class='op'>=</span> <span class='fl'>25</span>,
+  go_to_tiebreak <span class='op'>=</span> <span class='fl'>15</span>,
+  max_sets <span class='op'>=</span> <span class='fl'>5</span>,
+  show_plot <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  home_color <span class='op'>=</span> <span class='st'>"blue"</span>,
+  visiting_color <span class='op'>=</span> <span class='st'>"darkred"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>rates</th>
-      <td><p>list: rates as returned by <code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code></p></td>
+      <th>pbp</th>
+      <td><p>data frame: a data frame containing the set number, home team, visiting team, serving team, point-winning team, home team score, and visiting team score at the end of each point,
+easiest to obtain by subsetting the plays component of a datavolley object as returned by <code><a href='https://rdrr.io/pkg/datavolley/man/read_dv.html'>datavolley::dv_read()</a></code> to only include rows where <code>point == TRUE</code></p></td>
     </tr>
     <tr>
-      <th>process_model</th>
-      <td><p>string: currently only "phase". See <code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code></p></td>
+      <th>so</th>
+      <td><p>integer: a two-element vector of sideout rates for the home team and visiting team, easiest to obtain using <code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code></p></td>
+    </tr>
+    <tr>
+      <th>go_to</th>
+      <td><p>integer: the minimum score that must be reached to end a non-tiebreaker set (typically 25 for indoor volleyball in sets 1 to 4, or 21 in beach volleyball)</p></td>
+    </tr>
+    <tr>
+      <th>go_to_tiebreak</th>
+      <td><p>integer: the minimum score that must be reached to end a tiebreaker set (typically 15)</p></td>
+    </tr>
+    <tr>
+      <th>max_sets</th>
+      <td><p>integer: the maximum number of sets that can be played, either 3 or 5</p></td>
+    </tr>
+    <tr>
+      <th>show_plot</th>
+      <td><p>logical: if <code>TRUE</code>, produce a graph showing the home team's win probability at each point in the match</p></td>
+    </tr>
+    <tr>
+      <th>home_color</th>
+      <td><p>string: the color used to indicate points in the match where the home team is favored to win</p></td>
+    </tr>
+    <tr>
+      <th>visiting_color</th>
+      <td><p>string: the same as <code>home_color</code>, but for the visiting team</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The theoretical sideout rates of the two teams</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
-
-    <div class='dont-index'><p><code><a href='vs_estimate_rates.html'>vs_estimate_rates()</a></code></p></div>
+    <p>A data frame containing the home team's probability of winning the set (<code>set_probs</code>) and match (<code>match_probs</code>) at each point in the set.
+The first row of the data frame refers to the start of the match (0-0, Set 1).</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
   <span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'>datavolley</span><span class='op'>)</span>
-  <span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/read_dv.html'>dv_read</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/dv_example_file.html'>dv_example_file</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
-  <span class='va'>rates</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fu'><a href='vs_estimate_rates.html'>vs_estimate_rates</a></span><span class='op'>(</span><span class='va'>x</span>, target_team <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/teams.html'>home_team</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span>,
-                <span class='fu'><a href='vs_estimate_rates.html'>vs_estimate_rates</a></span><span class='op'>(</span><span class='va'>x</span>, target_team <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/teams.html'>visiting_team</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
-
-  <span class='co'>## the theoretical sideout rates</span>
-  <span class='fu'>vs_theoretical_sideout_rates</span><span class='op'>(</span><span class='va'>rates</span><span class='op'>)</span>
-
-  <span class='co'>## compare to their actual sideout rates</span>
-  <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>rates</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>sideout</span>, <span class='va'>rates</span><span class='op'>[[</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>sideout</span><span class='op'>)</span>
+  <span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/read_dv.html'>dv_read</a></span><span class='op'>(</span><span class='fu'><a href='vs_example_file.html'>vs_example_file</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+  <span class='va'>sideout_rates</span> <span class='op'>&lt;-</span> <span class='fu'><a href='vs_estimate_rates.html'>vs_estimate_rates</a></span><span class='op'>(</span><span class='va'>x</span>, target_team <span class='op'>=</span> <span class='st'>"each"</span><span class='op'>)</span><span class='op'>$</span><span class='va'>sideout</span>
+  <span class='va'>play_by_play</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/subset.html'>subset</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/pkg/datavolley/man/plays.html'>plays</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>, <span class='va'>point</span><span class='op'>)</span>
+  
+  <span class='fu'>vs_match_win_probability</span><span class='op'>(</span><span class='va'>play_by_play</span>, <span class='va'>sideout_rates</span><span class='op'>)</span>  <span class='co'>## data frame is not printed to console</span>
+  <span class='co'>## but can be stored in a variable</span>
+  <span class='va'>match_win_probs</span> <span class='op'>&lt;-</span> <span class='fu'>vs_match_win_probability</span><span class='op'>(</span><span class='va'>play_by_play</span>, <span class='va'>sideout_rates</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>

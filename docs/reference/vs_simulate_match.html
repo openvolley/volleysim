@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Simulate a volleyball match — vs_simulate_match" />
-<meta property="og:description" content="Currently hard-coded to indoor, best-of-5-set scoring." />
+<meta property="og:description" content="Simulate a volleyball match using either best-of-5 or best-of-3 scoring" />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">volleysim</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.3</span>
       </span>
     </div>
 
@@ -109,7 +109,7 @@
     </div>
 
     <div class="ref-description">
-    <p>Currently hard-coded to indoor, best-of-5-set scoring.</p>
+    <p>Simulate a volleyball match using either best-of-5 or best-of-3 scoring</p>
     </div>
 
     <pre class="usage"><span class='fu'>vs_simulate_match</span><span class='op'>(</span>
@@ -117,6 +117,9 @@
   process_model <span class='op'>=</span> <span class='st'>"phase"</span>,
   serving <span class='op'>=</span> <span class='cn'>NA</span>,
   serving5 <span class='op'>=</span> <span class='cn'>NA</span>,
+  max_sets <span class='op'>=</span> <span class='fl'>5</span>,
+  go_to <span class='op'>=</span> <span class='fl'>25</span>,
+  go_to5 <span class='op'>=</span> <span class='fl'>15</span>,
   n <span class='op'>=</span> <span class='fl'>2000</span>,
   simple <span class='op'>=</span> <span class='cn'>TRUE</span>,
   method <span class='op'>=</span> <span class='st'>"theoretical"</span>
@@ -124,7 +127,9 @@
 
 <span class='fu'>vs_simulate_match_mc</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span>
 
-<span class='fu'>vs_simulate_match_theor</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></pre>
+<span class='fu'>vs_simulate_match_theor</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span>
+
+<span class='fu'>vs_simulate_match_beach</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -143,7 +148,19 @@
     </tr>
     <tr>
       <th>serving5</th>
-      <td><p>logical: if <code>TRUE</code>, team 1 will serve first in set 5 (if the match gets that far). If <code>NA</code>, the team serving first in set 5 will be chosen at random</p></td>
+      <td><p>logical: if <code>TRUE</code>, team 1 will serve first in the tiebreaking set (if the match gets that far). If <code>NA</code>, the team serving first in that set will be chosen at random</p></td>
+    </tr>
+    <tr>
+      <th>max_sets</th>
+      <td><p>integer: the maximum number of sets to be played (either 3 or 5)</p></td>
+    </tr>
+    <tr>
+      <th>go_to</th>
+      <td><p>integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)</p></td>
+    </tr>
+    <tr>
+      <th>go_to5</th>
+      <td><p>integer: the minimum score that must be reached to end the tiebreaker set (typically 15 for indoor volleyball)</p></td>
     </tr>
     <tr>
       <th>n</th>
@@ -159,7 +176,8 @@
     </tr>
     <tr>
       <th>...</th>
-      <td><p>: parameters as for <code>vs_simulate_match</code>. <code>vs_simulate_match_theor</code> and <code>vs_simulate_match_mc</code> are convenience functions for <code>vs_simulate_match(..., method = "theoretical")</code> and <code>vs_simulate_match(..., method = "monte carlo")</code> respectively</p></td>
+      <td><p>parameters as for <code>vs_simulate_match</code>. <code>vs_simulate_match_theor</code> and <code>vs_simulate_match_mc</code> are convenience functions for <code>vs_simulate_match(..., method = "theoretical")</code> and <code>vs_simulate_match(..., method = "monte carlo")</code> respectively.
+<code>vs_simulate_match_beach</code> is a convenience function for  <code>vs_simulate_match(..., max_sets = 3, go_to = 21, go_to5 = 21)</code> (typical beach volleyball settings).</p></td>
     </tr>
     </table>
 
