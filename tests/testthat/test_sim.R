@@ -60,3 +60,18 @@ test_that("Simulation varies according to who served first", {
     ## the overall win rates for res1 and res2 should be the same, because this comes down to who served first in set 5 (which is random here)
     expect_true(abs(res1$pwin - res2$pwin) < 0.02)
 })
+
+test_that("Simulation copes with non-standard variable names", {
+    x <- datavolley::dv_read(datavolley::dv_example_file())
+    rates <- vs_estimate_rates(x$plays, "each")
+    xp <- x$plays
+    xp <- xp[which(xp$point), ]
+    p1 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred")
+    names(xp)[names(xp) == "visiting_team"] <- "away_team"
+    ## should error
+    expect_error(p2 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred"), "please rename")
+    names(xp)[names(xp) == "away_team"] <- "visiting_team"
+    names(xp)[names(xp) == "visiting_team_score"] <- "visiting_score"
+    ## should work
+    p2 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred")
+})
