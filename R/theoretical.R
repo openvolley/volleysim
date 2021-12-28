@@ -556,21 +556,21 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
     
     # fix potential issues with column names not matching exactly
     if(!("visiting_team" %in% names(pbp)) & ("away_team" %in% names(pbp))){
-      dplyr::rename(pbp, visiting_team = away_team)
+      dplyr::rename(pbp, visiting_team = "away_team")
     }
-    
+
     if(!("visiting_team_score" %in% names(pbp)) & (("away_team_score" %in% names(pbp)))){
-      dplyr::rename(pbp, visiting_team_score = away_team_score)
+        dplyr::rename(pbp, visiting_team_score = "away_team_score")
     } else if(!("visiting_team_score" %in% names(pbp)) & (("away_score" %in% names(pbp)))){
-        dplyr::rename(pbp, visiting_team_score = away_score)
-      } else if(!("visiting_team_score" %in% names(pbp)) & (("visiting_score" %in% names(pbp)))){
-        dplyr::rename(pbp, visiting_team_score = visiting_score)
-      }
-    
-    if(!("home_team_score" %in% names(pbp)) & ("home_score" %in% names(pbp))){
-      dplyr::rename(pbp, home_team_score = home_score)
+        dplyr::rename(pbp, visiting_team_score = "away_score")
+    } else if(!("visiting_team_score" %in% names(pbp)) & (("visiting_score" %in% names(pbp)))){
+        dplyr::rename(pbp, visiting_team_score = "visiting_score")
     }
-    
+
+    if(!("home_team_score" %in% names(pbp)) & ("home_score" %in% names(pbp))){
+        dplyr::rename(pbp, home_team_score = "home_score")
+    }
+
     # Now let's add some asserts after hopefully fixing the issue
     assert_that("home_team" %in% names(pbp), msg = "Home team not detected - please rename the home team column home_team")
     assert_that("visiting_team" %in% names(pbp), msg = "Visiting team not detected - please rename the visiting team column visiting_team")
@@ -677,8 +677,8 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
         set_probs = if(match_start_serve) wp_list$team_serve[1 + zero_eq, 1 + zero_eq] else wp_list$opponent_serve[1 + zero_eq, 1 + zero_eq],
         match_probs = if(max_sets == 5) serve_list[1] else serve_list[5]
     )
-    match_winners <- bind_rows(match_start, match_winners) %>% 
-      dplyr::arrange(set_number, visiting_team_score, home_team_score)
+    match_winners <- bind_rows(match_start, match_winners) %>%
+        dplyr::arrange(.data$set_number, .data$visiting_team_score, .data$home_team_score)
     # the above line should fix issues of points getting out of order, assuming only one line per point
     
     # if we make the win probability graph, make it
