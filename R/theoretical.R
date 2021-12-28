@@ -546,9 +546,37 @@ states_to_factor <- function(s) {
 #' 
 vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred"){
     
+    assert_that("set_number" %in% names(pbp), msg = "Set number not detected - please rename the set column set_number")
+    assert_that("serving_team" %in% names(pbp), msg = "Serving team not detected - please rename the serving team column serving_team")
+    assert_that("point_won_by" %in% names(pbp), msg = "Point-winning team not detected - please rename the column containing the team winning the point to point_won_by")
+    
     assert_that(max_sets %in% c(3,5), msg = "Only 3-set and 5-set matches are supported")
     assert_that(go_to <= 25, go_to_tiebreak <= 25, msg = "Target set points must be at most 25")
     assert_that(max(pbp$set_number) <= max_sets, msg = "More sets have been played in this match than maximum number of sets allowed")
+    
+    # fix potential issues with column names not matching exactly
+    if(!("visiting_team" %in% names(pbp)) & ("away_team" %in% names(pbp))){
+      dplyr::rename(pbp, visiting_team = away_team)
+    }
+    
+    if(!("visiting_team_score" %in% names(pbp)) & (("away_team_score" %in% names(pbp)))){
+      dplyr::rename(pbp, visiting_team_score = away_team_score)
+    } else if(!("visiting_team_score" %in% names(pbp)) & (("away_score" %in% names(pbp)))){
+        dplyr::rename(pbp, visiting_team_score = away_score)
+      } else if(!("visiting_team_score" %in% names(pbp)) & (("visiting_score" %in% names(pbp)))){
+        dplyr::rename(pbp, visiting_team_score = visiting_score)
+      }
+    
+    if(!("home_team_score" %in% names(pbp)) & ("home_score" %in% names(pbp))){
+      dplyr::rename(pbp, home_team_score = home_score)
+    }
+    
+    # Now let's add some asserts after hopefully fixing the issue
+    assert_that("home_team" %in% names(pbp), msg = "Home team not detected - please rename the home team column home_team")
+    assert_that("visiting_team" %in% names(pbp), msg = "Visiting team not detected - please rename the visiting team column visiting_team")
+    assert_that("home_team_score" %in% names(pbp), msg = "Home team score not detected - please rename the home team score column home_team_score")
+    assert_that("visiting_team_score" %in% names(pbp), msg = "Visiting team score not detected - please rename the visiting team score column visiting_team_score")
+    
     
     # Find the start and end points of each set
     n <- nrow(pbp)
@@ -583,7 +611,7 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
             index.right2 = if_else(.data$index.left > 26 | .data$index.right > 26, 24 + pmax(0, .data$visiting_team_score - .data$home_team_score), .data$index.right)
         ) %>%
         mutate(
-            set_probs = if_else(.data$serving_team == .data$home_team, 
+            set_probs = if_else(.data$point_won_by == .data$home_team, 
                                      diag(wp_list$team_serve[.data$index.left2, .data$index.right2]),  # these end up being matrices so have to take the diagonal values to get the right numbers
                                      diag(wp_list$opponent_serve[.data$index.left2, .data$index.right2])
                                      )
@@ -649,7 +677,9 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
         set_probs = if(match_start_serve) wp_list$team_serve[1 + zero_eq, 1 + zero_eq] else wp_list$opponent_serve[1 + zero_eq, 1 + zero_eq],
         match_probs = if(max_sets == 5) serve_list[1] else serve_list[5]
     )
-    match_winners <- bind_rows(match_start, match_winners)
+    match_winners <- bind_rows(match_start, match_winners) %>% 
+      dplyr::arrange(set_number, visiting_team_score, home_team_score)
+    # the above line should fix issues of points getting out of order, assuming only one line per point
     
     # if we make the win probability graph, make it
     if(show_plot){
@@ -672,7 +702,7 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
                  col = (if_else(lead(match_winners$match_probs) >= 0.5, home_color, visiting_color)),
                  lwd = 2)
         abline(v = set.end.points[-length(set.end.points)], lty = 2)  # dashed lines at set breaks
-        abline(v = c(0, set.end.points[length(set.end.points)]), lty = 1, lwd = 2)
+        abline(v = c(0, set.end.points[length(set.end.points)]), lty = 2)  # dashed lines at start and end of match too
         
         # Add set number labels
         set.labels <- paste0("Set ", seq(1, length(set.end.points)))
