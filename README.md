@@ -14,7 +14,13 @@ status](https://github.com/openvolley/volleysim/workflows/R-CMD-check/badge.svg)
 ## Installation
 
 ``` r
-## install.packages("remotes")
+options(repos = c(openvolley = "https://openvolley.r-universe.dev",
+                  CRAN = "https://cloud.r-project.org"))
+install.packages("volleysim")
+
+## or
+
+## install.packages("remotes") ## if needed
 remotes::install_github("openvolley/volleysim")
 ```
 
@@ -117,10 +123,10 @@ rates <- tribble(~team, ~serve_ace, ~serve_error, ~rec_loss_other, ~rec_att_erro
 knitr::kable(rates)
 ```
 
-| team       | serve\_ace | serve\_error | rec\_loss\_other | rec\_att\_error | rec\_att\_kill | rec\_att\_replayed | rec\_no\_att | trans\_loss\_other | trans\_att\_error | trans\_att\_kill | trans\_att\_replayed | trans\_no\_att | rec\_block | trans\_block |
-|:-----------|-----------:|-------------:|-----------------:|----------------:|---------------:|-------------------:|-------------:|-------------------:|------------------:|-----------------:|---------------------:|---------------:|-----------:|-------------:|
-| My team    |      0.062 |        0.156 |            0.009 |           0.071 |          0.499 |               0.05 |         0.05 |              0.018 |             0.082 |            0.452 |                 0.05 |           0.08 |      0.075 |        0.079 |
-| Other team |      0.069 |        0.190 |            0.014 |           0.063 |          0.523 |               0.05 |         0.05 |              0.021 |             0.102 |            0.435 |                 0.05 |           0.05 |      0.083 |        0.109 |
+| team       | serve_ace | serve_error | rec_loss_other | rec_att_error | rec_att_kill | rec_att_replayed | rec_no_att | trans_loss_other | trans_att_error | trans_att_kill | trans_att_replayed | trans_no_att | rec_block | trans_block |
+|:-----------|----------:|------------:|---------------:|--------------:|-------------:|-----------------:|-----------:|-----------------:|----------------:|---------------:|-------------------:|-------------:|----------:|------------:|
+| My team    |     0.062 |       0.156 |          0.009 |         0.071 |        0.499 |             0.05 |       0.05 |            0.018 |           0.082 |          0.452 |               0.05 |         0.08 |     0.075 |       0.079 |
+| Other team |     0.069 |       0.190 |          0.014 |         0.063 |        0.523 |             0.05 |       0.05 |            0.021 |           0.102 |          0.435 |               0.05 |         0.05 |     0.083 |       0.109 |
 
 “My team” is due to play “Other team” in our next match. If we assume
 that both teams play to their season-average parameters, what outcome do
@@ -332,9 +338,9 @@ fb_summary <- xp %>% dplyr::filter(skill == "Reception" & team == home_team(x)) 
                                                 `Attack kill %` = mean(fbso[made_attack])*100,
                                                 `FBSO%` = mean(fbso)*100)
 fb_summary
-#> # A tibble: 3 x 5
+#> # A tibble: 3 × 5
 #>   pass_quality     N `Attack %` `Attack kill %` `FBSO%`
-#> * <chr>        <int>      <dbl>           <dbl>   <dbl>
+#>   <chr>        <int>      <dbl>           <dbl>   <dbl>
 #> 1 Error            3        0             NaN       0  
 #> 2 Other           26       61.5            18.8    11.5
 #> 3 Positive        49       87.8            41.9    36.7
