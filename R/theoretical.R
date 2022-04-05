@@ -594,7 +594,7 @@ vs_match_win_probability <- function(pbp, so, go_to = 25, go_to_tiebreak = 15, m
                                              serve5_start = set5_start_serve,
                                              go_to = go_to,
                                              go_to_tiebreak = go_to_tiebreak)
-    
+
     zero_eq <- 25 - go_to
     zero_eq_tiebreak <- 25 - go_to_tiebreak
     
@@ -740,8 +740,8 @@ point_transition <- function(p) {
 }
 
 ## generate a long-form matrix representing score transitions
-score_transition_long_matrix <- function(so, serving = 1, go_to = 3, stop_at = 5) {
-    p <- c(0, 0, so, serving, go_to, stop_at, 0) ## starting params
+score_transition_long_matrix <- function(so, serving = 1, go_to = 25, stop_at = 35, start_scores = c(0, 0)) {
+    p <- c(start_scores, so, serving, go_to, stop_at, 0) ## starting params
     ## preallocate
     M <- matrix(NA_real_, nrow = 10000, ncol = 9)
     qi <- c(1L) ## index of item in Q to process
@@ -775,8 +775,8 @@ score_transition_long_matrix <- function(so, serving = 1, go_to = 3, stop_at = 5
     M[seq_len(i - 1L), ]
 }
 
-score_transition_matrix <- function(so, serving = 1, go_to = 25, stop_at = 35) {
-    M <- score_transition_long_matrix(so = so, serving = serving, go_to = go_to, stop_at = stop_at)
+score_transition_matrix <- function(so, serving = 1, go_to = 25, stop_at = 35, start_scores = c(0, 0)) {
+    M <- score_transition_long_matrix(so = so, serving = serving, go_to = go_to, stop_at = stop_at, start_scores = start_scores)
     M <- as.data.frame(M)
     M$rowid <- seq_len(nrow(M))
     M$from_id <- paste0(M$starting_serving_team, "@", M$starting_team_1_score, ":", M$starting_team_2_score)
