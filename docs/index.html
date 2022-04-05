@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">volleysim</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.4</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
@@ -59,61 +55,82 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="volleysim" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#volleysim" class="anchor"></a>volleysim</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="volleysim">volleysim<a class="anchor" aria-label="anchor" href="#volleysim"></a>
+</h1></div>
 <!-- badges: start -->
 
-<div id="installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>openvolley <span class="op">=</span> <span class="st">"https://openvolley.r-universe.dev"</span>,
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>openvolley <span class="op">=</span> <span class="st">"https://openvolley.r-universe.dev"</span>,
                   CRAN <span class="op">=</span> <span class="st">"https://cloud.r-project.org"</span><span class="op">)</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"volleysim"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"volleysim"</span><span class="op">)</span>
 
 <span class="co">## or</span>
 
 <span class="co">## install.packages("remotes") ## if needed</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"openvolley/volleysim"</span><span class="op">)</span></code></pre></div>
-<p>The <code>volleysim</code> package provides functions for simulating sets and matches of volleyball. The simulation model can be parameterized in two ways:</p>
-<ol>
-<li><p>A simple “sideout” parameterization. We simply specify the sideout rate for each team. This can be a constant value (i.e. their average sideout rate) or can be provided as a function, allowing the sideout rate to vary depending on whatever factors you think might be appropriate. (Function-based parameterization is experimental: see <code><a href="reference/vs_simulate_set.html">help("vs_simulate_set")</a></code> for more information.)</p></li>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"openvolley/volleysim"</span><span class="op">)</span></code></pre></div>
+<p>The <code>volleysim</code> package provides functions for simulating
+sets and matches of volleyball. The simulation model can be
+parameterized in two ways:</p>
+<ol style="list-style-type: decimal">
+<li><p>A simple “sideout” parameterization. We simply specify the
+sideout rate for each team. This can be a constant value (i.e. their
+average sideout rate) or can be provided as a function, allowing the
+sideout rate to vary depending on whatever factors you think might be
+appropriate. (Function-based parameterization is experimental: see
+<code><a href="reference/vs_simulate_set.html">help("vs_simulate_set")</a></code> for more information.)</p></li>
 <li>
-<p>A more detailed “phase” parameterization. In this model, we specify the rates for each team for:</p>
+<p>A more detailed “phase” parameterization. In this model, we
+specify the rates for each team for:</p>
 <ul>
 <li>
 <code>serve_ace</code> (serve ace rate)</li>
 <li>
 <code>serve_error</code> (serve error rate)</li>
 <li>
-<code>rec_loss_other</code> (loss of the point during reception-phase play, excluding reception errors and attack errors — e.g. errors on reception-phase sets)</li>
+<code>rec_loss_other</code> (loss of the point during
+reception-phase play, excluding reception errors and attack errors —
+e.g. errors on reception-phase sets)</li>
 <li>
-<code>rec_att_error</code> (error rate on reception-phase attacks)</li>
+<code>rec_att_error</code> (error rate on reception-phase
+attacks)</li>
 <li>
-<code>rec_att_kill</code> (kill rate on reception-phase attacks)</li>
+<code>rec_att_kill</code> (kill rate on reception-phase
+attacks)</li>
 <li>
-<code>rec_att_replayed</code> (rate at which reception-phase attacks are replayed by the attacking team for a second attack: either blocked for reattack, deliberately recycled off the block, or dug by the defending team but put back over as a freeball)</li>
+<code>rec_att_replayed</code> (rate at which reception-phase attacks
+are replayed by the attacking team for a second attack: either blocked
+for reattack, deliberately recycled off the block, or dug by the
+defending team but put back over as a freeball)</li>
 <li>
-<code>rec_no_att</code> (proportion of receptions, excluding reception errors, on which an attack is not made)</li>
+<code>rec_no_att</code> (proportion of receptions, excluding
+reception errors, on which an attack is not made)</li>
 <li>
-<code>rec_block</code> (block kill rate against reception-phase attacks)</li>
+<code>rec_block</code> (block kill rate against reception-phase
+attacks)</li>
 <li>
-<code>trans_loss_other</code>, <code>trans_att_error</code>, <code>trans_att_kill</code>, <code>trans_att_replayed</code>, <code>trans_no_att</code>, <code>trans_block</code> - as for the <code>rec_*</code> parameters, but in transition phase (i.e. everything after the reception-phase attack)</li>
+<code>trans_loss_other</code>, <code>trans_att_error</code>,
+<code>trans_att_kill</code>, <code>trans_att_replayed</code>,
+<code>trans_no_att</code>, <code>trans_block</code> - as for the
+<code>rec_*</code> parameters, but in transition phase (i.e. everything
+after the reception-phase attack)</li>
 </ul>
 </li>
 </ol>
 </div>
-<div id="example-1" class="section level2">
-<h2 class="hasAnchor">
-<a href="#example-1" class="anchor"></a>Example 1</h2>
+<div class="section level2">
+<h2 id="example-1">Example 1<a class="anchor" aria-label="anchor" href="#example-1"></a>
+</h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">volleysim</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">datavolley</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">volleysim</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">datavolley</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span>
 
 <span class="co">## read an example file</span>
-<span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/read_dv.html">dv_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/dv_example_file.html">dv_example_file</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+<span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/read_dv.html" class="external-link">dv_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/dv_example_file.html" class="external-link">dv_example_file</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 
 <span class="co">## calculate the rates we need to simulate</span>
 <span class="va">rates</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vs_estimate_rates.html">vs_estimate_rates</a></span><span class="op">(</span><span class="va">x</span>, target_team <span class="op">=</span> <span class="st">"each"</span><span class="op">)</span>
@@ -140,9 +157,11 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
 <span class="co">#&gt; [1] 0.001263653</span></code></pre></div>
-<p>So given the performances of the two teams during that match, we expect that the home team should have won, with 3-0 being the most likely scoreline. Compare this to the actual match result:</p>
+<p>So given the performances of the two teams during that match, we
+expect that the home team should have won, with 3-0 being the most
+likely scoreline. Compare this to the actual match result:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
 <span class="co">#&gt; Match summary:</span>
 <span class="co">#&gt; Date: 2015-01-25</span>
 <span class="co">#&gt; League: Finale mladinke</span>
@@ -152,16 +171,17 @@
 <span class="co">#&gt; Result: 3-0 (25-16, 25-14, 25-22)</span>
 <span class="co">#&gt; Duration: 67 minutes</span></code></pre></div>
 </div>
-<div id="example-2-exploring-match-options" class="section level2">
-<h2 class="hasAnchor">
-<a href="#example-2-exploring-match-options" class="anchor"></a>Example 2: exploring match options</h2>
-<p>Let’s say we have two teams with the following season-average parameters:</p>
+<div class="section level2">
+<h2 id="example-2-exploring-match-options">Example 2: exploring match options<a class="anchor" aria-label="anchor" href="#example-2-exploring-match-options"></a>
+</h2>
+<p>Let’s say we have two teams with the following season-average
+parameters:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
-<span class="va">rates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html">tribble</a></span><span class="op">(</span><span class="op">~</span><span class="va">team</span>, <span class="op">~</span><span class="va">serve_ace</span>, <span class="op">~</span><span class="va">serve_error</span>, <span class="op">~</span><span class="va">rec_loss_other</span>, <span class="op">~</span><span class="va">rec_att_error</span>, <span class="op">~</span><span class="va">rec_att_kill</span>, <span class="op">~</span><span class="va">rec_att_replayed</span>, <span class="op">~</span><span class="va">rec_no_att</span>, <span class="op">~</span><span class="va">trans_loss_other</span>, <span class="op">~</span><span class="va">trans_att_error</span>, <span class="op">~</span><span class="va">trans_att_kill</span>, <span class="op">~</span><span class="va">trans_att_replayed</span>, <span class="op">~</span><span class="va">trans_no_att</span>, <span class="op">~</span><span class="va">rec_block</span>, <span class="op">~</span><span class="va">trans_block</span>,
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span>
+<span class="va">rates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span><span class="op">~</span><span class="va">team</span>, <span class="op">~</span><span class="va">serve_ace</span>, <span class="op">~</span><span class="va">serve_error</span>, <span class="op">~</span><span class="va">rec_loss_other</span>, <span class="op">~</span><span class="va">rec_att_error</span>, <span class="op">~</span><span class="va">rec_att_kill</span>, <span class="op">~</span><span class="va">rec_att_replayed</span>, <span class="op">~</span><span class="va">rec_no_att</span>, <span class="op">~</span><span class="va">trans_loss_other</span>, <span class="op">~</span><span class="va">trans_att_error</span>, <span class="op">~</span><span class="va">trans_att_kill</span>, <span class="op">~</span><span class="va">trans_att_replayed</span>, <span class="op">~</span><span class="va">trans_no_att</span>, <span class="op">~</span><span class="va">rec_block</span>, <span class="op">~</span><span class="va">trans_block</span>,
 <span class="st">"My team"</span>,    <span class="fl">0.062</span>, <span class="fl">0.156</span>, <span class="fl">0.009</span>, <span class="fl">0.071</span>, <span class="fl">0.499</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.018</span>, <span class="fl">0.082</span>, <span class="fl">0.452</span>, <span class="fl">0.05</span>, <span class="fl">0.08</span>, <span class="fl">0.075</span>, <span class="fl">0.079</span>,
 <span class="st">"Other team"</span>, <span class="fl">0.069</span>, <span class="fl">0.190</span>, <span class="fl">0.014</span>, <span class="fl">0.063</span>, <span class="fl">0.523</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.021</span>, <span class="fl">0.102</span>, <span class="fl">0.435</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.083</span>, <span class="fl">0.109</span><span class="op">)</span>
-<span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span></code></pre></div>
+<span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="5%">
@@ -234,7 +254,9 @@
 </tr>
 </tbody>
 </table>
-<p>“My team” is due to play “Other team” in our next match. If we assume that both teams play to their season-average parameters, what outcome do we expect?</p>
+<p>“My team” is due to play “Other team” in our next match. If we assume
+that both teams play to their season-average parameters, what outcome do
+we expect?</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span><span class="va">rates</span><span class="op">)</span>
 <span class="co">#&gt; $pwin</span>
@@ -258,18 +280,26 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
 <span class="co">#&gt; [1] 0.1341014</span></code></pre></div>
-<p>Looks like we expect a close match, but My team is most probably going to lose.</p>
-<p>Perhaps as the coach of My team there are some adjustments I could make — in choosing the players in our starting lineup, or in our match tactics. Can simulation help us explore which option might be most beneficial?</p>
-<p>Let’s say that one of our options is to substitute in a different pass-hitter: Betty, who has a more aggressive serve and attack but who is a weaker passer than our starting pass-hitter Agnes. With Betty in the lineup instead of Agnes, we guesstimate our new team parameters to be:</p>
+<p>Looks like we expect a close match, but My team is most probably
+going to lose.</p>
+<p>Perhaps as the coach of My team there are some adjustments I could
+make — in choosing the players in our starting lineup, or in our match
+tactics. Can simulation help us explore which option might be most
+beneficial?</p>
+<p>Let’s say that one of our options is to substitute in a different
+pass-hitter: Betty, who has a more aggressive serve and attack but who
+is a weaker passer than our starting pass-hitter Agnes. With Betty in
+the lineup instead of Agnes, we guesstimate our new team parameters to
+be:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rates2</span> <span class="op">&lt;-</span> <span class="va">rates</span>
 
 <span class="co">## increase my team's serve aces and errors by 1% each, and attack kills by 2%</span>
-<span class="va">rates2</span><span class="op">[</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span>, <span class="st">"serve_error"</span>, <span class="st">"rec_att_kill"</span>, <span class="st">"trans_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span>
-    <span class="va">rates2</span><span class="op">[</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span>, <span class="st">"serve_error"</span>, <span class="st">"rec_att_kill"</span>, <span class="st">"trans_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="fl">0.02</span>, <span class="fl">0.02</span><span class="op">)</span>
+<span class="va">rates2</span><span class="op">[</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span>, <span class="st">"serve_error"</span>, <span class="st">"rec_att_kill"</span>, <span class="st">"trans_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span>
+    <span class="va">rates2</span><span class="op">[</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span>, <span class="st">"serve_error"</span>, <span class="st">"rec_att_kill"</span>, <span class="st">"trans_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="fl">0.02</span>, <span class="fl">0.02</span><span class="op">)</span>
 
 <span class="co">## increase opposition serve aces by 1%</span>
-<span class="va">rates2</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">rates2</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span><span class="op">)</span><span class="op">]</span> <span class="op">+</span> <span class="fl">0.01</span>
+<span class="va">rates2</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">rates2</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span><span class="op">)</span><span class="op">]</span> <span class="op">+</span> <span class="fl">0.01</span>
 
 <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span><span class="va">rates2</span><span class="op">)</span>
 <span class="co">#&gt; $pwin</span>
@@ -293,15 +323,18 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
 <span class="co">#&gt; [1] 0.1125133</span></code></pre></div>
-<p>That makes a slight improvement. Our second option is to change our serving tactics: we will serve more aggressively in order to put more pressure on Other team’s reception but accepting that we will make more serve errors in doing so:</p>
+<p>That makes a slight improvement. Our second option is to change our
+serving tactics: we will serve more aggressively in order to put more
+pressure on Other team’s reception but accepting that we will make more
+serve errors in doing so:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rates3</span> <span class="op">&lt;-</span> <span class="va">rates</span>
 
 <span class="co">## increase my team's serve aces by 2% and errors by 5%</span>
-<span class="va">rates3</span><span class="op">[</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span>, <span class="st">"serve_error"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">rates3</span><span class="op">[</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span>, <span class="st">"serve_error"</span><span class="op">)</span><span class="op">]</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.02</span>, <span class="fl">0.05</span><span class="op">)</span>
+<span class="va">rates3</span><span class="op">[</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span>, <span class="st">"serve_error"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">rates3</span><span class="op">[</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"serve_ace"</span>, <span class="st">"serve_error"</span><span class="op">)</span><span class="op">]</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.02</span>, <span class="fl">0.05</span><span class="op">)</span>
 
 <span class="co">## decrease opposition reception kills by 5% due to their expected poorer passing</span>
-<span class="va">rates3</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"rec_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">rates3</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"rec_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">-</span> <span class="fl">0.05</span>
+<span class="va">rates3</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rec_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">rates3</span><span class="op">[</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rec_att_kill"</span><span class="op">)</span><span class="op">]</span> <span class="op">-</span> <span class="fl">0.05</span>
 <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span><span class="va">rates3</span><span class="op">)</span>
 <span class="co">#&gt; $pwin</span>
 <span class="co">#&gt; [1] 0.5605252</span>
@@ -324,15 +357,20 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
 <span class="co">#&gt; [1] 0.1011914</span></code></pre></div>
-<p>This looks like it might be a better option (assuming, of course, that we have estimated the changes in rates correctly).</p>
+<p>This looks like it might be a better option (assuming, of course,
+that we have estimated the changes in rates correctly).</p>
 </div>
-<div id="example-3" class="section level2">
-<h2 class="hasAnchor">
-<a href="#example-3" class="anchor"></a>Example 3</h2>
-<p>Let’s look at another match: the 2020 Austrian Women’s Volley Cup played between Hartberg and UVC Graz (the dvw file was downloaded from <a href="https://www.volleynet.at/dvdownload/information/f-Damen/" class="uri">https://www.volleynet.at/dvdownload/information/f-Damen/</a> and is bundled with the volleysim package). UVC Graz won the match 3-1:</p>
+<div class="section level2">
+<h2 id="example-3">Example 3<a class="anchor" aria-label="anchor" href="#example-3"></a>
+</h2>
+<p>Let’s look at another match: the 2020 Austrian Women’s Volley Cup
+played between Hartberg and UVC Graz (the dvw file was downloaded from
+<a href="https://www.volleynet.at/dvdownload/information/f-Damen/" class="external-link uri">https://www.volleynet.at/dvdownload/information/f-Damen/</a>
+and is bundled with the volleysim package). UVC Graz won the match
+3-1:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/read_dv.html">dv_read</a></span><span class="op">(</span><span class="fu"><a href="reference/vs_example_file.html">vs_example_file</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/read_dv.html" class="external-link">dv_read</a></span><span class="op">(</span><span class="fu"><a href="reference/vs_example_file.html">vs_example_file</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
 <span class="co">#&gt; Match summary:</span>
 <span class="co">#&gt; Date: 2020-11-08</span>
 <span class="co">#&gt; League: Austrian Volley Cup Women 2020/21 - DCup</span>
@@ -341,10 +379,11 @@
 <span class="co">#&gt;        UVC Graz w Cup (PACK Matthias/APPEL Martin)</span>
 <span class="co">#&gt; Result: 1-3 (21-25, 21-25, 25-20, 15-25)</span>
 <span class="co">#&gt; Duration: 88 minutes</span></code></pre></div>
-<p>Let’s see what result we expected given the team’s actual performances during the match:</p>
+<p>Let’s see what result we expected given the team’s actual
+performances during the match:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">rates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="fu"><a href="reference/vs_estimate_rates.html">vs_estimate_rates</a></span><span class="op">(</span><span class="va">x</span>, target_team <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/teams.html">home_team</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>,
-              <span class="fu"><a href="reference/vs_estimate_rates.html">vs_estimate_rates</a></span><span class="op">(</span><span class="va">x</span>, target_team <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/teams.html">visiting_team</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">rates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="reference/vs_estimate_rates.html">vs_estimate_rates</a></span><span class="op">(</span><span class="va">x</span>, target_team <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/teams.html" class="external-link">home_team</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>,
+              <span class="fu"><a href="reference/vs_estimate_rates.html">vs_estimate_rates</a></span><span class="op">(</span><span class="va">x</span>, target_team <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/teams.html" class="external-link">visiting_team</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="va">sim_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span>rates <span class="op">=</span> <span class="va">rates</span><span class="op">)</span>
 <span class="va">sim_result</span>
 <span class="co">#&gt; $pwin</span>
@@ -368,37 +407,44 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $scores$`0-3`</span>
 <span class="co">#&gt; [1] 0.2140178</span></code></pre></div>
-<p>The simulations suggest that Hartberg had a 32.8% chance of winning, with the most likely scoreline being 1-3 — consistent with the actual result.</p>
-<p>Now let’s say that the two teams will be playing again soon, and the Hartberg coach thinks that their first-ball attack could be improved by improving their passing. What difference might we expect in the match outcome for an improvement in this area?</p>
-<p>First let’s get a handle on the relevant performance parameters. “Positive” passes here means passes that were rated as perfect or positive.</p>
+<p>The simulations suggest that Hartberg had a 32.8% chance of winning,
+with the most likely scoreline being 1-3 — consistent with the actual
+result.</p>
+<p>Now let’s say that the two teams will be playing again soon, and the
+Hartberg coach thinks that their first-ball attack could be improved by
+improving their passing. What difference might we expect in the match
+outcome for an improvement in this area?</p>
+<p>First let’s get a handle on the relevant performance parameters.
+“Positive” passes here means passes that were rated as perfect or
+positive.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## extract the play-by-play data</span>
-<span class="va">xp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/plays.html">plays</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
+<span class="va">xp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/plays.html" class="external-link">plays</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
 
 <span class="co">## identify first-ball attacks</span>
-<span class="va">fba</span> <span class="op">&lt;-</span> <span class="va">xp</span> <span class="op">%&gt;%</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">skill</span> <span class="op">==</span> <span class="st">"Attack"</span> <span class="op">&amp;</span> <span class="va">phase</span> <span class="op">==</span> <span class="st">"Reception"</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>made_attack <span class="op">=</span> <span class="cn">TRUE</span>, fbso <span class="op">=</span> <span class="va">evaluation</span> <span class="op">==</span> <span class="st">"Winning attack"</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">point_id</span>, <span class="va">team</span>, <span class="va">made_attack</span>, <span class="va">fbso</span><span class="op">)</span>
+<span class="va">fba</span> <span class="op">&lt;-</span> <span class="va">xp</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">skill</span> <span class="op">==</span> <span class="st">"Attack"</span> <span class="op">&amp;</span> <span class="va">phase</span> <span class="op">==</span> <span class="st">"Reception"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>made_attack <span class="op">=</span> <span class="cn">TRUE</span>, fbso <span class="op">=</span> <span class="va">evaluation</span> <span class="op">==</span> <span class="st">"Winning attack"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">point_id</span>, <span class="va">team</span>, <span class="va">made_attack</span>, <span class="va">fbso</span><span class="op">)</span>
 
 <span class="co">## join that back to the full play-by-play data</span>
-<span class="va">xp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">left_join</a></span><span class="op">(</span><span class="va">xp</span>, <span class="va">fba</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"point_id"</span>, <span class="st">"team"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>fbso <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/if_else.html">if_else</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">fbso</span><span class="op">)</span>, <span class="cn">FALSE</span>, <span class="va">fbso</span><span class="op">)</span>,
-           made_attack <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/if_else.html">if_else</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">made_attack</span><span class="op">)</span>, <span class="cn">FALSE</span>, <span class="va">made_attack</span><span class="op">)</span><span class="op">)</span>
+<span class="va">xp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">xp</span>, <span class="va">fba</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"point_id"</span>, <span class="st">"team"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>fbso <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/if_else.html" class="external-link">if_else</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">fbso</span><span class="op">)</span>, <span class="cn">FALSE</span>, <span class="va">fbso</span><span class="op">)</span>,
+           made_attack <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/if_else.html" class="external-link">if_else</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">made_attack</span><span class="op">)</span>, <span class="cn">FALSE</span>, <span class="va">made_attack</span><span class="op">)</span><span class="op">)</span>
 
 <span class="co">## and pass quality on each rally</span>
-<span class="va">pq</span> <span class="op">&lt;-</span> <span class="va">xp</span> <span class="op">%&gt;%</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">skill</span> <span class="op">==</span> <span class="st">"Reception"</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">point_id</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize</a></span><span class="op">(</span>pass_quality <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html">case_when</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html">n</a></span><span class="op">(</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span> <span class="op">~</span> <span class="va">evaluation</span><span class="op">)</span><span class="op">)</span>
-<span class="va">xp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">left_join</a></span><span class="op">(</span><span class="va">xp</span>, <span class="va">pq</span>, by <span class="op">=</span> <span class="st">"point_id"</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pass_quality <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html">case_when</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html">grepl</a></span><span class="op">(</span><span class="st">"Perfect|Positive"</span>, <span class="va">pass_quality</span><span class="op">)</span> <span class="op">~</span> <span class="st">"Positive"</span>,
-                                    <span class="fu"><a href="https://rdrr.io/r/base/grep.html">grepl</a></span><span class="op">(</span><span class="st">"Error"</span>, <span class="va">pass_quality</span><span class="op">)</span> <span class="op">~</span> <span class="st">"Error"</span>,
+<span class="va">pq</span> <span class="op">&lt;-</span> <span class="va">xp</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">skill</span> <span class="op">==</span> <span class="st">"Reception"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">point_id</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>pass_quality <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span> <span class="op">~</span> <span class="va">evaluation</span><span class="op">)</span><span class="op">)</span>
+<span class="va">xp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">xp</span>, <span class="va">pq</span>, by <span class="op">=</span> <span class="st">"point_id"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pass_quality <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Perfect|Positive"</span>, <span class="va">pass_quality</span><span class="op">)</span> <span class="op">~</span> <span class="st">"Positive"</span>,
+                                    <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Error"</span>, <span class="va">pass_quality</span><span class="op">)</span> <span class="op">~</span> <span class="st">"Error"</span>,
                                     <span class="cn">TRUE</span> <span class="op">~</span> <span class="st">"Other"</span><span class="op">)</span><span class="op">)</span>
 
 <span class="co">## finally summarize the first-ball attacks by pass quality</span>
-<span class="va">fb_summary</span> <span class="op">&lt;-</span> <span class="va">xp</span> <span class="op">%&gt;%</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">skill</span> <span class="op">==</span> <span class="st">"Reception"</span> <span class="op">&amp;</span> <span class="va">team</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/teams.html">home_team</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">pass_quality</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize</a></span><span class="op">(</span>N <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html">n</a></span><span class="op">(</span><span class="op">)</span>,
-                                                `Attack %` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">made_attack</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span>,
-                                                `Attack kill %` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">fbso</span><span class="op">[</span><span class="va">made_attack</span><span class="op">]</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span>,
-                                                `FBSO%` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">fbso</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span><span class="op">)</span>
+<span class="va">fb_summary</span> <span class="op">&lt;-</span> <span class="va">xp</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">skill</span> <span class="op">==</span> <span class="st">"Reception"</span> <span class="op">&amp;</span> <span class="va">team</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/pkg/datavolley/man/teams.html" class="external-link">home_team</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">pass_quality</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>N <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>,
+                                                `Attack %` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">made_attack</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span>,
+                                                `Attack kill %` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">fbso</span><span class="op">[</span><span class="va">made_attack</span><span class="op">]</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span>,
+                                                `FBSO%` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">fbso</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span><span class="op">)</span>
 <span class="va">fb_summary</span>
 <span class="co">#&gt; # A tibble: 3 × 5</span>
 <span class="co">#&gt;   pass_quality     N `Attack %` `Attack kill %` `FBSO%`</span>
@@ -406,9 +452,20 @@
 <span class="co">#&gt; 1 Error            3        0             NaN       0  </span>
 <span class="co">#&gt; 2 Other           26       61.5            18.8    11.5</span>
 <span class="co">#&gt; 3 Positive        49       87.8            41.9    36.7</span></code></pre></div>
-<p>Hartberg made 49 positive passes (62.8% positive pass rate). They made an actual attack on 87.8% of those positive passes, with a kill rate of 41.9% on those attacks. Their overall first-ball sideout rate on positive passes was 36.7%.</p>
-<p>On other passes (excluding pass errors), Hartberg’s first-attack sideout rate was 11.5%, with only 61.5% of those passes leading to an attack, and a kill rate of 18.8% on those attacks.</p>
-<p>Let’s say that with some focused training, the Hartberg coach thinks that their positive pass rate can be substantially increased, from 62.8% to 75%. This would change their reception attack kill rate, because more attacks would be made from positive passes. The expected reception attack kill rate would be the weighted average of the kill rates on positive and other passes (where the weights are the relative numbers of positive and other passes).</p>
+<p>Hartberg made 49 positive passes (62.8% positive pass rate). They
+made an actual attack on 87.8% of those positive passes, with a kill
+rate of 41.9% on those attacks. Their overall first-ball sideout rate on
+positive passes was 36.7%.</p>
+<p>On other passes (excluding pass errors), Hartberg’s first-attack
+sideout rate was 11.5%, with only 61.5% of those passes leading to an
+attack, and a kill rate of 18.8% on those attacks.</p>
+<p>Let’s say that with some focused training, the Hartberg coach thinks
+that their positive pass rate can be substantially increased, from 62.8%
+to 75%. This would change their reception attack kill rate, because more
+attacks would be made from positive passes. The expected reception
+attack kill rate would be the weighted average of the kill rates on
+positive and other passes (where the weights are the relative numbers of
+positive and other passes).</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">new_positive_pass_rate</span> <span class="op">&lt;-</span> <span class="fl">0.75</span>
 <span class="va">attack_rate_pos</span> <span class="op">&lt;-</span> <span class="va">new_positive_pass_rate</span> <span class="op">*</span> <span class="fl">0.878</span>
@@ -418,8 +475,11 @@
                      <span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">attack_rate_pos</span> <span class="op">+</span> <span class="va">attack_rate_other</span><span class="op">)</span>
 <span class="va">new_rec_att_kill</span>
 <span class="co">#&gt; [1] 0.3752742</span></code></pre></div>
-<p>That is, with the hypothesized better passing performance we expect only a modest increase in the overall reception attack kill rate to 37.5% (up from 35.6%).</p>
-<p>Armed with that estimate, we can explore what effect that might have on a re-match:</p>
+<p>That is, with the hypothesized better passing performance we expect
+only a modest increase in the overall reception attack kill rate to
+37.5% (up from 35.6%).</p>
+<p>Armed with that estimate, we can explore what effect that might have
+on a re-match:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rates</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">rec_att_kill</span> <span class="op">&lt;-</span> <span class="va">new_rec_att_kill</span>
 <span class="va">new_sim_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vs_simulate_match.html">vs_simulate_match</a></span><span class="op">(</span>rates <span class="op">=</span> <span class="va">rates</span><span class="op">)</span>
@@ -452,40 +512,53 @@
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>
-<a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
+<a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
 </li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing volleysim</a></li>
+</ul>
+</div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Ben Raymond <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Dwight Wynne <br><small class="roles"> Author </small>  </li>
 <li>Adrien Ickowicz <br><small class="roles"> Author </small>  </li>
-<li><a href="authors.html">All authors...</a></li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://www.tidyverse.org/lifecycle/#experimental"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="lifecycle"></a></li>
-<li><a href="https://github.com/openvolley/volleysim/actions"><img src="https://github.com/openvolley/volleysim/workflows/R-CMD-check/badge.svg" alt="R build status"></a></li>
+<li><a href="https://www.tidyverse.org/lifecycle/#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="lifecycle"></a></li>
+<li><a href="https://github.com/openvolley/volleysim/actions" class="external-link"><img src="https://github.com/openvolley/volleysim/workflows/R-CMD-check/badge.svg" alt="R build status"></a></li>
 </ul>
 </div>
-</div>
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Ben Raymond, Dwight Wynne, Adrien Ickowicz.</p>
+  <p></p>
+<p>Developed by Ben Raymond, Dwight Wynne, Adrien Ickowicz.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a>
+2.0.2.</p>
 </div>
 
       </footer>
@@ -493,6 +566,8 @@
 
   
 
+
+  
 
   </body>
 </html>
