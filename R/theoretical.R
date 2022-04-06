@@ -3,31 +3,28 @@ set_win_probabilities_theoretical <- function(so) {
     s.matrix <- matrix(0, 26, 26)
     o.matrix <- matrix(0, 26, 26)
 
-    s.matrix[26,-c(25,26)] <- 1
-    o.matrix[26,-c(25,26)] <- 1
+    s.matrix[26, -c(25, 26)] <- 1
+    o.matrix[26, -c(25, 26)] <- 1
 
-    rownames(s.matrix) <- seq(0,25)
-    rownames(o.matrix) <- seq(0,25)
-    colnames(s.matrix) <- seq(0,25)
-    colnames(o.matrix) <- seq(0,25)
+    rownames(s.matrix) <- rownames(o.matrix) <- colnames(s.matrix) <- colnames(o.matrix) <- 0:25
 
-    back <- seq(47, 0, by = -1)
+    denom <- (1 - so[1])^2 + (1 - so[2]) * so[1] * (1 - so[1] + (1 - so[2]))
+    s.matrix[25, 25] <- (1 - so[2])^2 / denom
+    o.matrix[25, 25] <- (1 - so[2]) * so[1] * ((1 - so[1]) + (1 - so[2])) / denom
 
-    denom <- (1-so[1])^2 + (1-so[2])*so[1]*(1-so[1]+(1-so[2]))
-    s.matrix[25, 25] <- (1-so[2])^2/denom
-    o.matrix[25, 25] <- (1-so[2])*so[1]*((1-so[1])+(1-so[2]))/denom
-
-    for (k in back) {
-        for (i in seq(max(k-24,0), min(24,k))){
-            s.matrix[i+1, k-i+1] <- (1-so[2])*s.matrix[i+2, k-i+1] + so[2]*o.matrix[i+1, k-i+2]
-            o.matrix[i+1, k-i+1] <- so[1]*s.matrix[i+2, k-i+1] + (1-so[1])*o.matrix[i+1, k-i+2]
+    for (k in 47:0) {
+        for (i in seq(max(k - 24, 0), min(24, k))) {
+            s.matrix[i+1, k-i+1] <- (1 - so[2]) * s.matrix[i+2, k-i+1] + so[2] * o.matrix[i+1, k-i+2]
+            o.matrix[i+1, k-i+1] <- so[1] * s.matrix[i+2, k-i+1] + (1 - so[1]) * o.matrix[i+1, k-i+2]
         }
     }
 
-    s.matrix[26,25] <- s.matrix[25,24]
-    s.matrix[26,26] <- s.matrix[25,25]
-    o.matrix[25,26] <- o.matrix[24,25]
-    o.matrix[26,26] <- o.matrix[25,25]
+    s.matrix[26, 25] <- s.matrix[25, 24]
+    s.matrix[25, 26] <- s.matrix[24, 25]
+    s.matrix[26, 26] <- s.matrix[25, 25]
+    o.matrix[25, 26] <- o.matrix[24, 25]
+    o.matrix[26, 25] <- o.matrix[25, 24]
+    o.matrix[26, 26] <- o.matrix[25, 25]
 
     list(s.matrix = s.matrix, o.matrix = o.matrix)
 }
@@ -728,7 +725,7 @@ point_transition <- function(p) {
                   p[1] + c(1, 0), ## 4 = next team_1_score
                   p[2] + c(0, 1), ## 5 = next team_2_score
                   t1won, 1 - t1won, ## 6 = prob
-                  1, 2, ## 7 = result - default to who is serving at the start of the next point
+                  1, 2, ## 7 = result - who won / is serving at the start of the next point
                   sshash(p[1] + c(0, 0), p[2] + c(0, 0), p[5]), ## 8 = "hash" of starting scores and serving team
                   rep(p[8], 2)), ## 9 = current_index
                 ncol = 9)
@@ -797,7 +794,7 @@ score_transition_matrix <- function(so, serving = 1, go_to = 25, stop_at = 35, s
     for (ss in grep("^(WIN|NO RESULT)", all_id)) A[ss, ss] <- 1.0
     colnames(A) <- rownames(A) <- all_id
     ## rearrange to canonical form
-    aidx <- diag(A) == 1
+    aidx <- diag(A) == 1 ## absorbing states
     aidx <- c(which(!aidx), which(aidx))
     A[aidx, aidx]
 }
