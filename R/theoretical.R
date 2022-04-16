@@ -808,7 +808,7 @@ scoreMC <- function(so, serving = 1, go_to = 25, stop_at = 35) {
 absorbp <- function(A) {
     aidx <- which(diag(A) == 1)
     stopifnot(all(diff(aidx) == 1), max(aidx) == nrow(A))
-    Q <- A[seq_len(aidx[1] - 1L), seq_len(aidx[1] - 1L)]
+    Q <- A[seq_len(aidx[1] - 1L), seq_len(aidx[1] - 1L), drop = FALSE]
     R <- A[seq_len(aidx[1] - 1L), aidx]
     N <- solve(diag(1, nrow(Q), ncol(Q)) - Q)
     N %*% R
