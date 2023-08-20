@@ -15,6 +15,8 @@ vs_simulate_match(
   max_sets = 5,
   go_to = 25,
   go_to5 = 15,
+  point_margin = 2L,
+  point_margin5 = 2L,
   n = 2000,
   simple = TRUE,
   method = "theoretical"
@@ -41,7 +43,11 @@ vs_simulate_match_beach(...)
 
 \item{go_to5}{integer: the minimum score that must be reached to end the tiebreaker set (typically 15 for indoor volleyball)}
 
-\item{n}{integer: the number of simulations to run}
+\item{point_margin}{integer: the minimum score difference in order to win the set. Only applicable to \code{method} "monte carlo". For \code{method} "theoretical" a two-point margin is always used}
+
+\item{point_margin5}{integer: the minimum score difference in order to win the tiebreaker set. Only applicable to \code{method} "monte carlo". For \code{method} "theoretical" a two-point margin is always used}
+
+\item{n}{integer: the number of simulations to run. Only applicable to \code{method} "monte carlo"}
 
 \item{simple}{logical: if \code{TRUE}, just return the probability of team winning and the probabilities of each possible set score. If \code{FALSE}, return extra details in a named list. The details will differ between \code{method = "monte carlo"} and \code{method = "theoretical"}}
 

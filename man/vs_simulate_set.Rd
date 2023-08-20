@@ -11,6 +11,7 @@ vs_simulate_set(
   process_model = "phase",
   serving = NA,
   go_to = 25,
+  point_margin = 2,
   simple = FALSE,
   id = NULL,
   method = "theoretical"
@@ -38,6 +39,8 @@ The function should return the sideout rate of the receiving team.
 \item{serving}{logical: if \code{TRUE}, team 1 will serve first. If \code{NA}, the team serving first will be chosen at random}
 
 \item{go_to}{integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)}
+
+\item{point_margin}{integer: the minimum score difference in order to win the set. Only applicable to \code{method} "monte carlo". For \code{method} "theoretical" a two-point margin is always used}
 
 \item{simple}{logical: if \code{TRUE}, return simplified output. Only applicable to \code{method} "monte carlo". If \code{simple = TRUE}, return the team (1 or 2) that won the set. If \code{simple = FALSE}, return extra details in a data.frame}
 

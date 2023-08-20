@@ -14,6 +14,7 @@
 #' @param process_model string: either "sideout" or "phase". The "sideout" model uses the estimated sideout rates (in the `rates` object) directly. The "phase" model breaks play down into different phases (serve, serve receive, etc) and uses the rates associated with those separate phases
 #' @param serving logical: if `TRUE`, team 1 will serve first. If `NA`, the team serving first will be chosen at random
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
+#' @param point_margin integer: the minimum score difference in order to win the set. Only applicable to `method` "monte carlo". For `method` "theoretical" a two-point margin is always used
 #' @param simple logical: if `TRUE`, return simplified output. Only applicable to `method` "monte carlo". If `simple = TRUE`, return the team (1 or 2) that won the set. If `simple = FALSE`, return extra details in a data.frame
 #' @param id : an optional value that (if non-`NULL`) will be returned in the `id` column of the returned data frame, if `simple` is `FALSE`
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
@@ -58,7 +59,7 @@
 #' vs_simulate_set(rates = rates, process_model = "sideout", method = "monte carlo")
 #'
 #' @export
-vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, simple = FALSE, id = NULL, method = "theoretical") {
+vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to = 25, point_margin = 2, simple = FALSE, id = NULL, method = "theoretical") {
     assert_that(is.string(process_model))
     process_model <- tolower(process_model)
     process_model <- match.arg(process_model, c("phase", "sideout", "phase_simple"))
@@ -70,7 +71,7 @@ vs_simulate_set <- function(rates, process_model = "phase", serving = NA, go_to 
     method <- match.arg(method, c("monte carlo", "theoretical"))
     rates <- precheck_rates(rates, process_model = process_model)
     sim_fun <- if (method == "monte carlo") do_sim_set_mc else do_sim_set_theor
-    sim_fun(rates = rates, process_model = process_model, serving = serving, go_to = go_to, simple = simple, id = id)
+    sim_fun(rates = rates, process_model = process_model, serving = serving, go_to = go_to, simple = simple, id = id, point_margin = point_margin)
 }
 
 #' @rdname vs_simulate_set
@@ -85,7 +86,7 @@ vs_simulate_set_theor <- function(...) {
     vs_simulate_set(..., method = "theoretical")
 }
 
-do_sim_set_theor <- function(rates, process_model, serving, go_to, simple, id) {
+do_sim_set_theor <- function(rates, process_model, serving, go_to, simple, id, ...) {
     if (go_to < 1 | go_to > 25) stop("go_to must be between 1 and 25 inclusive")
     if (process_model == "sideout") {
         ## if process_model == "sideout", use the observed sideout rates directly
@@ -103,7 +104,7 @@ do_sim_set_theor <- function(rates, process_model, serving, go_to, simple, id) {
     }
 }
 
-do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
+do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id, point_margin) {
     ## rates are list(
     ##  ## for team 1, probs
     ##  data.frame(serve_ace = z, serve_error = z,
@@ -133,7 +134,7 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id) {
     tm_srv[1] <- srv
     sc <- tm_scores[ptr, ]
     rates0 <- rates ## these might be functions
-    while (all(sc < go_to) || abs(diff(sc)) < 2) {
+    while (all(sc < go_to) || abs(diff(sc)) < point_margin) {
         tm_scores[ptr + 1, ] <- tm_scores[ptr, ] ## scores at the START of the next point, updated below
         rots[ptr + 1, ] <- rots[ptr, ] ## scores at the START of the next point, updated below
         rates <- rates0
@@ -432,7 +433,9 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, max_sets = 5, serve_kn
 #' @param max_sets integer: the maximum number of sets to be played (either 3 or 5)
 #' @param go_to integer: the minimum score that must be reached to end the set (typically 25 for indoor volleyball in sets 1 to 4, 15 in set 5, or 21 in beach volleyball)
 #' @param go_to5 integer: the minimum score that must be reached to end the tiebreaker set (typically 15 for indoor volleyball)
-#' @param n integer: the number of simulations to run
+#' @param point_margin integer: the minimum score difference in order to win the set. Only applicable to `method` "monte carlo". For `method` "theoretical" a two-point margin is always used
+#' @param point_margin5 integer: the minimum score difference in order to win the tiebreaker set. Only applicable to `method` "monte carlo". For `method` "theoretical" a two-point margin is always used
+#' @param n integer: the number of simulations to run. Only applicable to `method` "monte carlo"
 #' @param simple logical: if `TRUE`, just return the probability of team winning and the probabilities of each possible set score. If `FALSE`, return extra details in a named list. The details will differ between `method = "monte carlo"` and `method = "theoretical"`
 #' @param method string: the simulation method to use. Either "monte carlo" or "theoretical". Details TBD
 #' @param ... parameters as for `vs_simulate_match`. `vs_simulate_match_theor` and `vs_simulate_match_mc` are convenience functions for `vs_simulate_match(..., method = "theoretical")` and `vs_simulate_match(..., method = "monte carlo")` respectively. 
@@ -456,7 +459,7 @@ vs_set_probs_to_match <- function(sp13, sp24, sp5 = sp13, max_sets = 5, serve_kn
 #' }
 #'
 #' @export
-vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, max_sets = 5, go_to = 25, go_to5 = 15, n = 2000, simple = TRUE, method = "theoretical") {
+vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serving5 = NA, max_sets = 5, go_to = 25, go_to5 = 15, point_margin = 2L, point_margin5 = 2L, n = 2000, simple = TRUE, method = "theoretical") {
     assert_that(max_sets %in% c(3,5), msg = "Only 3-set and 5-set matches are supported")
     assert_that(is.string(process_model))
     process_model <- tolower(process_model)
@@ -464,26 +467,26 @@ vs_simulate_match <- function(rates, process_model = "phase", serving = NA, serv
     assert_that(is.flag(simple), !is.na(simple))
     rates <- precheck_rates(rates, process_model = process_model)
     sim_fun <- if (method == "monte carlo") do_sim_match_mc else do_sim_match_theor
-    sim_fun(rates = rates, process_model = process_model, serving = serving, serving5 = serving5, n = n, simple = simple, max_sets = max_sets, go_to = go_to, go_to5 = go_to5)
+    sim_fun(rates = rates, process_model = process_model, serving = serving, serving5 = serving5, n = n, simple = simple, max_sets = max_sets, go_to = go_to, go_to5 = go_to5, point_margin = point_margin, point_margin5 = point_margin5)
 }
 
-do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple, go_to = 25, go_to5 = 15, max_sets = 5) {
+do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple, go_to = 25, go_to5 = 15, max_sets = 5, point_margin, point_margin5) {
     ## need to simulate explicitly with team 1 serving first and then receiving first, so that we can adjust for the different probs in sets 1 & 3 vs sets 2 & 4
     if (simple) {
-        simres14s <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = go_to, simple = TRUE, method = "monte carlo"))
-        simres14r <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = go_to, simple = TRUE, method = "monte carlo"))
+        simres14s <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = go_to, point_margin = point_margin, simple = TRUE, method = "monte carlo"))
+        simres14r <- sapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = go_to, point_margin = point_margin, simple = TRUE, method = "monte carlo"))
         if (mean(is.na(c(simres14s, simres14r))) > 0.02) warning("More than 2% of set 1-4 simulations did not yield a result")
     } else {
-        simres14s <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = go_to, simple = FALSE, id = z, method = "monte carlo")))
-        simres14r <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = go_to, simple = FALSE, id = z, method = "monte carlo")))
+        simres14s <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = TRUE, go_to = go_to, point_margin = point_margin, simple = FALSE, id = z, method = "monte carlo")))
+        simres14r <- bind_rows(lapply(seq_len(max(n/2, 1)), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = FALSE, go_to = go_to, point_margin = point_margin, simple = FALSE, id = z, method = "monte carlo")))
         nsims <- length(c(unique(simres14s$id), -unique(simres14s$id)))
         if (nsims/n < 0.98) warning("More than 2% of set 1-4 simulations did not yield a result")
     }
     if (simple) {
-        simres5 <- sapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = go_to5, simple = TRUE, method = "monte carlo"))
+        simres5 <- sapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = go_to5, point_margin = point_margin5, simple = TRUE, method = "monte carlo"))
         if (mean(is.na(simres5)) > 0.02) warning("More than 2% of set 5 simulations did not yield a result")
     } else {
-        simres5 <- bind_rows(lapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = go_to5, simple = FALSE, id = z, method = "monte carlo")))
+        simres5 <- bind_rows(lapply(seq_len(n), function(z) vs_simulate_set(rates = rates, process_model = process_model, serving = serving5, go_to = go_to5, point_margin = point_margin5, simple = FALSE, id = z, method = "monte carlo")))
         if (length(unique(simres5$id))/n < 0.98) warning("More than 2% of set 5 simulations did not yield a result")
     }
     ## now convert set probabilities to match probabilities
@@ -531,7 +534,7 @@ do_sim_match_mc <- function(rates, process_model, serving, serving5, n, simple, 
     out
 }
 
-do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simple, max_sets = 5, go_to = 25, go_to5 = 15) {
+do_sim_match_theor <- function(rates, process_model, serving, serving5, n, simple, max_sets = 5, go_to = 25, go_to5 = 15, ...) {
     ## rates is a list
     if (process_model == "sideout") {
         ## if process_model == "sideout", use the observed sideout rates directly
