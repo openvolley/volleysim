@@ -66,13 +66,16 @@ test_that("Simulation copes with non-standard variable names", {
     rates <- vs_estimate_rates(x$plays, "each")
     xp <- x$plays
     xp <- xp[which(xp$point), ]
-    p1 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred")
+    ## use show_plot = FALSE for testing, GitHub actions is giving
+    ## Error in `title(...)`: conversion failure on 'Braslovče vs. Nova KBM Branik' in 'mbcsToSbcs': for č (U+010D)
+    ## which is probably something to do with a non-standard graphics device in that test environment
+    p1 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = FALSE, home_color = "blue", visiting_color = "darkred")
     names(xp)[names(xp) == "set_number"] <- "unexpected_set_number_column_name"
     ## should error
-    expect_error(vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred"), "please rename")
+    expect_error(vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = FALSE, home_color = "blue", visiting_color = "darkred"), "please rename")
     names(xp)[names(xp) == "unexpected_set_number_column_name"] <- "set_number"
     names(xp)[names(xp) == "visiting_team_score"] <- "visiting_score"
     ## should work
-    p2 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = TRUE, home_color = "blue", visiting_color = "darkred")
+    p2 <- vs_match_win_probability(xp, rates$sideout, go_to = 25, go_to_tiebreak = 15, max_sets = 5, show_plot = FALSE, home_color = "blue", visiting_color = "darkred")
     expect_equal(p1, p2)
 })
