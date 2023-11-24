@@ -136,14 +136,13 @@ do_sim_set_mc <- function(rates, process_model, serving, go_to, simple, id, poin
     rates0 <- rates ## these might be functions
     while (all(sc < go_to) || abs(diff(sc)) < point_margin) {
         tm_scores[ptr + 1, ] <- tm_scores[ptr, ] ## scores at the START of the next point, updated below
-        rots[ptr + 1, ] <- rots[ptr, ] ## scores at the START of the next point, updated below
+        rots[ptr + 1, ] <- rots[ptr, ] ## rotations at the START of the next point, updated below
         rates <- rates0
+        idx <- seq_len(ptr)
         if (is.function(rates[[1]])) {
-            idx <- seq_len(ptr)
             rates[[1]] <- rates[[1]](team_1_score = tm_scores[idx, 1], team_2_score = tm_scores[idx, 2], team_1_rotation = rots[idx, 1], team_2_rotation = rots[idx, 2], serving = tm_srv[idx], point_won_by = tm_point_won_by[idx],  outcome = outcome[idx], go_to = go_to)
         }
         if (is.function(rates[[2]])) {
-            idx <- seq_len(ptr)
             rates[[2]] <- rates[[2]](team_1_score = tm_scores[idx, 1], team_2_score = tm_scores[idx, 2], team_1_rotation = rots[idx, 1], team_2_rotation = rots[idx, 2], serving = tm_srv[idx], point_won_by = tm_point_won_by[idx],  outcome = outcome[idx], go_to = go_to)
         }
         srv_tm_rates <- rates[[srv]] ## serving team's rates
