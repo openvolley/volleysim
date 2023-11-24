@@ -7,6 +7,8 @@ Authors@R: c(person("Ben", "Raymond", role = c("aut", "cre"), email = "ben@untan
              person("openvolley.org", role = "org"))
 Description: Functions for simulating volleyball match outcomes.
 Depends: R (>= 3.3.0)
+URL: https://volleysim.openvolley.org, https://github.com/openvolley/volleysim
+BugReports: https://github.com/openvolley/volleysim/issues
 Imports:
   assertthat,
   dplyr,
